@@ -139,13 +139,13 @@ def ui():
     window.blit(cost, (1467, 805))
     window.blit(money, (1461, 30))
     if towernum == 0:
-        pygame.draw.rect(window, 'white', [1412, 160, 140, 170], 4)
+        pygame.draw.rect(window, 'white', [1402, 160, 160, 170], 4)
     if towernum == 1:
-        pygame.draw.rect(window, 'white', [1412, 340, 140, 170], 4)
+        pygame.draw.rect(window, 'white', [1402, 340, 160, 170], 4)
     if towernum == 2:
-        pygame.draw.rect(window, 'white', [1412, 510, 140, 170], 4)
+        pygame.draw.rect(window, 'white', [1402, 510, 160, 170], 4)
     if towernum == 3:
-        pygame.draw.rect(window, 'white', [1412, 680, 140, 170], 4)
+        pygame.draw.rect(window, 'white', [1402, 680, 160, 170], 4)
 
 
 def uiswtch():
