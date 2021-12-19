@@ -33,11 +33,11 @@ def main_menu():
         my = my / SCALE_MULTIPLIER
 
         if button_1.collidepoint((mx, my)):
-            print(click)
+            #  print(click)
             if click:
                 game()
         if button_2.collidepoint((mx, my)):
-            print(click)
+            #  print(click)
             if click:
                 options()
         pygame.draw.rect(display, (255, 0, 0), button_1)
@@ -79,6 +79,7 @@ def game():
 
     display = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER))
     world = e.World(48, 48)
+    world.add_enemy(e.Entity(-32, -32, 16, 16, 'enemy'))
     player = e.Entity(0,0,16,16,'player')
     cursor = e.Cursor(0, 0, 'data_img/curs3.png')
     world.generate_map()
@@ -97,9 +98,6 @@ def game():
         #  scroll = [0, 0]
 
         tile_rects = world.get_rects()
-
-        world.draw(display, scroll)
-
         player_movement = [0, 0]
 
         if moving_right:
@@ -117,8 +115,8 @@ def game():
 
         player.move_projectiles(tile_rects)
         player.update()
+        world.draw(display, scroll)
         player.draw(display,scroll)
-
         player.draw_projectiles(display, scroll)
 
         #  player.move(player_movement)

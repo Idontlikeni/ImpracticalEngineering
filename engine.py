@@ -1,4 +1,4 @@
-import pygame, math, os, random
+import pygame, math, os, random, itertools
 from pygame.locals import *
 
 global e_colorkey
@@ -24,6 +24,8 @@ class World:
         self.objects = []
         self.field = [['1'] * width for _ in range(height)]
         self.tile_rects = []
+        self.projectiles = []
+        self.enemies = []
 
     def generate_map(self):
         for i in range(self.height):
@@ -69,9 +71,15 @@ class World:
     def add_game_object(self, Object):
         self.objects.append(Object)
 
+    def add_enemy(self, enemy):
+        self.enemies.append(enemy)
+
     def update(self):
-        for object in self.objects:
-            object.update()
+        for enemy in self.enemies:
+            print(enemy.shootTimer)
+            enemy.update()
+            enemy.shoot(0)
+            enemy.move_projectiles(self.get_rects())
     
     def draw(self, display, scroll):
         y = 0
@@ -87,6 +95,10 @@ class World:
                     pygame.draw.rect(display, (255, 0, 0), pygame.Rect((x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]), (TILE_SIZE, TILE_SIZE)), 1)
                 x += 1
             y += 1
+        
+        for enemy in self.enemies:
+            enemy.draw(display, scroll)
+            enemy.draw_projectiles(display, scroll)
 
     def get_rects(self):
         return self.tile_rects
@@ -148,7 +160,9 @@ class PhysicalObject(GameObject):
         return collision_types
 
 class Entity(GameObject):
+    id_iter = itertools.count()
     def __init__(self, x, y, width, height, type):
+        self.id = next(self.id_iter)
         self.x = x
         self.y = y
         self.width = width
@@ -157,6 +171,7 @@ class Entity(GameObject):
         self.physical_object = PhysicalObject(x, y, width, height)
         self.projectiles = []
         self.shootTimer = 50
+        self.id += 1
 
     def draw(self, surface, scroll):
         pygame.draw.rect(surface, (255, 0, 0), pygame.Rect(self.physical_object.x-scroll[0], self.physical_object.y-scroll[1],
@@ -188,6 +203,8 @@ class Entity(GameObject):
             projectile = Projectile(self.x + self.width / 2 - 4, self.y + self.height / 2 - 4, 8, 8, angle, 5, "player_projectile")
             self.projectiles.append(projectile)
             self.shootTimer = 0
+            return projectile
+        return None
     
     def draw_projectiles(self, surface, scroll):
         for projectile in self.projectiles:
