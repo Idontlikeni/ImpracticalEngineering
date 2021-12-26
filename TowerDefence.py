@@ -146,6 +146,9 @@ class Bullet:
     def draw(self):
         pygame.draw.circle(window, self.color, [self.x, self.y], self.size)
 
+    def rng(self):
+        return self.x
+
 
 class FreshMeat:
     def __init__(self, x, y, hp, speed, size, color, reward):
@@ -157,28 +160,30 @@ class FreshMeat:
         self.speed = speed
         self.point = 0
         self.reward = reward
-        self.napr = 'r'
+        self.napx = 1
+        self.napy = 0
 
     def draw(self):
         pygame.draw.circle(window, self.color, [self.x, self.y], self.size)
 
     def go(self):
-        if self.napr == 'r':
-            self.x += 1
-        if self.napr == 'l':
-            self.x -= 1
-        if self.napr == 'u':
-            self.y -= 1
-        if self.napr == 'd':
-            self.y += 1
         if [self.x, self.y] in right:
-            self.napr = 'r'
+            self.napy = 0
+            self.napx = 1
         if [self.x, self.y] in left:
-            self.napr = 'l'
+            self.napy = 0
+            self.napx = -1
         if [self.x, self.y] in up:
-            self.napr = 'u'
+            self.napy = -1
+            self.napx = 0
         if [self.x, self.y] in down:
-            self.napr = 'd'
+            self.napy = 1
+            self.napx = 0
+        self.x += self.speed * self.napx
+        self.y += self.speed * self.napy
+
+    def rng(self):
+        return self.x
 
 
 def createway():
@@ -286,14 +291,18 @@ def run():
     for bullet in bullets:
         bullet.move()
         bullet.draw()
+        if Bullet.rng(bullet) > width:
+            bullets.remove(bullet)
     for meats in meat:
         meats.draw()
         meats.go()
+        if FreshMeat.rng(meats) > width:
+            meat.remove(meats)
 
 
 plr = Player(100)
 for i in range(10):
-    meatcreate(meatstrt[0] - i * 30, meatstrt[1], 100, 3, 10, 'red', 10)
+    meatcreate(meatstrt[0] - i * 30, meatstrt[1], 100, 1, 10, 'red', 10)
 
 running = True
 while running:
