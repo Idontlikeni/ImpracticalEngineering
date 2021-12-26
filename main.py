@@ -63,7 +63,7 @@ def main_menu():
         clock.tick(60)
 
 def game():
-    SCALE_MULTIPLIER = 5
+    SCALE_MULTIPLIER = 4
     clicked = False
 
     running = True
@@ -111,16 +111,17 @@ def game():
         if clicked == True:
             player.shoot(mouse_angle)
         
-        collision_types = player.move(player_movement,tile_rects)
+        collision_types = player.move(player_movement,tile_rects, world.get_enemies())
 
-        player.move_projectiles(tile_rects)
+        player.move_projectiles(tile_rects, world.get_enemies())
         player.update()
+        world.update(player)
         world.draw(display, scroll)
         player.draw(display,scroll)
         player.draw_projectiles(display, scroll)
 
         #  player.move(player_movement)
-        pygame.draw.line(display, (0, 255, 0), (player.x + player.width / 2 - scroll[0], player.y + player.height / 2 - scroll[1]), ((pygame.mouse.get_pos()[0] // SCALE_MULTIPLIER), (pygame.mouse.get_pos()[1] // SCALE_MULTIPLIER)))
+        #  pygame.draw.line(display, (0, 255, 0), (player.x + player.width / 2 - scroll[0], player.y + player.height / 2 - scroll[1]), ((pygame.mouse.get_pos()[0] // SCALE_MULTIPLIER), (pygame.mouse.get_pos()[1] // SCALE_MULTIPLIER)))
         
         cursor.draw(display)
 
@@ -157,7 +158,7 @@ def game():
                     clicked = False
 
                     
-        world.update()
+        
         screen.blit(pygame.transform.scale(display, WINDOW_SIZE), (0, 0))
         pygame.display.update()
         clock.tick(60)

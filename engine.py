@@ -17,7 +17,7 @@ def collision_test(object_1,object_list):
 
 TILE_SIZE = 20
 
-class World:
+class World:  #  ZA WARUDOOOOOO
     def __init__(self, width, height):
         self.width = width
         self.height = height
@@ -74,12 +74,12 @@ class World:
     def add_enemy(self, enemy):
         self.enemies.append(enemy)
 
-    def update(self):
+    def update(self, player):
         for enemy in self.enemies:
-            print(enemy.shootTimer)
+            #  print(enemy.shootTimer)
             enemy.update()
             enemy.shoot(0)
-            enemy.move_projectiles(self.get_rects())
+            enemy.move_projectiles(self.get_rects(), [player])
     
     def draw(self, display, scroll):
         y = 0
@@ -103,6 +103,16 @@ class World:
     def get_rects(self):
         return self.tile_rects
 
+    def get_enemies_rects(self):
+        rects = []
+        for enemy in self.enemies:
+            rects.append(enemy.physical_object.rect)
+        return rects
+
+    def get_enemies(self):
+        return self.enemies
+
+
 class GameObject:
     def __init__(self, x, y, width, height):
         self.x = x
@@ -122,10 +132,15 @@ class PhysicalObject(GameObject):
     def __init__(self, x, y, width, height):
         super().__init__(x, y, width, height)
 
-    def move(self,movement,platforms):
+    def move(self,movement,platforms,enemies=None):
+        enemies_rects = []
+        for enemy in enemies:
+            enemies_rects.append(enemy.physical_object.rect)
+        
         self.x += movement[0]
         self.rect.x = int(self.x)
         block_hit_list = collision_test(self.rect, platforms)
+        enemies_hit_list = collision_test(self.rect, enemies_rects)
         collision_types = {'top':False,'bottom':False,'right':False,'left':False,'slant_bottom':False,'data':[]}
         # added collision data to "collision_types". ignore the poorly chosen variable name
         for block in block_hit_list:
@@ -140,11 +155,39 @@ class PhysicalObject(GameObject):
                 markers[1] = True
             collision_types['data'].append([block,markers])
             self.x = self.rect.x
+        
+        for block in enemies_hit_list:
+            markers = [False,False,False,False]
+            if movement[0] > 0:
+                self.rect.right = block.left
+                collision_types['right'] = True
+                markers[0] = True
+            elif movement[0] < 0:
+                self.rect.left = block.right
+                collision_types['left'] = True
+                markers[1] = True
+            collision_types['data'].append([block,markers])
+            self.x = self.rect.x
         # Y-collisions -------------------------------------------------
         self.y += movement[1]
         self.rect.y = int(self.y)
-        block_hit_list = collision_test(self.rect,platforms)
+        block_hit_list = collision_test(self.rect, platforms)
+        enemies_hit_list = collision_test(self.rect, enemies_rects)
         for block in block_hit_list:
+            markers = [False,False,False,False]
+            if movement[1] > 0:
+                self.rect.bottom = block.top
+                collision_types['bottom'] = True
+                markers[2] = True
+            elif movement[1] < 0:
+                self.rect.top = block.bottom
+                collision_types['top'] = True
+                markers[3] = True
+            collision_types['data'].append([block,markers])
+            self.change_y = 0
+            self.y = self.rect.y
+
+        for block in enemies_hit_list:
             markers = [False,False,False,False]
             if movement[1] > 0:
                 self.rect.bottom = block.top
@@ -189,8 +232,8 @@ class Entity(GameObject):
         if self.shootTimer < 50:
             self.shootTimer += 1
     
-    def move(self,movement,platforms):
-        collisions = self.physical_object.move(movement,platforms)
+    def move(self,movement,platforms, enemies):
+        collisions = self.physical_object.move(movement,platforms, enemies)
         self.x = self.physical_object.x
         self.y = self.physical_object.y
         return collisions
@@ -210,10 +253,12 @@ class Entity(GameObject):
         for projectile in self.projectiles:
             projectile.draw(surface, scroll)
 
-    def move_projectiles(self, platforms):
+    def move_projectiles(self, platforms, enemies=None):
+        if enemies is not None:
+            print(enemies)
         for count, projectile in enumerate(self.projectiles):
-            collisions = projectile.move(platforms)
-            print(collisions)
+            collisions = projectile.move(platforms, enemies)
+            #  print(collisions)
             if len(collisions['data']) > 0:
                 self.projectiles.remove(projectile)
 
@@ -243,9 +288,9 @@ class Projectile(Entity):
         self.angle = angle
         self.velocity = velocity
 
-    def move(self, platforms):
+    def move(self, platforms, enemies):
         movement = [math.cos(self.angle) * self.velocity, math.sin(self.angle) * self.velocity]
-        collisions = self.physical_object.move(movement,platforms)
+        collisions = self.physical_object.move(movement,platforms,enemies)
         self.x = self.physical_object.x
         self.y = self.physical_object.y
         if len(collisions) > 0:
