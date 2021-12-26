@@ -9,15 +9,63 @@ height = county * cellsize + 1
 fps = 60
 bullets = []
 towers = []
+meat = []
+way = []
 towernum = 0
-uirect = [pygame.Rect(1361, 160, 240, 140), pygame.Rect(1361, 320, 240, 140),
-          pygame.Rect(1361, 480, 240, 140), pygame.Rect(1361, 640, 240, 140)]
-
+uirect = [pygame.Rect(1361, 160, 240, 170), pygame.Rect(1361, 340, 240, 170),
+          pygame.Rect(1361, 510, 240, 170), pygame.Rect(1361, 680, 240, 170)]
+Map = [
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 4, 1, 1, 1, 1, 1, 5, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+        [3, 1, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 3, 1, 1, 1, 6],
+        [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 1, 0, 0, 0, 3, 1, 1, 1, 1, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 4, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 3, 1, 1, 1, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+]
+# down == 2
+# right == 3
+# up == 4
+# left == 5
+# end == 6
+down = []
+right = []
+up = []
+left = []
+napr = ''
 pygame.init()
 pygame.font.init()
 myfont = pygame.font.SysFont('Comic Sans MS', 30)
 window = pygame.display.set_mode((width + 240, height))
 clock = pygame.time.Clock()
+for y in range(len(Map)):
+    if Map[y][0] == 3:
+        meatstrt = cellsize / 2, y * cellsize + (cellsize / 2)
+    for x in range(len(Map[y])):
+        if Map[y][x] == 2:
+            down.append([x * cellsize + cellsize / 2, y * cellsize + cellsize / 2])
+        if Map[y][x] == 3:
+            right.append([x * cellsize + cellsize / 2, y * cellsize + cellsize / 2])
+        if Map[y][x] == 4:
+            up.append([x * cellsize + cellsize / 2, y * cellsize + cellsize / 2])
+        if Map[y][x] == 5:
+            left.append([x * cellsize + cellsize / 2, y * cellsize + cellsize / 2])
 
 
 class Player:
@@ -99,6 +147,53 @@ class Bullet:
         pygame.draw.circle(window, self.color, [self.x, self.y], self.size)
 
 
+class FreshMeat:
+    def __init__(self, x, y, hp, speed, size, color, reward):
+        self.x = x
+        self.y = y
+        self.size = size
+        self.color = color
+        self.hp = hp
+        self.speed = speed
+        self.point = 0
+        self.reward = reward
+        self.napr = 'r'
+
+    def draw(self):
+        pygame.draw.circle(window, self.color, [self.x, self.y], self.size)
+
+    def go(self):
+        if self.napr == 'r':
+            self.x += 1
+        if self.napr == 'l':
+            self.x -= 1
+        if self.napr == 'u':
+            self.y -= 1
+        if self.napr == 'd':
+            self.y += 1
+        if [self.x, self.y] in right:
+            self.napr = 'r'
+        if [self.x, self.y] in left:
+            self.napr = 'l'
+        if [self.x, self.y] in up:
+            self.napr = 'u'
+        if [self.x, self.y] in down:
+            self.napr = 'd'
+
+
+def createway():
+    for j in range(len(Map)):
+        for i in range(len(Map[0])):
+            if Map[j][i] != 0:
+                pygame.draw.rect(window, 'blue', [i * cellsize + 1, j * cellsize + 1,
+                                                  cellsize - 1, cellsize - 1])
+                way.append([i, j])
+
+
+def meatcreate(x, y, hp, speed, size, color, reward):
+    meat.append(FreshMeat(x, y, hp, speed, size, color, reward))
+
+
 def addbullet(x, y, size, color, damage, speed):
     bullets.append(Bullet(x, y, size, color, damage, speed))
 
@@ -110,12 +205,16 @@ def maycreatetower(x, y):
         for tower in towers:
             if tower.x == x and tower.y == y:
                 return False
+    for i in way:
+        if i[0] + cellsize / 2 == x and i[1] + cellsize / 2 == y:
+            return False
     return True
 
 
 def windowrender():
     x, y = getmpos()
     pygame.draw.rect(window, 'blue', [x, y, cellsize, cellsize])
+    pygame.draw.rect(window, 'black', [x + 6, y + 6, cellsize - 12, cellsize - 12])
     for i in range(countx + 1):
         pygame.draw.line(window, 'white', [i * cellsize, 0], [i * cellsize, height * cellsize])
     for i in range(county + 1):
@@ -187,9 +286,14 @@ def run():
     for bullet in bullets:
         bullet.move()
         bullet.draw()
+    for meats in meat:
+        meats.draw()
+        meats.go()
 
 
 plr = Player(100)
+for i in range(10):
+    meatcreate(meatstrt[0] - i * 30, meatstrt[1], 100, 3, 10, 'red', 10)
 
 running = True
 while running:
@@ -202,6 +306,7 @@ while running:
                 if getmpos()[0] >= 1361:
                     towernum = uiswtch()
     window.fill('black')
+    createway()
     run()
     ui()
     pygame.display.update()
