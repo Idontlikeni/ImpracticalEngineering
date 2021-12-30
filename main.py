@@ -79,10 +79,11 @@ def game():
 
     display = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER))
     world = e.World(48, 48)
-    world.add_enemy(e.Entity(-32, -32, 16, 16, 'enemy'))
-    player = e.Entity(0,0,16,16,'player')
-    cursor = e.Cursor(0, 0, 'data_img/curs3.png')
     world.generate_map()
+    world.add_enemy(e.Entity(-64, 32, 16, 16, 'enemy'))
+    player = e.Entity(*world.get_start_pos(),16,16,'player')
+    cursor = e.Cursor(0, 0, 'data_img/curs3.png')
+    
 
     while running:
         display.fill((0, 0, 0))
@@ -111,7 +112,7 @@ def game():
         if clicked == True:
             player.shoot(mouse_angle)
         
-        collision_types = player.move(player_movement,tile_rects, world.get_enemies())
+        collision_types = player.move(player_movement,tile_rects, [])
 
         player.move_projectiles(tile_rects, world.get_enemies())
         player.update()

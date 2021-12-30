@@ -26,6 +26,10 @@ class World:  #  ZA WARUDOOOOOO
         self.tile_rects = []
         self.projectiles = []
         self.enemies = []
+        self.start_pos = []
+        self.enemies_positions = []
+        self.chest_positions = []
+        self.enemies_count = 0
 
     def generate_map(self):
         for i in range(self.height):
@@ -38,9 +42,15 @@ class World:  #  ZA WARUDOOOOOO
             self.field[self.height - 1][i] = 'x'
         
         numer_of_cells = random.randint(self.width * self.height, self.width * self.height * 2)
+        self.enemies_count = random.randint(10, 25)
+        print(self.enemies_count, numer_of_cells)
+
+        for i in range(self.enemies_count):
+            self.enemies_positions.append(random.randint(0, numer_of_cells - 1))
 
         x, y = random.randint(1, self.width - 2), random.randint(1, self.height - 2)
         self.field[y][x] = '0'
+        self.start_pos = [x, y]
         directions = [(0, 1), (0, -1), (1, 0), (-1, 0)] 
 
         for i in range(numer_of_cells):
@@ -58,7 +68,12 @@ class World:  #  ZA WARUDOOOOOO
             for v in directions:
                 if self.field[y + v[1]][x + v[0]] == '1':
                     self.field[y + v[1]][x + v[0]] = '2'
+            if i in self.enemies_positions:
+                self.enemies_positions.append([x, y])
+                self.add_enemy(Entity(*self.to_screen_coordinates(x, y), 16, 16, 'enemy'))
         
+        print(*self.enemies_positions)
+
         y = 0
         for row in self.field:
             x = 0
@@ -67,7 +82,13 @@ class World:  #  ZA WARUDOOOOOO
                     self.tile_rects.append(pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE))
                 x += 1
             y += 1
-        
+    
+    def to_screen_coordinates(self, x, y):
+        return x * TILE_SIZE, y * TILE_SIZE
+
+    def get_start_pos(self):
+        return self.to_screen_coordinates(self.start_pos[0], self.start_pos[1])
+
     def add_game_object(self, Object):
         self.objects.append(Object)
 
@@ -140,7 +161,7 @@ class PhysicalObject(GameObject):
         self.x += movement[0]
         self.rect.x = int(self.x)
         block_hit_list = collision_test(self.rect, platforms)
-        enemies_hit_list = collision_test(self.rect, enemies_rects)
+        enemies_hit_list = collision_test(self.rect, enemies_rects) #  Сода надо добавить возможность управлять id
         collision_types = {'top':False,'bottom':False,'right':False,'left':False,'slant_bottom':False,'data':[]}
         # added collision data to "collision_types". ignore the poorly chosen variable name
         for block in block_hit_list:
@@ -253,13 +274,13 @@ class Entity(GameObject):
         for projectile in self.projectiles:
             projectile.draw(surface, scroll)
 
-    def move_projectiles(self, platforms, enemies=None):
-        if enemies is not None:
-            print(enemies)
+    def move_projectiles(self, platforms, enemies=[]):
         for count, projectile in enumerate(self.projectiles):
             collisions = projectile.move(platforms, enemies)
             #  print(collisions)
+            
             if len(collisions['data']) > 0:
+                #  print(self, collisions['data'][0])
                 self.projectiles.remove(projectile)
 
 
