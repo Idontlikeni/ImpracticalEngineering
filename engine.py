@@ -4,6 +4,8 @@ from pygame.locals import *
 global e_colorkey
 e_colorkey = (255,255,255)
 
+TILE_SIZE = 20
+
 def set_global_colorkey(colorkey):
     global e_colorkey
     e_colorkey = colorkey
@@ -15,7 +17,18 @@ def collision_test(object_1,object_list):
             collision_list.append(obj)
     return collision_list
 
-TILE_SIZE = 20
+def object_collision_test(object_1,object_list):
+    collision_list = []
+    for obj in object_list:
+        if obj.physical_object.rect.colliderect(object_1):
+            collision_list.append(obj)
+    return collision_list
+
+def circle_surf(radius, color):
+    surf = pygame.Surface((radius * 2, radius * 2))
+    pygame.draw.circle(surf, color, (radius, radius), radius)
+    surf.set_colorkey((0, 0, 0))
+    return surf
 
 class World:  #  ZA WARUDOOOOOO
     def __init__(self, width, height):
@@ -43,7 +56,7 @@ class World:  #  ZA WARUDOOOOOO
         
         numer_of_cells = random.randint(self.width * self.height, self.width * self.height * 2)
         self.enemies_count = random.randint(10, 25)
-        print(self.enemies_count, numer_of_cells)
+        #  print(self.enemies_count, numer_of_cells)
 
         for i in range(self.enemies_count):
             self.enemies_positions.append(random.randint(0, numer_of_cells - 1))
@@ -72,7 +85,7 @@ class World:  #  ZA WARUDOOOOOO
                 self.enemies_positions.append([x, y])
                 self.add_enemy(Entity(*self.to_screen_coordinates(x, y), 16, 16, 'enemy'))
         
-        print(*self.enemies_positions)
+        #  print(*self.enemies_positions)
 
         y = 0
         for row in self.field:
@@ -95,12 +108,16 @@ class World:  #  ZA WARUDOOOOOO
     def add_enemy(self, enemy):
         self.enemies.append(enemy)
 
-    def update(self, player):
-        for enemy in self.enemies:
-            #  print(enemy.shootTimer)
-            enemy.update()
-            enemy.shoot(0)
-            enemy.move_projectiles(self.get_rects(), [player])
+    def update(self, player, dt):
+        for i, enemy in sorted(enumerate(self.enemies), reverse=True):
+            if enemy.hp <= 0:
+                del enemy
+                self.enemies.pop(i)
+            else:
+                #  print(enemy.shootTimer)
+                enemy.update()
+                enemy.shoot(0)
+                enemy.move_projectiles(self.get_rects(), [player], dt)
     
     def draw(self, display, scroll):
         y = 0
@@ -153,7 +170,7 @@ class PhysicalObject(GameObject):
     def __init__(self, x, y, width, height):
         super().__init__(x, y, width, height)
 
-    def move(self,movement,platforms,enemies=None):
+    def move(self,movement,platforms,enemies=[]):
         enemies_rects = []
         for enemy in enemies:
             enemies_rects.append(enemy.physical_object.rect)
@@ -161,8 +178,8 @@ class PhysicalObject(GameObject):
         self.x += movement[0]
         self.rect.x = int(self.x)
         block_hit_list = collision_test(self.rect, platforms)
-        enemies_hit_list = collision_test(self.rect, enemies_rects) #  Сода надо добавить возможность управлять id
-        collision_types = {'top':False,'bottom':False,'right':False,'left':False,'slant_bottom':False,'data':[]}
+        enemies_hit_list = object_collision_test(self.rect, enemies) #  Сода надо добавить возможность управлять id
+        collision_types = {'top':False,'bottom':False,'right':False,'left':False,'slant_bottom':False,'data':[],'enemies':[],'projectiles':[]}
         # added collision data to "collision_types". ignore the poorly chosen variable name
         for block in block_hit_list:
             markers = [False,False,False,False]
@@ -177,23 +194,27 @@ class PhysicalObject(GameObject):
             collision_types['data'].append([block,markers])
             self.x = self.rect.x
         
-        for block in enemies_hit_list:
+        for enemy in enemies_hit_list:
             markers = [False,False,False,False]
             if movement[0] > 0:
-                self.rect.right = block.left
+                self.rect.right = enemy.physical_object.rect.left
                 collision_types['right'] = True
                 markers[0] = True
             elif movement[0] < 0:
-                self.rect.left = block.right
+                self.rect.left = enemy.physical_object.rect.right
                 collision_types['left'] = True
                 markers[1] = True
-            collision_types['data'].append([block,markers])
+            collision_types['data'].append([enemy,markers])
+            if enemy.type == 'projectile':
+                collision_types['projectiles'].append(enemy)
+            else:
+                collision_types['enemies'].append(enemy)
             self.x = self.rect.x
         # Y-collisions -------------------------------------------------
         self.y += movement[1]
         self.rect.y = int(self.y)
         block_hit_list = collision_test(self.rect, platforms)
-        enemies_hit_list = collision_test(self.rect, enemies_rects)
+        enemies_hit_list = object_collision_test(self.rect, enemies)
         for block in block_hit_list:
             markers = [False,False,False,False]
             if movement[1] > 0:
@@ -208,17 +229,21 @@ class PhysicalObject(GameObject):
             self.change_y = 0
             self.y = self.rect.y
 
-        for block in enemies_hit_list:
+        for enemy in enemies_hit_list:
             markers = [False,False,False,False]
             if movement[1] > 0:
-                self.rect.bottom = block.top
+                self.rect.bottom = enemy.physical_object.rect.top
                 collision_types['bottom'] = True
                 markers[2] = True
             elif movement[1] < 0:
-                self.rect.top = block.bottom
+                self.rect.top = enemy.physical_object.rect.bottom
                 collision_types['top'] = True
                 markers[3] = True
-            collision_types['data'].append([block,markers])
+            collision_types['data'].append([enemy,markers])
+            if enemy.type == 'projectile':
+                collision_types['projectiles'].append(enemy)
+            else:
+                collision_types['enemies'].append(enemy)
             self.change_y = 0
             self.y = self.rect.y
         return collision_types
@@ -236,6 +261,7 @@ class Entity(GameObject):
         self.projectiles = []
         self.shootTimer = 50
         self.id += 1
+        self.hp = 10
 
     def draw(self, surface, scroll):
         pygame.draw.rect(surface, (255, 0, 0), pygame.Rect(self.physical_object.x-scroll[0], self.physical_object.y-scroll[1],
@@ -274,9 +300,9 @@ class Entity(GameObject):
         for projectile in self.projectiles:
             projectile.draw(surface, scroll)
 
-    def move_projectiles(self, platforms, enemies=[]):
+    def move_projectiles(self, platforms, enemies, dt):
         for count, projectile in enumerate(self.projectiles):
-            collisions = projectile.move(platforms, enemies)
+            collisions = projectile.move(platforms, enemies, dt)
             #  print(collisions)
             
             if len(collisions['data']) > 0:
@@ -308,15 +334,55 @@ class Projectile(Entity):
         super().__init__(x, y, width, height, type)
         self.angle = angle
         self.velocity = velocity
+        self.type = 'projectile'
 
-    def move(self, platforms, enemies):
-        movement = [math.cos(self.angle) * self.velocity, math.sin(self.angle) * self.velocity]
+    def move(self, platforms, enemies, dt):
+        movement = [math.cos(self.angle) * self.velocity * dt, math.sin(self.angle) * self.velocity * dt]
         collisions = self.physical_object.move(movement,platforms,enemies)
         self.x = self.physical_object.x
         self.y = self.physical_object.y
+        if len(collisions['enemies']) > 0:
+            #  print(collisions)
+            for enemy in collisions['enemies']:
+                enemy.hp -= 1
         if len(collisions) > 0:
             del self
         return collisions
 
     def set_move_angle(self, angle):
         self.angle = angle
+
+
+class Particle:
+    def __init__(self, x, y, velocity, time, scroll):
+        self.x = x
+        self.y = y
+        self.velocity = velocity
+        self.time = time
+        self.spent_time = 0
+        self.scroll = scroll
+
+    def __init__(self, x, y, scroll):
+        self.x = x
+        self.y = y
+        self.scroll = scroll
+        self.velocity = [random.randint(0, 20) / 10 - 1, random.randint(0, 20) / 10 - 1]
+        self.time = random.randint(1, 3)
+        self.spent_time = 0
+        self.color = (random.randint(1, 255), random.randint(1, 255), random.randint(1, 255))
+        
+    def update(self):
+        self.x += self.velocity[0]
+        self.y += self.velocity[1]
+        self.time -= 0.05
+        self.spent_time += 0.1
+
+    def draw(self, display, scroll):
+        #  display.set_colorkey((0,0,0))
+        #  pygame.draw.circle(display, (241, 100, 31, 255), [int(self.x), int(self.y)], int(self.time * 2))
+        radius = self.time * 2
+        display.blit(circle_surf(radius, (31, 100, 241)), 
+        [int(self.x - radius - scroll[0] + self.scroll[0]), int(self.y - radius - scroll[1] + self.scroll[1])], special_flags=BLEND_RGB_ADD)
+        
+        pygame.draw.circle(display, (255, 255, 255), 
+        [int(self.x - scroll[0] + self.scroll[0]), int(self.y - scroll[1] + self.scroll[1])], int(self.time))

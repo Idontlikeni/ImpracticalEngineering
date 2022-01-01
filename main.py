@@ -1,4 +1,4 @@
-import pygame, sys, os, random, math
+import pygame, sys, os, random, math, time
 
 from pygame import mouse
 import engine as e
@@ -8,7 +8,7 @@ from pygame.mixer import set_num_channels
 pygame.init()
 pygame.display.set_caption("Yandex game")
 pygame.mixer.pre_init(44100, -16, 2, 512)
-pygame.mixer,set_num_channels(64)
+pygame.mixer.set_num_channels(64)
 random.seed()
 clock = pygame.time.Clock()
 
@@ -64,11 +64,11 @@ def main_menu():
 
 def game():
     SCALE_MULTIPLIER = 4
+    display = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER))
+
     clicked = False
-
     running = True
-    pygame.mouse.set_visible(False)
-
+    
     moving_right = False
     moving_left = False
     moving_up = False
@@ -77,23 +77,32 @@ def game():
     true_scroll = [0,0]
     scroll = [0, 0]
 
-    display = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER))
+    last_time = time.time()
+
+    pygame.mouse.set_visible(False)
     world = e.World(48, 48)
     world.generate_map()
     world.add_enemy(e.Entity(-64, 32, 16, 16, 'enemy'))
     player = e.Entity(*world.get_start_pos(),16,16,'player')
     cursor = e.Cursor(0, 0, 'data_img/curs3.png')
     
+    particles = []
 
     while running:
+        dt = time.time() - last_time
+        dt *= 60
+        last_time = time.time()
         display.fill((0, 0, 0))
         mouse_pos = pygame.mouse.get_pos()
+
         cursor.set_pos(mouse_pos[0] / SCALE_MULTIPLIER, mouse_pos[1] / SCALE_MULTIPLIER)
+
         true_scroll[0] += (player.x - true_scroll[0] - display.get_width() / 2 + 8) / 10
         true_scroll[1] += (player.y - true_scroll[1] - display.get_height() / 2 + 8) / 10
         scroll = true_scroll.copy()
         scroll[0] = int(scroll[0])
         scroll[1] = int(scroll[1])
+
         mouse_angle = math.atan2(mouse_pos[1] / SCALE_MULTIPLIER - player.y - player.height / 2 + scroll[1], mouse_pos[0] / SCALE_MULTIPLIER - player.x - player.width / 2 + scroll[0])
 
         #  scroll = [0, 0]
@@ -102,28 +111,37 @@ def game():
         player_movement = [0, 0]
 
         if moving_right:
-            player_movement[0] += 2
+            player_movement[0] += 2 * dt
         if moving_left:
-            player_movement[0] -= 2
+            player_movement[0] -= 2 * dt
         if moving_up:
-            player_movement[1] -= 2
+            player_movement[1] -= 2 * dt
         if moving_down:
-            player_movement[1] += 2
+            player_movement[1] += 2 * dt
         if clicked == True:
             player.shoot(mouse_angle)
         
         collision_types = player.move(player_movement,tile_rects, [])
 
-        player.move_projectiles(tile_rects, world.get_enemies())
+        player.move_projectiles(tile_rects, world.get_enemies(), dt)
         player.update()
-        world.update(player)
+        world.update(player, dt)
         world.draw(display, scroll)
         player.draw(display,scroll)
         player.draw_projectiles(display, scroll)
-
+        print(player.hp)
         #  player.move(player_movement)
         #  pygame.draw.line(display, (0, 255, 0), (player.x + player.width / 2 - scroll[0], player.y + player.height / 2 - scroll[1]), ((pygame.mouse.get_pos()[0] // SCALE_MULTIPLIER), (pygame.mouse.get_pos()[1] // SCALE_MULTIPLIER)))
         
+        #  particles.append(e.Particle(player.x - scroll[0] + player.width // 2, player.y - scroll[1] + player.height // 2, scroll))
+
+        for i, particle in sorted(enumerate(particles), reverse=True):
+            particle.update()
+            particle.draw(display, scroll)
+            if particle.time < 0:
+                del particle
+                particles.pop(i)
+
         cursor.draw(display)
 
         for event in pygame.event.get():
