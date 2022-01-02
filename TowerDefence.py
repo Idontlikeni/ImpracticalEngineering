@@ -3,9 +3,13 @@ import math
 
 countx = 34
 county = 23
-cellsize = 40
-width = countx * cellsize
-height = county * cellsize + 1
+cellsize = 10
+sclsz = 4
+sclsz1 = 2
+width1 = 1600
+height1 = 900
+width = width1 / sclsz
+height = height1 / sclsz
 fps = 60
 bullets = []
 towers = []
@@ -22,11 +26,11 @@ Map = [
         [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 4, 1, 1, 1, 1, 1, 5, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 5, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 4, 1, 1, 1, 1, 1, 5, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-        [1, 1, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 3, 1, 1, 1, 1],
+        [3, 1, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 3, 1, 1, 1, 6],
         [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0],
@@ -43,11 +47,30 @@ Map = [
 # right == 3
 # up == 4
 # left == 5
+# end == 6
+down = []
+right = []
+up = []
+left = []
+napr = ''
 pygame.init()
 pygame.font.init()
-myfont = pygame.font.SysFont('Comic Sans MS', 30)
-window = pygame.display.set_mode((width + 240, height))
+myfont = pygame.font.Font('MaredivRegular.ttf', 30)
+window = pygame.Surface((width, height))
+display = pygame.display.set_mode((width1, height1))
 clock = pygame.time.Clock()
+for y in range(len(Map)):
+    if Map[y][0] == 3:
+        meatstrt = cellsize / 2, y * cellsize + (cellsize / 2)
+    for x in range(len(Map[y])):
+        if Map[y][x] == 2:
+            down.append([x * cellsize + cellsize / 2, y * cellsize + cellsize / 2])
+        if Map[y][x] == 3:
+            right.append([x * cellsize + cellsize / 2, y * cellsize + cellsize / 2])
+        if Map[y][x] == 4:
+            up.append([x * cellsize + cellsize / 2, y * cellsize + cellsize / 2])
+        if Map[y][x] == 5:
+            left.append([x * cellsize + cellsize / 2, y * cellsize + cellsize / 2])
 
 
 class Player:
@@ -62,7 +85,7 @@ class Tower:
     def __init__(self, x, y, size, color, damage, firespeed, price, attackrad):
         self.x = x
         self.y = y
-        self.size = size
+        self.size = size / sclsz1
         self.color = color
         self.damage = damage
         self.firespeed = firespeed
@@ -117,7 +140,7 @@ class Bullet:
     def __init__(self, x, y, size, color, damage, speed):
         self.x = x
         self.y = y
-        self.size = size
+        self.size = size / sclsz1
         self.color = color
         self.damage = damage
         self.speed = speed
@@ -128,23 +151,44 @@ class Bullet:
     def draw(self):
         pygame.draw.circle(window, self.color, [self.x, self.y], self.size)
 
+    def rng(self):
+        return self.x
+
 
 class FreshMeat:
     def __init__(self, x, y, hp, speed, size, color, reward):
         self.x = x
         self.y = y
-        self.size = size
+        self.size = size / sclsz1
         self.color = color
         self.hp = hp
         self.speed = speed
         self.point = 0
         self.reward = reward
+        self.napx = 1
+        self.napy = 0
 
     def draw(self):
         pygame.draw.circle(window, self.color, [self.x, self.y], self.size)
 
     def go(self):
-        pass
+        if [self.x, self.y] in right:
+            self.napy = 0
+            self.napx = 1
+        if [self.x, self.y] in left:
+            self.napy = 0
+            self.napx = -1
+        if [self.x, self.y] in up:
+            self.napy = -1
+            self.napx = 0
+        if [self.x, self.y] in down:
+            self.napy = 1
+            self.napx = 0
+        self.x += self.speed * self.napx
+        self.y += self.speed * self.napy
+
+    def rng(self):
+        return self.x
 
 
 def createway():
@@ -156,12 +200,8 @@ def createway():
                 way.append([i, j])
 
 
-def meatcreate(hp, speed, size, color, reward):
-    x = cellsize / 2
-    for i in range(10):
-        x += cellsize
-        y = cellsize + cellsize / 2
-        meat.append(FreshMeat(x, y, hp, speed, size, color, reward))
+def meatcreate(x, y, hp, speed, size, color, reward):
+    meat.append(FreshMeat(x, y, hp, speed, size, color, reward))
 
 
 def addbullet(x, y, size, color, damage, speed):
@@ -192,29 +232,29 @@ def windowrender():
 
 
 def ui():
-    pygame.draw.rect(window, 'black', [1361, 0, 240, 921])
-    pygame.draw.circle(window, 'green', [1482, 230], 60)
+    pygame.draw.rect(display, 'black', [1361, 0, 240, 921])
+    pygame.draw.circle(display, 'green', [1482, 230], 60)
     cost = myfont.render('10', False, 'white')
-    window.blit(cost, (1467, 285))
-    pygame.draw.circle(window, 'yellow', [1482, 410], 60)
+    display.blit(cost, (1467, 285))
+    pygame.draw.circle(display, 'yellow', [1482, 410], 60)
     cost = myfont.render('15', False, 'white')
-    window.blit(cost, (1467, 465))
-    pygame.draw.circle(window, 'red', [1482, 580], 60)
+    display.blit(cost, (1467, 465))
+    pygame.draw.circle(display, 'red', [1482, 580], 60)
     cost = myfont.render('30', False, 'white')
-    window.blit(cost, (1467, 635))
-    pygame.draw.circle(window, 'blue', [1482, 750], 60)
+    display.blit(cost, (1467, 635))
+    pygame.draw.circle(display, 'blue', [1482, 750], 60)
     money = myfont.render(str(plr.money), False, 'white')
     cost = myfont.render('50', False, 'white')
-    window.blit(cost, (1467, 805))
-    window.blit(money, (1461, 30))
+    display.blit(cost, (1467, 805))
+    display.blit(money, (1461, 30))
     if towernum == 0:
-        pygame.draw.rect(window, 'white', [1402, 160, 160, 170], 4)
+        pygame.draw.rect(display, 'white', [1402, 160, 160, 170], 4)
     if towernum == 1:
-        pygame.draw.rect(window, 'white', [1402, 340, 160, 170], 4)
+        pygame.draw.rect(display, 'white', [1402, 340, 160, 170], 4)
     if towernum == 2:
-        pygame.draw.rect(window, 'white', [1402, 510, 160, 170], 4)
+        pygame.draw.rect(display, 'white', [1402, 510, 160, 170], 4)
     if towernum == 3:
-        pygame.draw.rect(window, 'white', [1402, 680, 160, 170], 4)
+        pygame.draw.rect(display, 'white', [1402, 680, 160, 170], 4)
 
 
 def uiswtch():
@@ -243,8 +283,12 @@ def maketower(n):
 
 def getmpos():
     mpos = pygame.mouse.get_pos()
-    x = math.floor(mpos[0] / cellsize) * cellsize
-    y = math.floor(mpos[1] / cellsize) * cellsize
+    if mpos[0] > width1 - 240:
+        x = math.floor(mpos[0] / cellsize) * cellsize
+        y = math.floor(mpos[1] / cellsize) * cellsize
+    else:
+        x = math.floor(mpos[0] / cellsize / sclsz) * cellsize
+        y = math.floor(mpos[1] / cellsize / sclsz) * cellsize
     return x, y
 
 
@@ -256,12 +300,18 @@ def run():
     for bullet in bullets:
         bullet.move()
         bullet.draw()
+        if Bullet.rng(bullet) > width:
+            bullets.remove(bullet)
     for meats in meat:
         meats.draw()
+        meats.go()
+        if FreshMeat.rng(meats) > width:
+            meat.remove(meats)
 
 
 plr = Player(100)
-meatcreate(100, 3, 10, 'red', 10)
+for i in range(10):
+    meatcreate(meatstrt[0] - i * 30, meatstrt[1], 100, 1, 10, 'red', 10)
 
 running = True
 while running:
@@ -276,6 +326,7 @@ while running:
     window.fill('black')
     createway()
     run()
+    display.blit(pygame.transform.scale(window, (width1, height1)), (0, 0))
     ui()
     pygame.display.update()
     clock.tick(fps)
