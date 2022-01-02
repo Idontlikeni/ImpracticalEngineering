@@ -43,6 +43,7 @@ class World:  #  ZA WARUDOOOOOO
         self.enemies_positions = []
         self.chest_positions = []
         self.enemies_count = 0
+        self.effects = []
 
     def generate_map(self):
         for i in range(self.height):
@@ -118,6 +119,12 @@ class World:  #  ZA WARUDOOOOOO
                 enemy.update()
                 enemy.shoot(0)
                 enemy.move_projectiles(self.get_rects(), [player], dt)
+        
+        for i, effect in sorted(enumerate(self.effects), reverse=True):
+            effect.update()
+            if len(effect.particles) == 0:
+                del effect
+                effect.pop(i)
     
     def draw(self, display, scroll):
         y = 0
@@ -137,6 +144,8 @@ class World:  #  ZA WARUDOOOOOO
         for enemy in self.enemies:
             enemy.draw(display, scroll)
             enemy.draw_projectiles(display, scroll)
+        for effect in self.effects:
+            effect.draw(display)
 
     def get_rects(self):
         return self.tile_rects
@@ -386,3 +395,54 @@ class Particle:
         
         pygame.draw.circle(display, (255, 255, 255), 
         [int(self.x - scroll[0] + self.scroll[0]), int(self.y - scroll[1] + self.scroll[1])], int(self.time))
+
+class ExplodeParticle(Particle):
+    def __init__(self, x, y, velocity, time):
+        self.x = x
+        self.y = y
+        self.velocity = velocity
+        self.time = time
+        self.spent_time = 0
+
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.velocity = random.randint(25, 30) / 15
+        self.time = random.randint(2, 6)
+        self.length = random.randint(10, 15)
+        self.spent_time = 0
+        self.color = (random.randint(1, 255), random.randint(1, 255), random.randint(1, 255))
+        self.angle = math.radians(random.randint(0, 360))
+        self.width = random.randint(1, 3)
+
+    def update(self):
+        self.time += 0.1
+        self.x += self.velocity * math.cos(self.angle)
+        self.y += self.velocity * math.sin(self.angle)
+        self.length -= 0.9
+
+    def draw(self, display):
+        #  display.set_colorkey((0,0,0))
+        #  pygame.draw.circle(display, (241, 100, 31, 255), [int(self.x), int(self.y)], int(self.time * 2))
+        pygame.draw.line(display, (255, 255, 255), (self.x, self.y), 
+        (self.length * math.cos(self.angle) + self.x, self.length * math.sin(self.angle) + self.y), self.width)
+
+class Explosion:
+    def __init__(self, x, y) -> None:
+        self.x = x
+        self.y = y
+        self.particles = []
+        for i in range(random.randint(5, 8)):
+            self.particles.append(ExplodeParticle(x, y))
+
+    def update(self):
+        #  print(self.particles)
+        for i, particle in sorted(enumerate(self.particles), reverse=True):
+            particle.update()
+            if particle.length <= 0:
+                del particle
+                self.particles.pop(i)
+            
+    def draw(self, display):
+        for particle in self.particles:
+            particle.draw(display)
