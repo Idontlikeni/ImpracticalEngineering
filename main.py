@@ -80,7 +80,7 @@ def game():
     last_time = time.time()
 
     pygame.mouse.set_visible(False)
-    world = e.World(48, 48)
+    world = e.World(48, 48, 20)
     world.generate_map()
     world.add_enemy(e.Entity(-64, 32, 16, 16, 'enemy'))
     player = e.Entity(*world.get_start_pos(),16,16,'player')

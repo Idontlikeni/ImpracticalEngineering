@@ -31,7 +31,7 @@ def circle_surf(radius, color):
     return surf
 
 class World:  #  ZA WARUDOOOOOO
-    def __init__(self, width, height):
+    def __init__(self, width, height, tile_size):
         self.width = width
         self.height = height
         self.objects = []
@@ -44,6 +44,7 @@ class World:  #  ZA WARUDOOOOOO
         self.chest_positions = []
         self.enemies_count = 0
         self.effects = []
+        self.tile_size = tile_size
 
     def generate_map(self):
         for i in range(self.height):
@@ -93,12 +94,12 @@ class World:  #  ZA WARUDOOOOOO
             x = 0
             for tile in row:
                 if tile != '0' and tile != '1':
-                    self.tile_rects.append(pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE))
+                    self.tile_rects.append(pygame.Rect(x * self.tile_size, y * self.tile_size, self.tile_size, self.tile_size))
                 x += 1
             y += 1
     
     def to_screen_coordinates(self, x, y):
-        return x * TILE_SIZE, y * TILE_SIZE
+        return x * self.tile_size, y * self.tile_size
 
     def get_start_pos(self):
         return self.to_screen_coordinates(self.start_pos[0], self.start_pos[1])
@@ -132,12 +133,12 @@ class World:  #  ZA WARUDOOOOOO
             x = 0
             for tile in row:
                 if tile == '1':
-                    pygame.draw.rect(display, (255, 255, 255), pygame.Rect((x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]), (TILE_SIZE, TILE_SIZE)), 1)
+                    pygame.draw.rect(display, (255, 255, 255), pygame.Rect((x * self.tile_size - scroll[0], y * self.tile_size - scroll[1]), (self.tile_size, self.tile_size)), 1)
                     #  display.blit(dirt_image, (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
                 if tile == '2':
-                    pygame.draw.rect(display, (0, 255, 0), pygame.Rect((x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]), (TILE_SIZE, TILE_SIZE)), 1)
+                    pygame.draw.rect(display, (0, 255, 0), pygame.Rect((x * self.tile_size - scroll[0], y * self.tile_size - scroll[1]), (self.tile_size, self.tile_size)), 1)
                 if tile == 'x':
-                    pygame.draw.rect(display, (255, 0, 0), pygame.Rect((x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]), (TILE_SIZE, TILE_SIZE)), 1)
+                    pygame.draw.rect(display, (255, 0, 0), pygame.Rect((x * self.tile_size - scroll[0], y * self.tile_size - scroll[1]), (self.tile_size, self.tile_size)), 1)
                 x += 1
             y += 1
         
