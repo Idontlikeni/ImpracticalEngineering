@@ -16,35 +16,48 @@ WINDOW_SIZE = (1600, 900)
 TILE_SIZE = 16
 screen = pygame.display.set_mode(WINDOW_SIZE, 0, 32)
 
+ss = e.spritesheet('data_img/spritesheet_2.png')
+
 def main_menu():
     pygame.mouse.set_visible(True)
     SCALE_MULTIPLIER = 5
-    clicked = False
+    click = False
+    cveta1 = (0, 255, 0)
+    cveta2 = (255, 255, 255)
+    cveta3 = (0, 255, 0)
+    font = pygame.font.Font('MaredivRegular.ttf', 15)
     display = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER))
     while True:
-        display.fill((24, 45, 200))
-
+        display.fill((0, 0, 0))
         mx, my = pygame.mouse.get_pos()
-
         button_1 = pygame.Rect(WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 50, 50, 100, 25)
         button_2 = pygame.Rect(WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 50, 100, 100, 25)
-
         mx = mx / SCALE_MULTIPLIER
         my = my / SCALE_MULTIPLIER
-
         if button_1.collidepoint((mx, my)):
-            #  print(click)
+            cveta = (200, 25, 23)
+            cveta1 = (255, 128, 0)
             if click:
                 game()
+        else:
+            cveta = (255, 255, 255)
+            cveta1 = (0, 255, 0)
         if button_2.collidepoint((mx, my)):
-            #  print(click)
+            cveta2 = (200, 25, 23)
+            cveta3 = (255, 128, 0)
             if click:
                 options()
-        pygame.draw.rect(display, (255, 0, 0), button_1)
-        pygame.draw.rect(display, (255, 0, 0), button_2)
+        else:
+            cveta2 = (255, 255, 255)
+            cveta3 = (0, 255, 0)
+        pygame.draw.rect(display, cveta, button_1)
+        pygame.draw.rect(display, (cveta2), button_2)
+        text = font.render("play", True, (cveta1))
+        display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 15, 50))
 
+        text = font.render("options", True, (cveta3))
+        display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 25, 100))
         click = False
-
         for event in pygame.event.get():
             if event.type == QUIT:
                 pygame.quit()
@@ -56,8 +69,6 @@ def main_menu():
             if event.type == MOUSEBUTTONDOWN:
                 if event.button == 1:
                     click = True
-                    
-
         screen.blit(pygame.transform.scale(display, WINDOW_SIZE), (0, 0))
         pygame.display.update()
         clock.tick(60)
@@ -92,7 +103,7 @@ def game():
         dt = time.time() - last_time
         dt *= 60
         last_time = time.time()
-        display.fill((0, 0, 0))
+        display.fill((240, 181, 65))
         mouse_pos = pygame.mouse.get_pos()
 
         cursor.set_pos(mouse_pos[0] / SCALE_MULTIPLIER, mouse_pos[1] / SCALE_MULTIPLIER)

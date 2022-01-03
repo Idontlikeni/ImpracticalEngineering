@@ -30,6 +30,34 @@ def circle_surf(radius, color):
     surf.set_colorkey((0, 0, 0))
     return surf
 
+class spritesheet(object):
+    def __init__(self, filename):
+        self.sheet = pygame.image.load(filename).convert()
+    
+    # Load a specific image from a specific rectangle
+    def image_at(self, rectangle, colorkey = None):
+        "Loads image from x,y,x+offset,y+offset"
+        rect = pygame.Rect(rectangle)
+        image = pygame.Surface(rect.size).convert()
+        image.blit(self.sheet, (0, 0), rect)
+        if colorkey is not None:
+            if colorkey is -1:
+                colorkey = image.get_at((0,0))
+            image.set_colorkey(colorkey, pygame.RLEACCEL)
+        return image
+    
+    # Load a whole bunch of images and return them as a list
+    def images_at(self, rects, colorkey = None):
+        "Loads multiple images, supply a list of coordinates" 
+        return [self.image_at(rect, colorkey) for rect in rects]
+    
+    # Load a whole strip of images
+    def load_strip(self, rect, image_count, colorkey = None):
+        "Loads a strip of images and returns them as a list"
+        tups = [(rect[0]+rect[2]*x, rect[1], rect[2], rect[3])
+                for x in range(image_count)]
+        return self.images_at(tups, colorkey)
+
 class World:  #  ZA WARUDOOOOOO
     def __init__(self, width, height, tile_size):
         self.width = width
@@ -45,6 +73,20 @@ class World:  #  ZA WARUDOOOOOO
         self.enemies_count = 0
         self.effects = []
         self.tile_size = tile_size
+
+        ss1 = spritesheet('data_img/spritesheet_3.png')
+        ss2 = spritesheet('data_img/spritesheet_4.png')
+        self.img = pygame.image.load('data_img/wall_2.png')
+        self.images1 = []
+        self.images2 = []
+        for i in range(3):
+            for j in range(3):
+                self.images1.append(ss1.image_at((j * 20, i * 20, 20, 20), (0, 0, 0)))
+        for i in range(6):
+            self.images2.append(ss2.image_at((i * 20, 40, 20, 20), (0, 0, 0)))
+        for i in range(5):
+            self.images2.append(ss2.image_at((40, i * 20, 20, 20), (0, 0, 0)))
+        
 
     def generate_map(self):
         for i in range(self.height):
@@ -128,19 +170,63 @@ class World:  #  ZA WARUDOOOOOO
                 effect.pop(i)
     
     def draw(self, display, scroll):
-        y = 0
-        for row in self.field:
-            x = 0
-            for tile in row:
-                if tile == '1':
-                    pygame.draw.rect(display, (255, 255, 255), pygame.Rect((x * self.tile_size - scroll[0], y * self.tile_size - scroll[1]), (self.tile_size, self.tile_size)), 1)
+        for y in range(len(self.field)):
+            for x in range(len(self.field[y])):
+                if self.field[y][x] == '1':
+                    pygame.draw.rect(display, (207, 117, 43), pygame.Rect((x * self.tile_size - scroll[0], y * self.tile_size - scroll[1]), (self.tile_size, self.tile_size)))
                     #  display.blit(dirt_image, (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
-                if tile == '2':
-                    pygame.draw.rect(display, (0, 255, 0), pygame.Rect((x * self.tile_size - scroll[0], y * self.tile_size - scroll[1]), (self.tile_size, self.tile_size)), 1)
-                if tile == 'x':
+                if self.field[y][x] == '2':
+                    # if self.field[y + 1][x] == '0':
+                    #     pygame.draw.rect(display, (255, 255, 0), pygame.Rect((x * self.tile_size - scroll[0], y * self.tile_size - scroll[1]), (self.tile_size, self.tile_size)), 1)
+                    if self.field[y + 1][x] == '0' and self.field[y - 1][x] != '0' and self.field[y][x + 1] != '0' and self.field[y][x - 1] != '0':
+                        display.blit(self.images1[7], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
+                    elif self.field[y + 1][x] == '0' and self.field[y - 1][x] != '0' and self.field[y][x + 1] == '0' and self.field[y][x - 1] != '0':
+                        display.blit(self.images1[8], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
+                    elif self.field[y + 1][x] == '0' and self.field[y - 1][x] != '0' and self.field[y][x + 1] != '0' and self.field[y][x - 1] == '0':
+                        display.blit(self.images1[6], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
+                    elif self.field[y + 1][x] != '0' and self.field[y - 1][x] != '0' and self.field[y][x + 1] == '0' and self.field[y][x - 1] != '0':
+                        display.blit(self.images1[5], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
+                    elif self.field[y + 1][x] != '0' and self.field[y - 1][x] != '0' and self.field[y][x + 1] != '0' and self.field[y][x - 1] == '0':
+                        display.blit(self.images1[3], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
+                    elif self.field[y + 1][x] != '0' and self.field[y - 1][x] == '0' and self.field[y][x + 1] == '0' and self.field[y][x - 1] != '0':
+                        display.blit(self.images1[2], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
+                    elif self.field[y + 1][x] != '0' and self.field[y - 1][x] == '0' and self.field[y][x + 1] != '0' and self.field[y][x - 1] != '0':
+                        display.blit(self.images1[1], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
+                    elif self.field[y + 1][x] != '0' and self.field[y - 1][x] == '0' and self.field[y][x + 1] != '0' and self.field[y][x - 1] == '0':
+                        display.blit(self.images1[0], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
+                    elif self.field[y + 1][x] == '0' and self.field[y - 1][x] == '0' and self.field[y][x + 1] != '0' and self.field[y][x - 1] == '0':
+                        display.blit(self.images2[0], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
+                    elif self.field[y + 1][x] == '0' and self.field[y - 1][x] == '0' and self.field[y][x + 1] != '0' and self.field[y][x - 1] != '0':
+                        display.blit(self.images2[1], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
+                    elif self.field[y + 1][x] == '0' and self.field[y - 1][x] == '0' and self.field[y][x + 1] == '0' and self.field[y][x - 1] != '0':
+                        display.blit(self.images2[4], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
+                    elif self.field[y + 1][x] == '0' and self.field[y - 1][x] == '0' and self.field[y][x + 1] == '0' and self.field[y][x - 1] == '0':
+                        display.blit(self.images2[5], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
+                    elif self.field[y + 1][x] != '0' and self.field[y - 1][x] == '0' and self.field[y][x + 1] == '0' and self.field[y][x - 1] == '0':
+                        display.blit(self.images2[6], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
+                    elif self.field[y + 1][x] != '0' and self.field[y - 1][x] != '0' and self.field[y][x + 1] == '0' and self.field[y][x - 1] == '0':
+                        display.blit(self.images2[7], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
+                    elif self.field[y + 1][x] == '0' and self.field[y - 1][x] != '0' and self.field[y][x + 1] == '0' and self.field[y][x - 1] == '0':
+                        display.blit(self.images2[10], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
+                    else:
+                        pygame.draw.rect(display, (207, 117, 43), pygame.Rect((x * self.tile_size - scroll[0], y * self.tile_size - scroll[1]), (self.tile_size, self.tile_size)))
+                if self.field[y][x] == 'x':
                     pygame.draw.rect(display, (255, 0, 0), pygame.Rect((x * self.tile_size - scroll[0], y * self.tile_size - scroll[1]), (self.tile_size, self.tile_size)), 1)
-                x += 1
-            y += 1
+        # y = 0
+        # for row in self.field:
+        #     x = 0
+        #     for tile in row:
+        #         if tile == '1':
+        #             pygame.draw.rect(display, (255, 255, 255), pygame.Rect((x * self.tile_size - scroll[0], y * self.tile_size - scroll[1]), (self.tile_size, self.tile_size)), 1)
+        #             #  display.blit(dirt_image, (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
+        #         if tile == '2':
+        #             pygame.draw.rect(display, (0, 255, 0), pygame.Rect((x * self.tile_size - scroll[0], y * self.tile_size - scroll[1]), (self.tile_size, self.tile_size)), 1)
+        #             if(self.field[y + 1][x + 1] == '0'):
+        #                 pygame.draw.rect(display, (255, 255, 0), pygame.Rect((x * self.tile_size - scroll[0], y * self.tile_size - scroll[1]), (self.tile_size, self.tile_size)), 1)
+        #         if tile == 'x':
+        #             pygame.draw.rect(display, (255, 0, 0), pygame.Rect((x * self.tile_size - scroll[0], y * self.tile_size - scroll[1]), (self.tile_size, self.tile_size)), 1)
+        #         x += 1
+        #     y += 1
         
         for enemy in self.enemies:
             enemy.draw(display, scroll)
