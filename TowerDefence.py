@@ -67,7 +67,7 @@ pygame.font.init()
 myfont = pygame.font.Font('MaredivRegular.ttf', 30)
 window = pygame.Surface((width, height))
 display = pygame.display.set_mode((width1, height1))
-ss = pygame.image.load('spritesheet_3.png').convert()
+ss = pygame.image.load('data_img/spritesheet_3.png').convert()
 ss.set_colorkey((0, 0, 0))
 clock = pygame.time.Clock()
 for y in range(len(Map)):
@@ -532,7 +532,7 @@ plr = Player(100)
 for i in range(10):
     meatcreate(meatstrt[0] - i * 20, meatstrt[1], 100, 0.5, 10, 'red', 10)
 
-player = e.Entity(*[21, 21], 16, 16, 'player')
+player = e.Entity(*[21, 21], 16, 16, 10, 'player')
 fullhp = player.hp
 playerhp = Healthpoints(fullhp, player.hp)
 running = True
