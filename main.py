@@ -93,8 +93,7 @@ def game():
     pygame.mouse.set_visible(False)
     world = e.World(48, 48, 20)
     world.generate_map()
-    world.add_enemy(e.Entity(-64, 32, 16, 16, 'enemy'))
-    player = e.Entity(*world.get_start_pos(),16,16,'player')
+    player = e.Player(*world.get_start_pos(), 16, 16, 10, 'player')
     cursor = e.Cursor(0, 0, 'data_img/curs3.png')
     
     particles = []
@@ -140,7 +139,7 @@ def game():
         world.draw(display, scroll)
         player.draw(display,scroll)
         player.draw_projectiles(display, scroll)
-        print(player.hp)
+        #  print(player.hp)
         #  player.move(player_movement)
         #  pygame.draw.line(display, (0, 255, 0), (player.x + player.width / 2 - scroll[0], player.y + player.height / 2 - scroll[1]), ((pygame.mouse.get_pos()[0] // SCALE_MULTIPLIER), (pygame.mouse.get_pos()[1] // SCALE_MULTIPLIER)))
         
@@ -196,6 +195,73 @@ def game():
 
 
 def options():
-    pass
+    running = True
+    n = 0
+    m = 0
+    font = pygame.font.Font('MaredivRegular.ttf', 15)
+    font1 = pygame.font.Font('MaredivRegular.ttf', 25)
+    usl1 = 0
+    usl2 = 0
+    uslza = 0
+    SCALE_MULTIPLIER = 5
+    cveta1 = (200, 200, 200)
+    cveta2 = (255, 255, 255)
+    cveta3 = (0, 255, 0)
+    display = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER))
+    while running:
+        display.fill((0, 0, 0))
+        mx, my = pygame.mouse.get_pos()
+        pygame.draw.rect(display, (255, 255, 255), (240, 20, 20, 20))
+        pygame.draw.rect(display, (255, 255, 255), (210, 20, 20, 20))
+        text3 = font1.render('+', True, (0, 0, 0))
+        display.blit(text3, (243, 11))
+        text3 = font1.render('-', True, (0, 0, 0))
+        display.blit(text3, (213, 11))
+        text1 = font.render(f"Crosshair-{n + 1}/3", True, (cveta1))
+        display.blit(text1, (100, 0))
+        text2 = font.render(f"sound-{m}/100", True, (cveta1))
+        display.blit(text2, (100, 20))
+        mx = mx / SCALE_MULTIPLIER
+        my = my / SCALE_MULTIPLIER
+        button_1 = pygame.Rect(100, 0, 100, 20)
+        button_2 = pygame.Rect(240, 20, 20, 20)
+        button_3 = pygame.Rect(210, 20, 20, 20)
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == KEYDOWN:
+                if event.key == K_ESCAPE:
+                    running = False
+            if event.type == pygame.MOUSEBUTTONUP:
+                if button_1.collidepoint((mx, my)):
+                    if n + 2 > 3:
+                        n = 0
+                    else:
+                        n += 1
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if button_2.collidepoint((mx, my)):
+                    usl1 = 1
+            if event.type == pygame.MOUSEBUTTONUP:
+                usl1 = 0
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if button_3.collidepoint((mx, my)):
+                    usl2 = 1
+            if event.type == pygame.MOUSEBUTTONUP:
+                usl2 = 0
+        uslza += 0.5
+        if usl2 == 1 and uslza % 3 == 0:
+            if m - 1 >= 0:
+                m -= 1
+        if usl1 == 1 and uslza % 3 == 0:
+            if m + 1 <= 100:
+                m += 1
+
+
+        print(usl1)
+        screen.blit(pygame.transform.scale(display, WINDOW_SIZE), (0, 0))
+        pygame.display.update()
+        clock.tick(60)
+
 
 main_menu()

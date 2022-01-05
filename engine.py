@@ -127,7 +127,7 @@ class World:  #  ZA WARUDOOOOOO
                     self.field[y + v[1]][x + v[0]] = '2'
             if i in self.enemies_positions:
                 self.enemies_positions.append([x, y])
-                self.add_enemy(Entity(*self.to_screen_coordinates(x, y), 16, 16, 'enemy'))
+                self.add_enemy(Enemy(*self.to_screen_coordinates(x, y), 16, 16, 5, 'enemy'))
         
         #  print(*self.enemies_positions)
 
@@ -160,6 +160,8 @@ class World:  #  ZA WARUDOOOOOO
             else:
                 #  print(enemy.shootTimer)
                 enemy.update()
+                enemy.move(enemy.movement, self.get_rects(), [])
+                enemy.check_player(self.get_rects(), player)
                 enemy.shoot(0)
                 enemy.move_projectiles(self.get_rects(), [player], dt)
         
@@ -346,7 +348,7 @@ class PhysicalObject(GameObject):
 
 class Entity(GameObject):
     id_iter = itertools.count()
-    def __init__(self, x, y, width, height, type):
+    def __init__(self, x, y, width, height, hp, type):
         self.id = next(self.id_iter)
         self.x = x
         self.y = y
@@ -357,7 +359,8 @@ class Entity(GameObject):
         self.projectiles = []
         self.shootTimer = 50
         self.id += 1
-        self.hp = 10
+        self.hp = hp
+        self.movement = [0, 0]
 
     def draw(self, surface, scroll):
         pygame.draw.rect(surface, (255, 0, 0), pygame.Rect(self.physical_object.x-scroll[0], self.physical_object.y-scroll[1],
@@ -375,7 +378,7 @@ class Entity(GameObject):
         if self.shootTimer < 50:
             self.shootTimer += 1
     
-    def move(self,movement,platforms, enemies):
+    def move(self, movement, platforms, enemies):
         collisions = self.physical_object.move(movement,platforms, enemies)
         self.x = self.physical_object.x
         self.y = self.physical_object.y
@@ -405,10 +408,73 @@ class Entity(GameObject):
                 #  print(self, collisions['data'][0])
                 self.projectiles.remove(projectile)
 
+class Enemy(Entity):
+    def __init__(self, x, y, width, height, hp, type):
+        super().__init__(x, y, width, height, hp, type)
+        self.can_see_player = False
+        self.is_wondering = False
+        self.destination_pos = [x, y]
+        self.angle = 0
+        self.movement = [0, 0]
+        self.wonder_timer = 0
+        self.velocity = 0.8
+        self.wait_timer = 0
+        self.is_waiting = False
+        self.sees_enemy = False
+        self.color = [255, 0, 0]
+
+    def wonder(self):
+        pass
+    
+    def check_player(self, map_rectangles, player):
+        pass
+        x1 = player.x + player.width / 2
+        y1 = player.y + player.height / 2
+        x2 = self.x + self.width / 2
+        y2 = self.y + self.height / 2
+        if math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2) <= 150:
+            self.color = [0, 255, 0]
+        else: 
+            self.color = [255, 0, 0]
+            #  return True
+
+                
+    def update(self):
+        super().update()
+        print(self.wait_timer)
+        if self.is_waiting:
+            self.wait_timer -= 1
+            self.is_waiting = self.wait_timer > 0
+            self.movement = [0, 0]
+        else:
+            if not self.is_wondering:
+                angle = math.radians(random.randint(0, 360))
+                self.angle = angle
+                dist = random.randint(50, 170)
+                self.destination_pos = [self.x + self.width / 2 + math.cos(angle) * dist, self.y +  self.height / 2+ math.sin(angle) * dist]
+                print("new: ", math.cos(angle) * 100)
+                self.is_wondering = True
+                self.movement = [math.cos(self.angle) * self.velocity, math.sin(self.angle) * self.velocity]
+                self.wonder_timer = int(dist * 4)
+                self.wait_timer -= 1
+            self.wonder_timer -= 1
+            #  print("update: ", math.cos(self.angle) * 100)
+            if (self.x - self.destination_pos[0] < 0.1 and self.y - self.destination_pos[1] < 0.1) or self.wonder_timer <= 0:
+                self.is_waiting = True
+                self.wait_timer = random.randint(30, 80)
+                self.is_wondering = False
+
+        
+    
+    def draw(self, surface, scroll):
+        super().draw(surface, scroll)
+        pygame.draw.line(surface, self.color, (self.x - scroll[0], self.y - scroll[1]), 
+        (self.destination_pos[0] - scroll[0], self.destination_pos[1] - scroll[1]))
+    
 
 class Player(Entity):
-    def __init__(self, x, y, width, height, type):
-        super().__init__(x, y, width, height, type)
+    def __init__(self, x, y, width, height, hp, type):
+        super().__init__(x, y, width, height, hp, type)
 
 class Cursor(GameObject):
     def __init__(self, x, y, path):
@@ -427,7 +493,7 @@ class Cursor(GameObject):
 
 class Projectile(Entity):
     def __init__(self, x, y, width, height, angle, velocity, type):
-        super().__init__(x, y, width, height, type)
+        super().__init__(x, y, width, height, 1, type)
         self.angle = angle
         self.velocity = velocity
         self.type = 'projectile'
