@@ -1,47 +1,56 @@
+import random
+
 import pygame
 import math
+import time
+import engine as e
 
 countx = 34
 county = 23
-cellsize = 10
-sclsz = 4
-sclsz1 = 2
+cellsize = 20
+sclsz = 2
+sclsz1 = 1.3
 width1 = 1600
 height1 = 900
 width = width1 / sclsz
 height = height1 / sclsz
 fps = 60
+inviztime = 0
 bullets = []
 towers = []
 meat = []
+drops = []
+heals = []
+walls = []
 way = []
+tile_rects = []
 towernum = 0
 uirect = [pygame.Rect(1361, 160, 240, 170), pygame.Rect(1361, 340, 240, 170),
           pygame.Rect(1361, 510, 240, 170), pygame.Rect(1361, 680, 240, 170)]
 Map = [
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 4, 1, 1, 1, 1, 1, 5, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+        [9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9],
+        [9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9],
+        [9, 0, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9],
+        [9, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9],
+        [9, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9],
+        [9, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9],
+        [9, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9],
+        [9, 0, 0, 0, 0, 0, 0, 0, 4, 1, 1, 1, 1, 1, 5, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 9],
+        [9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 9],
+        [9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 9],
+        [9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 9],
         [3, 1, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 3, 1, 1, 1, 6],
-        [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 1, 0, 0, 0, 3, 1, 1, 1, 1, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 4, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 3, 1, 1, 1, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        [9, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 9],
+        [9, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 9],
+        [9, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 9],
+        [9, 0, 0, 0, 0, 1, 0, 0, 0, 3, 1, 1, 1, 1, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 9],
+        [9, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 4, 0, 0, 0, 9],
+        [9, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9],
+        [9, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9],
+        [9, 0, 0, 0, 0, 3, 1, 1, 1, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9],
+        [9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9],
+        [9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9],
+        [9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9]
 ]
 # down == 2
 # right == 3
@@ -58,6 +67,8 @@ pygame.font.init()
 myfont = pygame.font.Font('MaredivRegular.ttf', 30)
 window = pygame.Surface((width, height))
 display = pygame.display.set_mode((width1, height1))
+ss = pygame.image.load('spritesheet_3.png').convert()
+ss.set_colorkey((0, 0, 0))
 clock = pygame.time.Clock()
 for y in range(len(Map)):
     if Map[y][0] == 3:
@@ -71,6 +82,9 @@ for y in range(len(Map)):
             up.append([x * cellsize + cellsize / 2, y * cellsize + cellsize / 2])
         if Map[y][x] == 5:
             left.append([x * cellsize + cellsize / 2, y * cellsize + cellsize / 2])
+        if Map[y][x] == 9:
+            tile_rects.append(pygame.Rect(x * cellsize, y * cellsize, cellsize, cellsize))
+            walls.append(pygame.Rect(x * cellsize, y * cellsize, cellsize, cellsize))
 
 
 class Player:
@@ -81,8 +95,22 @@ class Player:
         return self.money
 
 
+class Healthpoints():
+    def __init__(self, fullhp, nowhp):
+        self.fullhp = fullhp
+        self.nowhp = nowhp
+
+    def draw(self, fullhp, nowhp):
+        pygame.draw.rect(display, 'black', (0.03 * width, 0.05 * height, 250, 40))
+        pygame.draw.rect(display, 'white', (0.03 * width, 0.05 * height, 250, 40), 8)
+        pygame.draw.rect(display, 'red',
+                         (0.03 * width + 1, 0.05 * height + 1, (nowhp / fullhp) * 250 - 1, 40 - 1))
+        hp = myfont.render(str(f'{nowhp}/{fullhp}'), False, 'white')
+        display.blit(hp, (0.01 * width + 250 / 3, 0.05 * height - 2))
+
+
 class Tower:
-    def __init__(self, x, y, size, color, damage, firespeed, price, attackrad):
+    def __init__(self, x, y, size, color, damage, firespeed, price, bullspeed):
         self.x = x
         self.y = y
         self.size = size / sclsz1
@@ -91,7 +119,7 @@ class Tower:
         self.firespeed = firespeed
         self.firerate = 0
         self.price = price
-        self.attackrad = attackrad
+        self.bullspeed = bullspeed
 
     def draw(self):
         pygame.draw.circle(window, self.color, [self.x, self.y], self.size)
@@ -103,56 +131,99 @@ class Tower:
 class CommonTower(Tower):
     def fire(self):
         if self.firerate <= 0:
-            addbullet(self.x, self.y, 3, 'green', 5, 20)
+            addbullet(self.x, self.y, 6, self.color, self.damage, self.bullspeed, 0)
             self.firerate = self.firespeed
         else:
             self.firerate -= 1 / fps
 
 
-class CommonTower1(Tower):
+class QuadTower(Tower):
     def fire(self):
         if self.firerate <= 0:
-            addbullet(self.x, self.y, 3, 'yellow', 5, 20)
+            for direction in range(4):
+                addbullet(self.x, self.y, 6, self.color, self.damage, self.bullspeed, direction)
             self.firerate = self.firespeed
         else:
             self.firerate -= 1 / fps
 
 
-class CommonTower2(Tower):
+class TheEighthTower(Tower):
     def fire(self):
         if self.firerate <= 0:
-            addbullet(self.x, self.y, 3, 'blue', 5, 20)
+            for direction in range(8):
+                addbullet(self.x, self.y, 6, self.color, self.damage, self.bullspeed, direction)
             self.firerate = self.firespeed
         else:
             self.firerate -= 1 / fps
 
 
-class CommonTower3(Tower):
+class HomingTower(Tower):
     def fire(self):
-        if self.firerate <= 0:
-            addbullet(self.x, self.y, 3, 'red', 5, 20)
-            self.firerate = self.firespeed
-        else:
-            self.firerate -= 1 / fps
+        if meat:
+            if self.firerate <= 0:
+                addbullet(self.x, self.y, 6, self.color, self.damage, self.bullspeed, 8)
+                self.firerate = self.firespeed
+            else:
+                self.firerate -= 1 / fps
 
 
 class Bullet:
-    def __init__(self, x, y, size, color, damage, speed):
+    def __init__(self, x, y, size, color, damage, speed, direction):
         self.x = x
         self.y = y
         self.size = size / sclsz1
         self.color = color
         self.damage = damage
         self.speed = speed
+        self.rect = pygame.Rect(x - size, y - size, size * 2, size * 2)
+        self.direction = direction
 
     def move(self):
-        self.x += 10
+        if self.direction == 0:
+            self.x += self.speed
+        if self.direction == 1:
+            self.x -= self.speed
+        if self.direction == 2:
+            self.y += self.speed
+        if self.direction == 3:
+            self.y -= self.speed
+        if self.direction == 4:
+            self.x += self.speed / math.sqrt(2)
+            self.y += self.speed / math.sqrt(2)
+        if self.direction == 5:
+            self.x += self.speed / math.sqrt(2)
+            self.y -= self.speed / math.sqrt(2)
+        if self.direction == 6:
+            self.x -= self.speed / math.sqrt(2)
+            self.y += self.speed / math.sqrt(2)
+        if self.direction == 7:
+            self.x -= self.speed / math.sqrt(2)
+            self.y -= self.speed / math.sqrt(2)
+        if self.direction == 8:
+            if meat:
+                self.homingx = \
+                    (meat[0].x - self.x) / math.sqrt((meat[0].x - self.x) ** 2 + (meat[0].y - self.y) ** 2) * self.speed
+                self.homingxy = \
+                    (meat[0].y - self.y) / math.sqrt((meat[0].x - self.x) ** 2 + (meat[0].y - self.y) ** 2) * self.speed
+                self.x += self.homingx
+                self.y += self.homingxy
+            else:
+                self.x += self.homingx
+                self.y += self.homingxy
+        self.rect = pygame.Rect(self.x - self.size, self.y - self.size, self.size * 2, self.size * 2)
 
     def draw(self):
         pygame.draw.circle(window, self.color, [self.x, self.y], self.size)
+        # pygame.draw.rect(window, (255, 0, 0), self.rect, 1)
 
     def rng(self):
         return self.x
+
+    def rect(self):
+        return self.rect
+
+    def damage(self):
+        return self.damage
 
 
 class FreshMeat:
@@ -167,9 +238,11 @@ class FreshMeat:
         self.reward = reward
         self.napx = 1
         self.napy = 0
+        self.rect = pygame.Rect(self.x - self.size, self.y - self.size, self.size * 2, self.size * 2)
 
     def draw(self):
         pygame.draw.circle(window, self.color, [self.x, self.y], self.size)
+        # pygame.draw.rect(window, (255, 0, 0), self.rect, 1)
 
     def go(self):
         if [self.x, self.y] in right:
@@ -186,37 +259,142 @@ class FreshMeat:
             self.napx = 0
         self.x += self.speed * self.napx
         self.y += self.speed * self.napy
+        self.rect = pygame.Rect(self.x - self.size, self.y - self.size, self.size * 2, self.size * 2)
 
     def rng(self):
         return self.x
+
+    def rect(self):
+        return self.rect
+
+    def damage(self, damage):
+        self.hp -= damage
+
+    def check(self):
+        if self.hp <= 0:
+            return False
+        return True
+
+
+class Drop:
+    def __init__(self, x, y, speed, x0, y0, heal=False):
+        self.x = x
+        self.y = y
+        self.speed = speed
+        self.speedfly = speed
+        self.t = False
+        self.m = False
+        self.x0 = x0
+        self.y0 = y0
+        self.a = 0
+        self.heal = heal
+
+    def fly(self):
+        if round(self.x) != round(self.x0) and round(self.y0) != round(self.y) and not self.m and self.a < self.speed:
+            self.x0 += (self.x - self.x0) / math.sqrt((self.x - self.x0) ** 2 +
+                                                      (self.y - self.y0) ** 2) * self.speedfly - self.a
+            self.y0 += (self.y - self.y0) / math.sqrt((self.x - self.x0) ** 2 +
+                                                      (self.y - self.y0) ** 2) * self.speedfly - self.a
+            self.a += 0.03
+        else:
+            self.m = True
+
+    def draw(self):
+        if self.heal:
+            pygame.draw.rect(window, 'red', (self.x0, self.y0, 5, 5))
+        else:
+            pygame.draw.rect(window, 'gray', (self.x0, self.y0, 5, 5))
+
+    def take(self):
+        x = player.x + 8
+        y = player.y + 8
+        if math.sqrt((x - self.x0) ** 2 + (y - self.y0) ** 2) < 30:
+            self.t = True
+        if self.t:
+            self.x0 += (x - self.x0) / math.sqrt((x - self.x0) ** 2 + (y - self.y0) ** 2) * self.speed
+            self.y0 += (y - self.y0) / math.sqrt((x - self.x0) ** 2 + (y - self.y0) ** 2) * self.speed
+
+    def taked(self):
+        x = player.x
+        y = player.y
+        if x < self.x0 < (x + 16) and y < self.y0 < (y + 16):
+            if self.heal:
+                if player.hp + 2 > 10:
+                    player.hp = 10
+                else:
+                    player.hp += 2
+            return True
+        return False
 
 
 def createway():
     for j in range(len(Map)):
         for i in range(len(Map[0])):
-            if Map[j][i] != 0:
-                pygame.draw.rect(window, 'blue', [i * cellsize + 1, j * cellsize + 1,
-                                                  cellsize - 1, cellsize - 1])
+            if Map[j][i] != 0 and Map[j][i] != 9:
+                pygame.draw.rect(window, (186, 145, 65), [i * cellsize, j * cellsize,
+                                                  cellsize, cellsize])
                 way.append([i, j])
+
+
+def createwall():
+    cropped = pygame.Surface((20, 20))
+    cropped.fill((240, 181, 65))
+    for y in range(len(Map)):
+        for x in range(len(Map[0])):
+            if (y == 0 and x == 0) or (y == 0 and x == 33) or (y == 22 and x == 0) or (y == 22 and x == 33):
+                cropped.blit(ss, (0, 0), (20, 20, 20, 20))
+                window.blit(pygame.transform.scale(cropped, (20, 20)), (x * cellsize, y * cellsize))
+            elif y == 0:
+                cropped.blit(ss, (0, 0), (20, 40, 20, 20))
+                window.blit(pygame.transform.scale(cropped, (20, 20)), (x * cellsize, y * cellsize))
+            elif y == 22:
+                cropped.blit(ss, (0, 0), (20, 0, 20, 20))
+                window.blit(pygame.transform.scale(cropped, (20, 20)), (x * cellsize, y * cellsize))
+            elif x == 33:
+                cropped.blit(ss, (0, 0), (0, 20, 20, 20))
+                window.blit(pygame.transform.scale(cropped, (20, 20)), (x * cellsize, y * cellsize))
+            elif x == 0:
+                cropped.blit(ss, (0, 0), (40, 20, 20, 20))
+                window.blit(pygame.transform.scale(cropped, (20, 20)), (x * cellsize, y * cellsize))
+            if x == 0 and y == 10:
+                cropped.blit(ss, (0, 0), (40, 40, 20, 20))
+                window.blit(pygame.transform.scale(cropped, (20, 20)), (x * cellsize, y * cellsize))
+            if x == 0 and y == 12:
+                cropped.blit(ss, (0, 0), (40, 0, 20, 20))
+                window.blit(pygame.transform.scale(cropped, (20, 20)), (x * cellsize, y * cellsize))
+            if x == 33 and y == 10:
+                cropped.blit(ss, (0, 0), (0, 40, 20, 20))
+                window.blit(pygame.transform.scale(cropped, (20, 20)), (x * cellsize, y * cellsize))
+            if x == 33 and y == 12:
+                cropped.blit(ss, (0, 0), (0, 0, 20, 20))
+                window.blit(pygame.transform.scale(cropped, (20, 20)), (x * cellsize, y * cellsize))
 
 
 def meatcreate(x, y, hp, speed, size, color, reward):
     meat.append(FreshMeat(x, y, hp, speed, size, color, reward))
 
 
-def addbullet(x, y, size, color, damage, speed):
-    bullets.append(Bullet(x, y, size, color, damage, speed))
+def addbullet(x, y, size, color, damage, speed, direction):
+    bullets.append(Bullet(x, y, size, color, damage, speed, direction))
+
+
+def adddrop(dx, dy, mx, my, heal=False):
+    x = random.randint(-30, 30) + dx
+    y = random.randint(-30, 30) + dy
+    drops.append(Drop(x, y, 1.3, mx, my, heal))
 
 
 def maycreatetower(x, y):
     x += cellsize / 2
     y += cellsize / 2
+    if math.sqrt((player.x + 8 - x) ** 2 + (player.y + 8 - y) ** 2) > cellsize * 3:
+        return False
     if len(towers) > 0:
         for tower in towers:
             if tower.x == x and tower.y == y:
                 return False
     for i in way:
-        if i[0] + cellsize / 2 == x and i[1] + cellsize / 2 == y:
+        if i[0] * cellsize + cellsize / 2 == x and i[1] * cellsize + cellsize / 2 == y:
             return False
     return True
 
@@ -248,12 +426,14 @@ def ui():
     display.blit(cost, (1467, 805))
     display.blit(money, (1461, 30))
     if towernum == 0:
-        pygame.draw.rect(display, 'white', [1402, 160, 160, 170], 4)
+        pass
     if towernum == 1:
-        pygame.draw.rect(display, 'white', [1402, 340, 160, 170], 4)
+        pygame.draw.rect(display, 'white', [1402, 160, 160, 170], 4)
     if towernum == 2:
-        pygame.draw.rect(display, 'white', [1402, 510, 160, 170], 4)
+        pygame.draw.rect(display, 'white', [1402, 340, 160, 170], 4)
     if towernum == 3:
+        pygame.draw.rect(display, 'white', [1402, 510, 160, 170], 4)
+    if towernum == 4:
         pygame.draw.rect(display, 'white', [1402, 680, 160, 170], 4)
 
 
@@ -261,24 +441,26 @@ def uiswtch():
     x, y = getmpos()
     for i in uirect:
         if i.collidepoint((x, y)):
-            return uirect.index(i)
+            return uirect.index(i) + 1
 
 
 def maketower(n):
     x, y = getmpos()
     if maycreatetower(x, y) and x <= width:
-        if n == 0 and plr.money >= 10:
-            towers.append(CommonTower(x + cellsize / 2, y + cellsize / 2, 10, 'green', 5, 0.5, 10, 150))
-            plr.money -= 10
-        if n == 1 and plr.money >= 15:
-            towers.append(CommonTower1(x + cellsize / 2, y + cellsize / 2, 10, 'yellow', 5, 0.5, 15, 150))
-            plr.money -= 15
-        if n == 3 and plr.money >= 50:
-            towers.append(CommonTower2(x + cellsize / 2, y + cellsize / 2, 10, 'blue', 5, 0.5, 30, 150))
-            plr.money -= 50
-        if n == 2 and plr.money >= 30:
-            towers.append(CommonTower3(x + cellsize / 2, y + cellsize / 2, 10, 'red', 5, 0.5, 50, 150))
-            plr.money -= 30
+        if n:
+            if n == 1 and plr.money >= 10:
+                towers.append(CommonTower(x + cellsize / 2, y + cellsize / 2, 10, 'green', 40, 1, 10, 3.5))
+                plr.money -= 10
+            if n == 2 and plr.money >= 15:
+                towers.append(QuadTower(x + cellsize / 2, y + cellsize / 2, 10, 'yellow', 30, 1, 15, 2))
+                plr.money -= 15
+            if n == 4 and plr.money >= 50:
+                towers.append(HomingTower(x + cellsize / 2, y + cellsize / 2, 10, 'blue', 50, 1, 50, 2))
+                plr.money -= 50
+            if n == 3 and plr.money >= 30:
+                towers.append(TheEighthTower(x + cellsize / 2, y + cellsize / 2, 10, 'red', 20, 1, 30, 2))
+                plr.money -= 30
+            tile_rects.append(pygame.Rect(x, y, cellsize, cellsize))
 
 
 def getmpos():
@@ -292,29 +474,89 @@ def getmpos():
     return x, y
 
 
+def createrad():
+    if towernum:
+        pygame.draw.circle(window, 'green', (player.x + 8, player.y + 8), cellsize * 3, 1)
+
+
 def run():
-    windowrender()
+    global inviztime
     for tower in towers:
         tower.draw()
         tower.fire()
+    for drop in drops:
+        drop.fly()
+        drop.take()
+        drop.draw()
+        if drop.taked():
+            drops.remove(drop)
+            plr.money += 1
     for bullet in bullets:
         bullet.move()
         bullet.draw()
-        if Bullet.rng(bullet) > width:
+        if player.rect().colliderect(bullet.rect):
+            player.hp -= 1
             bullets.remove(bullet)
+            break
+        for wall in walls:
+            if wall.colliderect(bullet.rect):
+                bullets.remove(bullet)
+                break
     for meats in meat:
         meats.draw()
         meats.go()
+        for bullet in bullets:
+            if Bullet.rng(bullet) > width:
+                bullets.remove(bullet)
+            elif meats.rect.colliderect(bullet.rect):
+                meats.damage(bullet.damage)
+                bullets.remove(bullet)
+            if not meats.check():
+                if meats in meat:
+                    for i in range(random.randint(3, 5)):
+                        adddrop(meats.x, meats.y, meats.x, meats.y)
+                    ch = random.randint(1, 10)
+                    if ch == 5 or ch == 2:
+                        adddrop(meats.x, meats.y, meats.x, meats.y, True)
+                    meat.remove(meats)
         if FreshMeat.rng(meats) > width:
             meat.remove(meats)
+        if inviztime > 500 and player.rect().colliderect(meats.rect):
+            player.hp -= 1
+            inviztime = 0
+        else:
+            inviztime += 1
 
 
 plr = Player(100)
 for i in range(10):
-    meatcreate(meatstrt[0] - i * 30, meatstrt[1], 100, 1, 10, 'red', 10)
+    meatcreate(meatstrt[0] - i * 20, meatstrt[1], 100, 0.5, 10, 'red', 10)
 
+player = e.Entity(*[21, 21], 16, 16, 'player')
+fullhp = player.hp
+playerhp = Healthpoints(fullhp, player.hp)
 running = True
+moving_right = False
+moving_left = False
+moving_up = False
+moving_down = False
+last_time = time.time()
 while running:
+    player_movement = [0, 0]
+    dt = time.time() - last_time
+    dt *= 60
+    last_time = time.time()
+    display.fill((0, 0, 0))
+    if moving_right:
+        player_movement[0] += 2 * dt
+    if moving_left:
+        player_movement[0] -= 2 * dt
+    if moving_up:
+        player_movement[1] -= 2 * dt
+    if moving_down:
+        player_movement[1] += 2 * dt
+    player.move(player_movement, tile_rects, [])
+    player.update()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
@@ -323,10 +565,34 @@ while running:
                 maketower(towernum)
                 if getmpos()[0] >= 1361:
                     towernum = uiswtch()
-    window.fill('black')
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_d:
+                moving_right = True
+            if event.key == pygame.K_a:
+                moving_left = True
+            if event.key == pygame.K_w:
+                moving_up = True
+            if event.key == pygame.K_s:
+                moving_down = True
+            if event.key == pygame.K_ESCAPE:
+                running = False
+        if event.type == pygame.KEYUP:
+            if event.key == pygame.K_d:
+                moving_right = False
+            if event.key == pygame.K_a:
+                moving_left = False
+            if event.key == pygame.K_w:
+                moving_up = False
+            if event.key == pygame.K_s:
+                moving_down = False
+    window.fill((240, 181, 65))
+    createwall()
     createway()
     run()
+    player.draw(window, [0, 0])
+    createrad()
     display.blit(pygame.transform.scale(window, (width1, height1)), (0, 0))
+    playerhp.draw(fullhp, player.hp)
     ui()
     pygame.display.update()
     clock.tick(fps)
