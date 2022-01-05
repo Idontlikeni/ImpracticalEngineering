@@ -205,8 +205,6 @@ def options():
     uslza = 0
     SCALE_MULTIPLIER = 5
     cveta1 = (200, 200, 200)
-    cveta2 = (255, 255, 255)
-    cveta3 = (0, 255, 0)
     display = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER))
     while running:
         display.fill((0, 0, 0))
