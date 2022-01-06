@@ -23,6 +23,7 @@ drops = []
 heals = []
 walls = []
 way = []
+allmetal = []
 tile_rects = []
 tile_rects_coord = []
 towernum = 0
@@ -301,7 +302,7 @@ class FreshMeat:
 
 
 class Drop:
-    def __init__(self, x, y, speed, x0, y0, heal=False):
+    def __init__(self, x, y, speed, x0, y0, heal=False, met=False):
         self.x = x
         self.y = y
         self.speed = speed
@@ -312,6 +313,8 @@ class Drop:
         self.y0 = y0
         self.a = 0
         self.heal = heal
+        if met:
+            self.met = met
 
     def fly(self):
         if round(self.x) != round(self.x0) and round(self.y0) != round(self.y) and not self.m and self.a < self.speed:
@@ -328,7 +331,7 @@ class Drop:
             window.blit(pygame.transform.scale(healim, (5, 5)), (self.x0, self.y0))
             # pygame.draw.rect(window, 'red', (self.x0, self.y0, 5, 5))
         else:
-            window.blit(pygame.transform.scale(metal, (5, 5)), (self.x0, self.y0))
+            window.blit(pygame.transform.scale(self.met, (5, 5)), (self.x0, self.y0))
             # pygame.draw.rect(window, 'gray', (self.x0, self.y0, 5, 5))
 
     def take(self):
@@ -414,7 +417,8 @@ def addbullet(x, y, size, color, damage, speed, direction):
 def adddrop(dx, dy, mx, my, heal=False):
     x = random.randint(-30, 30) + dx
     y = random.randint(-30, 30) + dy
-    drops.append(Drop(x, y, 1.3, mx, my, heal))
+    tex = random.choice(allmetal)
+    drops.append(Drop(x, y, 1.3, mx, my, heal, tex))
 
 
 def maycreatetower(x, y):
@@ -427,9 +431,6 @@ def maycreatetower(x, y):
         return False
     if [x // cellsize, y // cellsize] in tile_rects_coord:
         return False
-    # for tower in towers:
-    #     if tower.x == x and tower.y == y:
-    #         return False
     if [x // cellsize, y // cellsize] in way:
         return False
     return True
@@ -661,6 +662,19 @@ bluetow.blit(bluetower, (0, 0), (0, 0, 20, 20))
 metim = pygame.image.load('data_img/metal.png').convert_alpha()
 metal = pygame.Surface((5, 5), pygame.SRCALPHA)
 metal.blit(metim, (0, 0), (0, 0, 5, 5))
+metim1 = pygame.image.load('data_img/metal1.png').convert_alpha()
+metal1 = pygame.Surface((5, 5), pygame.SRCALPHA)
+metal1.blit(metim1, (0, 0), (0, 0, 5, 5))
+metim2 = pygame.image.load('data_img/metal2.png').convert_alpha()
+metal2 = pygame.Surface((5, 5), pygame.SRCALPHA)
+metal2.blit(metim2, (0, 0), (0, 0, 5, 5))
+metim3 = pygame.image.load('data_img/metal3.png').convert_alpha()
+metal3 = pygame.Surface((5, 5), pygame.SRCALPHA)
+metal3.blit(metim3, (0, 0), (0, 0, 5, 5))
+allmetal.append(metal)
+allmetal.append(metal1)
+allmetal.append(metal2)
+allmetal.append(metal3)
 helim = pygame.image.load('data_img/heal.png').convert_alpha()
 healim = pygame.Surface((5, 5), pygame.SRCALPHA)
 healim.blit(helim, (0, 0), (0, 0, 5, 5))
