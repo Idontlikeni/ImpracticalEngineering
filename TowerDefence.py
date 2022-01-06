@@ -74,6 +74,7 @@ myfont1 = pygame.font.Font('MaredivRegular.ttf', 80)
 window = pygame.Surface((width, height))
 display = pygame.display.set_mode((width1, height1))
 deadscreen = pygame.Surface((width, height), pygame.SRCALPHA)
+crosshairsurf = pygame.Surface((width, height), pygame.SRCALPHA)
 ss = pygame.image.load('data_img/spritesheet_3.png').convert()
 sand = pygame.image.load('data_img/sand.png')
 ssway = pygame.image.load('data_img/way.png')
@@ -149,6 +150,7 @@ class CommonTower(Tower):
             self.firerate -= 1 / fps
 
     def draw(self):
+        outline_mask(greentow, (self.x - cellsize / 2, self.y - cellsize / 2))
         window.blit(pygame.transform.scale(greentow, (20, 20)), (self.x - cellsize / 2, self.y - cellsize / 2))
         # pygame.draw.circle(window, self.color, [self.x, self.y], self.size)
 
@@ -163,6 +165,7 @@ class QuadTower(Tower):
             self.firerate -= 1 / fps
 
     def draw(self):
+        outline_mask(yellowtow, (self.x - cellsize / 2, self.y - cellsize / 2))
         window.blit(pygame.transform.scale(yellowtow, (20, 20)), (self.x - cellsize / 2, self.y - cellsize / 2))
 
 
@@ -176,6 +179,7 @@ class TheEighthTower(Tower):
             self.firerate -= 1 / fps
 
     def draw(self):
+        outline_mask(redtow, (self.x - cellsize / 2, self.y - cellsize / 2))
         window.blit(pygame.transform.scale(redtow, (20, 20)), (self.x - cellsize / 2, self.y - cellsize / 2))
 
 
@@ -189,6 +193,7 @@ class HomingTower(Tower):
                 self.firerate -= 1 / fps
 
     def draw(self):
+        outline_mask(bluetow, (self.x - cellsize / 2, self.y - cellsize / 2))
         window.blit(pygame.transform.scale(bluetow, (20, 20)), (self.x - cellsize / 2, self.y - cellsize / 2))
 
 
@@ -328,9 +333,11 @@ class Drop:
 
     def draw(self):
         if self.heal:
+            outline_mask(healim, (self.x0, self.y0))
             window.blit(pygame.transform.scale(healim, (5, 5)), (self.x0, self.y0))
             # pygame.draw.rect(window, 'red', (self.x0, self.y0, 5, 5))
         else:
+            outline_mask(self.met, (self.x0, self.y0))
             window.blit(pygame.transform.scale(self.met, (5, 5)), (self.x0, self.y0))
             # pygame.draw.rect(window, 'gray', (self.x0, self.y0, 5, 5))
 
@@ -354,6 +361,15 @@ class Drop:
                     player.hp += 2
             return True
         return False
+
+
+class Crosshair:
+    def __init__(self):
+        self.Cursor = pygame.image.load('data_img/curs_4x2.png')
+        pygame.mouse.set_visible(False)
+
+    def render(self):
+        display.blit(self.Cursor, (pygame.mouse.get_pos()))
 
 
 def createway():
@@ -447,17 +463,25 @@ def windowrender():
 
 
 def ui():
-    pygame.draw.rect(display, 'black', [1361, 0, 240, 921])
-    pygame.draw.circle(display, 'green', [1482, 230], 60)
+    pygame.draw.rect(display, (58, 63, 94), [1360, 0, 241, 921])
+    greentow1 = pygame.transform.scale(greentow, (120, 120))
+    outline_mask1(greentow1, (1420, 170))
+    display.blit(pygame.transform.scale(greentow, (120, 120)), (1420, 170))
     cost = myfont.render('10', False, 'white')
     display.blit(cost, (1467, 285))
-    pygame.draw.circle(display, 'yellow', [1482, 410], 60)
+    yellowtow1 = pygame.transform.scale(yellowtow, (120, 120))
+    outline_mask1(yellowtow1, (1420, 350))
+    display.blit(pygame.transform.scale(yellowtow, (120, 120)), (1420, 350))
     cost = myfont.render('15', False, 'white')
     display.blit(cost, (1467, 465))
-    pygame.draw.circle(display, 'red', [1482, 580], 60)
+    redtow1 = pygame.transform.scale(redtow, (120, 120))
+    outline_mask1(redtow1, (1420, 520))
+    display.blit(pygame.transform.scale(redtow, (120, 120)), (1420, 520))
     cost = myfont.render('30', False, 'white')
     display.blit(cost, (1467, 635))
-    pygame.draw.circle(display, 'blue', [1482, 750], 60)
+    bluetow1 = pygame.transform.scale(bluetow, (120, 120))
+    outline_mask1(bluetow1, (1420, 690))
+    display.blit(pygame.transform.scale(bluetow, (120, 120)), (1420, 690))
     money = myfont.render(str(plr.money), False, 'white')
     cost = myfont.render('50', False, 'white')
     display.blit(cost, (1467, 805))
@@ -495,6 +519,26 @@ def dieui():
     display.blit(f1, (width - 350, height + 60))
     f2 = myfont.render('Exit', False, 'white')
     display.blit(f2, (width + 120, height + 60))
+
+
+def outline_mask(img, loc):
+    mask = pygame.mask.from_surface(img)
+    mask_outline = mask.outline()
+    n = 0
+    for point in mask_outline:
+        mask_outline[n] = (point[0] + loc[0], point[1] + loc[1])
+        n += 1
+    pygame.draw.polygon(window, (255, 255, 255), mask_outline, 3)
+
+
+def outline_mask1(img, loc):
+    mask = pygame.mask.from_surface(img)
+    mask_outline = mask.outline()
+    n = 0
+    for point in mask_outline:
+        mask_outline[n] = (point[0] + loc[0], point[1] + loc[1])
+        n += 1
+    pygame.draw.polygon(display, (255, 255, 255), mask_outline, 7)
 
 
 def maketower(n):
@@ -637,7 +681,7 @@ def run():
 plr = Player(100)
 for i in range(10):
     meatcreate(meatstrt[0] - i * 20, meatstrt[1], 100, 0.5, 10, 'red', 10)
-
+crosshair = Crosshair()
 player = e.Entity(*[21, 21], 16, 16, 10, 'player')
 fullhp = player.hp
 playerhp = Healthpoints(fullhp, player.hp)
@@ -744,6 +788,7 @@ while running:
         display.blit(pygame.transform.scale(window, (width1, height1)), (0, 0))
         playerhp.draw(fullhp, player.hp)
         ui()
+        crosshair.render()
         pygame.display.update()
         checklife()
         clock.tick(fps)
@@ -765,6 +810,8 @@ while running:
         hp = myfont1.render('You died', False, 'white')
         display.blit(hp, (width - 200, height - 200))
         dieui()
+        crosshair.render()
+        pygame.display.update()
         pygame.display.update()
         clock.tick(fps)
 pygame.quit()
