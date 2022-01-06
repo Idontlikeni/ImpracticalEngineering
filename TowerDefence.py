@@ -325,9 +325,11 @@ class Drop:
 
     def draw(self):
         if self.heal:
-            pygame.draw.rect(window, 'red', (self.x0, self.y0, 5, 5))
+            window.blit(pygame.transform.scale(healim, (5, 5)), (self.x0, self.y0))
+            # pygame.draw.rect(window, 'red', (self.x0, self.y0, 5, 5))
         else:
-            pygame.draw.rect(window, 'gray', (self.x0, self.y0, 5, 5))
+            window.blit(pygame.transform.scale(metal, (5, 5)), (self.x0, self.y0))
+            # pygame.draw.rect(window, 'gray', (self.x0, self.y0, 5, 5))
 
     def take(self):
         x = player.x + 8
@@ -656,6 +658,12 @@ redtow.blit(redtower, (0, 0), (0, 0, 20, 20))
 bluetower = pygame.image.load('data_img/bluetower.png').convert_alpha()
 bluetow = pygame.Surface((20, 20), pygame.SRCALPHA)
 bluetow.blit(bluetower, (0, 0), (0, 0, 20, 20))
+metim = pygame.image.load('data_img/metal.png').convert_alpha()
+metal = pygame.Surface((5, 5), pygame.SRCALPHA)
+metal.blit(metim, (0, 0), (0, 0, 5, 5))
+helim = pygame.image.load('data_img/heal.png').convert_alpha()
+healim = pygame.Surface((5, 5), pygame.SRCALPHA)
+healim.blit(helim, (0, 0), (0, 0, 5, 5))
 while running:
     if alive:
         player_movement = [0, 0]
