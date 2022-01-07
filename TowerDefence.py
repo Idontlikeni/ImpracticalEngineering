@@ -9,8 +9,8 @@ countx = 34
 county = 23
 sclsz = 2
 sclsz1 = 1.3
-width1 = 1600
-height1 = 900
+width1 = 3840
+height1 = 2160
 width = width1 / sclsz
 height = height1 / sclsz
 cellsize = (width - 120) // countx
@@ -27,7 +27,10 @@ way = []
 allmetal = []
 tile_rects = []
 tile_rects_coord = []
+explosions = []
 towernum = 0
+spawntime = 0
+playerv = 2
 uirect = [pygame.Rect(68.05 * cellsize, 8 * cellsize, 12 * cellsize, 8.5 * cellsize),
           pygame.Rect(68.05 * cellsize, 17 * cellsize, 12 * cellsize, 8.5 * cellsize),
           pygame.Rect(68.05 * cellsize, 25.5 * cellsize, 12 * cellsize, 8.5 * cellsize),
@@ -264,7 +267,7 @@ class Bullet:
 
 
 class FreshMeat:
-    def __init__(self, x, y, hp, speed, size, color, reward):
+    def __init__(self, x, y, hp, speed, size, color, slowed=False):
         self.x = x
         self.y = y
         self.size = size / sclsz1
@@ -272,7 +275,7 @@ class FreshMeat:
         self.hp = hp
         self.speed = speed * cellsize / 20
         self.point = 0
-        self.reward = reward
+        self.slowed = slowed
         self.napx = 1
         self.napy = 0
         self.rect = pygame.Rect(self.x - self.size, self.y - self.size, self.size * 2, self.size * 2)
@@ -471,6 +474,9 @@ def windowrender():
 
 def ui():
     pygame.draw.rect(display, (48, 48, 48), [68 * cellsize, 0, 12.05 * cellsize, height1])
+    pygame.draw.rect(display, 'white', [70.1 * cellsize, 4.5 * cellsize, 8 * cellsize, 3 * cellsize], 4)
+    can = myfont.render('Cancel', False, 'white')
+    display.blit(can, (cellsize * 72, 4.9 * cellsize))
     greentow1 = pygame.transform.scale(greentow, (6 * cellsize, 6 * cellsize))
     outline_mask1(greentow1, (71 * cellsize, 8.5 * cellsize))
     display.blit(pygame.transform.scale(greentow, (6 * cellsize, 6 * cellsize)), (71 * cellsize, 8.5 * cellsize))
@@ -513,20 +519,32 @@ def uiswtch():
 
 
 def dieui():
-    global running
+    global running, alive, bullets, towers, meat, drops, heals, wawe, playerv
     mx, my = pygame.mouse.get_pos()
-    menu = pygame.Rect(width - 20 * cellsize, height + 2.5 * cellsize, 15 * cellsize, 3.5 * cellsize)
+    retry = pygame.Rect(width - 20 * cellsize, height + 2.5 * cellsize, 15 * cellsize, 3.5 * cellsize)
     exit = pygame.Rect(width, height + 2.5 * cellsize, 15 * cellsize, 3.5 * cellsize)
-    pygame.draw.rect(display, 'gray', menu)
+    pygame.draw.rect(display, 'gray', retry)
     pygame.draw.rect(display, 'gray', exit)
-    if menu.collidepoint(mx, my):
-        pygame.draw.rect(display, (112, 112, 112), menu)
+    if retry.collidepoint(mx, my):
+        pygame.draw.rect(display, (112, 112, 112), retry)
+        if dieuiclicked:
+            bullets = []
+            towers = []
+            meat = []
+            drops = []
+            heals = []
+            wawe = 0
+            alive = True
+            player.set_pos(cellsize + 1, cellsize + 1)
+            player.hp = 10
+            plr.money = 100
+            playerv = 2
     if exit.collidepoint(mx, my):
         pygame.draw.rect(display, (112, 112, 112), exit)
         if dieuiclicked:
             running = False
-    f1 = myfont.render('Back to menu', False, 'white')
-    display.blit(f1, (width - 17.5 * cellsize, height + 3 * cellsize))
+    f1 = myfont.render('Retry', False, 'white')
+    display.blit(f1, (width - 15 * cellsize, height + 3 * cellsize))
     f2 = myfont.render('Exit', False, 'white')
     display.blit(f2, (width + 6 * cellsize, height + 3 * cellsize))
 
@@ -574,22 +592,25 @@ def maketower(n):
                 plr.money -= 10
                 tile_rects.append(pygame.Rect(x, y, cellsize, cellsize))
                 tile_rects_coord.append([x // cellsize, y // cellsize])
+                towernum = 0
             if n == 2 and plr.money >= 15:
-                towers.append(QuadTower(x + cellsize / 2, y + cellsize / 2, 10, 'yellow', 30, 1, 40, 1))
+                towers.append(QuadTower(x + cellsize / 2, y + cellsize / 2, 10, 'yellow', 30, 1.3, 40, 1))
                 plr.money -= 15
                 tile_rects.append(pygame.Rect(x, y, cellsize, cellsize))
                 tile_rects_coord.append([x // cellsize, y // cellsize])
+                towernum = 0
             if n == 4 and plr.money >= 50:
-                towers.append(HomingTower(x + cellsize / 2, y + cellsize / 2, 10, 'blue', 40, 1, 500, 0.7))
+                towers.append(HomingTower(x + cellsize / 2, y + cellsize / 2, 10, 'blue', 40, 2, 50, 0.7))
                 plr.money -= 50
                 tile_rects.append(pygame.Rect(x, y, cellsize, cellsize))
                 tile_rects_coord.append([x // cellsize, y // cellsize])
+                towernum = 0
             if n == 3 and plr.money >= 30:
-                towers.append(TheEighthTower(x + cellsize / 2, y + cellsize / 2, 10, 'red', 20, 1, 40, 1))
+                towers.append(TheEighthTower(x + cellsize / 2, y + cellsize / 2, 10, 'red', 20, 1.5, 40, 1))
                 plr.money -= 30
                 tile_rects.append(pygame.Rect(x, y, cellsize, cellsize))
                 tile_rects_coord.append([x // cellsize, y // cellsize])
-            towernum = 0
+                towernum = 0
 
 
 def getmpos():
@@ -636,7 +657,10 @@ def createrad():
 def run():
     overwidth()
     if alive:
+        global spawntime
         global inviztime
+        global wawe
+        global playerv
         for tower in towers:
             tower.draw()
             tower.fire()
@@ -667,22 +691,31 @@ def run():
                 elif meats.rect.colliderect(bullet.rect):
                     meats.damage(bullet.damage)
                     bullets.remove(bullet)
-                if not meats.check():
-                    if meats in meat:
-                        for i in range(random.randint(3, 5)):
-                            adddrop(meats.x, meats.y, meats.x, meats.y)
-                        ch = random.randint(1, 10)
-                        if ch == 5 or ch == 2:
-                            adddrop(meats.x, meats.y, meats.x, meats.y, True)
-                        meat.remove(meats)
+            if not meats.check():
+                if meats in meat:
+                    for i in range(random.randint(3, 5)):
+                        adddrop(meats.x, meats.y, meats.x, meats.y)
+                    ch = random.randint(1, 10)
+                    if ch == 5 or ch == 2:
+                        adddrop(meats.x, meats.y, meats.x, meats.y, True)
+                    explosions.append(e.Explosion(meats.x, meats.y))
+                    meat.remove(meats)
             if inviztime > 500 and player.rect().colliderect(meats.rect):
                 player.hp -= 1
                 inviztime = 0
             else:
                 inviztime += 1
-    if len(meat) == 0:
-        for i in range(10):
-            meatcreate(meatstrt[0] - i * 20, meatstrt[1], 100, 0.5, 10, 'red', 10)
+        if len(meat) == 0 and wawe < 3:
+            if spawntime > 300:
+                for i in range(10 + wawe * 2):
+                    if wawe == 0:
+                        meatcreate(meatstrt[0] - i * 20, meatstrt[1], 100, 0.7, wawe + 10, 'red', True)
+                    else:
+                        meatcreate(meatstrt[0] - i * 20, meatstrt[1], wawe * 100, 0.7, wawe + 10, 'red', True)
+                wawe += 1
+                spawntime = 0
+            else:
+                spawntime += 1
     else:
         for tower in towers:
             tower.draw()
@@ -711,8 +744,7 @@ def run():
 
 
 plr = Player(100)
-for i in range(10):
-    meatcreate(meatstrt[0] - i * 20, meatstrt[1], 100, 0.5, 10, 'red', 10)
+wawe = 0
 crosshair = Crosshair()
 player = e.Entity(*[cellsize + 1, cellsize + 1], 16, 16, 10, 'player')
 fullhp = player.hp
@@ -756,19 +788,25 @@ healim = pygame.Surface((5, 5), pygame.SRCALPHA)
 healim.blit(helim, (0, 0), (0, 0, 5, 5))
 while running:
     if alive:
+        for meats in meat:
+            if math.sqrt((meats.x - (player.x + 8)) ** 2 + (meats.y - (player.y + 8)) ** 2) < cellsize * 2 and meats.slowed:
+                playerv = 0.5
+                break
+            else:
+                playerv = 2
         player_movement = [0, 0]
         dt = time.time() - last_time
         dt *= 60
         last_time = time.time()
         display.fill((0, 0, 0))
         if moving_right:
-            player_movement[0] += 2 * dt
+            player_movement[0] += playerv * dt
         if moving_left:
-            player_movement[0] -= 2 * dt
+            player_movement[0] -= playerv * dt
         if moving_up:
-            player_movement[1] -= 2 * dt
+            player_movement[1] -= playerv * dt
         if moving_down:
-            player_movement[1] += 2 * dt
+            player_movement[1] += playerv * dt
         player.move(player_movement, tile_rects, [])
         player.update()
         for event in pygame.event.get():
@@ -810,13 +848,18 @@ while running:
                     moving_up = False
                 if event.key == pygame.K_s:
                     moving_down = False
-        window.fill('black')
         createfloor()
         createwall()
         createway()
         run()
         player.draw(window, [0, 0])
         createrad()
+        for i, explosion in sorted(enumerate(explosions), reverse=True):
+            explosion.update()
+            explosion.draw(window)
+            if len(explosion.particles) == 0:
+                del explosion
+                explosions.pop(i)
         display.blit(pygame.transform.scale(window, (width1, height1)), (0, 0))
         playerhp.draw(fullhp, player.hp)
         ui()
