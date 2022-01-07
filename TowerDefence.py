@@ -7,13 +7,14 @@ import engine as e
 
 countx = 34
 county = 23
-cellsize = 20
 sclsz = 2
 sclsz1 = 1.3
 width1 = 1600
 height1 = 900
 width = width1 / sclsz
 height = height1 / sclsz
+cellsize = (width - 120) // countx
+cellost = (width - 120) % countx
 fps = 60
 inviztime = 0
 bullets = []
@@ -27,8 +28,10 @@ allmetal = []
 tile_rects = []
 tile_rects_coord = []
 towernum = 0
-uirect = [pygame.Rect(1361, 160, 240, 170), pygame.Rect(1361, 340, 240, 170),
-          pygame.Rect(1361, 510, 240, 170), pygame.Rect(1361, 680, 240, 170)]
+uirect = [pygame.Rect(68.05 * cellsize, 8 * cellsize, 12 * cellsize, 8.5 * cellsize),
+          pygame.Rect(68.05 * cellsize, 17 * cellsize, 12 * cellsize, 8.5 * cellsize),
+          pygame.Rect(68.05 * cellsize, 25.5 * cellsize, 12 * cellsize, 8.5 * cellsize),
+          pygame.Rect(68.05 * cellsize, 34 * cellsize, 12 * cellsize, 8.5 * cellsize)]
 Map = [
         [9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9],
         [9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9],
@@ -66,17 +69,20 @@ left = []
 napr = ''
 mousx = 0
 mousy = 0
+dieuiclicked = False
 alive = True
 pygame.init()
 pygame.font.init()
-myfont = pygame.font.Font('MaredivRegular.ttf', 30)
-myfont1 = pygame.font.Font('MaredivRegular.ttf', 80)
+myfont = pygame.font.Font('MaredivRegular.ttf', round(1.5 * cellsize))
+myfont1 = pygame.font.Font('MaredivRegular.ttf', round(4 * cellsize))
 window = pygame.Surface((width, height))
 display = pygame.display.set_mode((width1, height1))
 deadscreen = pygame.Surface((width, height), pygame.SRCALPHA)
 crosshairsurf = pygame.Surface((width, height), pygame.SRCALPHA)
-ss = pygame.image.load('data_img/spritesheet_3.png').convert()
+ss = pygame.image.load('data_img/spritesheet_3.png').convert_alpha()
 sand = pygame.image.load('data_img/sand.png')
+ssand = pygame.Surface((20, 20), pygame.SRCALPHA)
+ssand.blit(sand, (0, 0), (0, 0, 20, 20))
 ssway = pygame.image.load('data_img/way.png')
 ss.set_colorkey((0, 0, 0))
 clock = pygame.time.Clock()
@@ -114,12 +120,12 @@ class Healthpoints:
     def draw(self, fullhp, nowhp):
         if nowhp < 1:
             nowhp = 0
-        pygame.draw.rect(display, 'black', (0.03 * width, 0.05 * height, 250, 40))
-        pygame.draw.rect(display, 'white', (0.03 * width, 0.05 * height, 250, 40), 8)
+        pygame.draw.rect(display, 'black', (0.03 * width, 0.05 * height, 12.5 * cellsize, 2 * cellsize))
+        pygame.draw.rect(display, 'white', (0.03 * width, 0.05 * height, 12.5 * cellsize, 2 * cellsize), 8)
         pygame.draw.rect(display, 'red',
-                         (0.03 * width + 1, 0.05 * height + 1, (nowhp / fullhp) * 250 - 1, 40 - 1))
+                         (0.03 * width + 1, 0.05 * height + 1, (nowhp / fullhp) * 12.5 * cellsize - 1, 2 * cellsize - 1))
         hp = myfont.render(str(f'{nowhp}/{fullhp}'), False, 'white')
-        display.blit(hp, (0.01 * width + 250 / 3, 0.05 * height - 2))
+        display.blit(hp, ((0.01 * width + 250 / 3) * cellsize / 20, 0.05 * height - (2 * cellsize / 20)))
 
 
 class Tower:
@@ -151,7 +157,7 @@ class CommonTower(Tower):
 
     def draw(self):
         outline_mask(greentow, (self.x - cellsize / 2, self.y - cellsize / 2))
-        window.blit(pygame.transform.scale(greentow, (20, 20)), (self.x - cellsize / 2, self.y - cellsize / 2))
+        window.blit(pygame.transform.scale(greentow, (cellsize, cellsize)), (self.x - cellsize / 2, self.y - cellsize / 2))
         # pygame.draw.circle(window, self.color, [self.x, self.y], self.size)
 
 
@@ -166,7 +172,7 @@ class QuadTower(Tower):
 
     def draw(self):
         outline_mask(yellowtow, (self.x - cellsize / 2, self.y - cellsize / 2))
-        window.blit(pygame.transform.scale(yellowtow, (20, 20)), (self.x - cellsize / 2, self.y - cellsize / 2))
+        window.blit(pygame.transform.scale(yellowtow, (cellsize, cellsize)), (self.x - cellsize / 2, self.y - cellsize / 2))
 
 
 class TheEighthTower(Tower):
@@ -180,21 +186,22 @@ class TheEighthTower(Tower):
 
     def draw(self):
         outline_mask(redtow, (self.x - cellsize / 2, self.y - cellsize / 2))
-        window.blit(pygame.transform.scale(redtow, (20, 20)), (self.x - cellsize / 2, self.y - cellsize / 2))
+        window.blit(pygame.transform.scale(redtow, (cellsize, cellsize)), (self.x - cellsize / 2, self.y - cellsize / 2))
 
 
 class HomingTower(Tower):
     def fire(self):
         if meat:
-            if self.firerate <= 0:
-                addbullet(self.x, self.y, 6, self.color, self.damage, self.bullspeed, 8)
-                self.firerate = self.firespeed
-            else:
-                self.firerate -= 1 / fps
+            if math.sqrt((meat[0].x - self.x) ** 2 + (meat[0].y - self.y) ** 2) < cellsize * 8:
+                if self.firerate <= 0:
+                    addbullet(self.x, self.y, 6, self.color, self.damage, self.bullspeed, 8)
+                    self.firerate = self.firespeed
+                else:
+                    self.firerate -= 1 / fps
 
     def draw(self):
         outline_mask(bluetow, (self.x - cellsize / 2, self.y - cellsize / 2))
-        window.blit(pygame.transform.scale(bluetow, (20, 20)), (self.x - cellsize / 2, self.y - cellsize / 2))
+        window.blit(pygame.transform.scale(bluetow, (cellsize, cellsize)), (self.x - cellsize / 2, self.y - cellsize / 2))
 
 
 class Bullet:
@@ -204,7 +211,7 @@ class Bullet:
         self.size = size / sclsz1
         self.color = color
         self.damage = damage
-        self.speed = speed
+        self.speed = speed * cellsize / 20
         self.rect = pygame.Rect(x - size, y - size, size * 2, size * 2)
         self.direction = direction
 
@@ -263,7 +270,7 @@ class FreshMeat:
         self.size = size / sclsz1
         self.color = color
         self.hp = hp
-        self.speed = speed
+        self.speed = speed * cellsize / 20
         self.point = 0
         self.reward = reward
         self.napx = 1
@@ -275,16 +282,16 @@ class FreshMeat:
         # pygame.draw.rect(window, (255, 0, 0), self.rect, 1)
 
     def go(self):
-        if [self.x, self.y] in right:
+        if [round(self.x), round(self.y)] in right:
             self.napy = 0
             self.napx = 1
-        if [self.x, self.y] in left:
+        if [round(self.x), round(self.y)] in left:
             self.napy = 0
             self.napx = -1
-        if [self.x, self.y] in up:
+        if [round(self.x), round(self.y)] in up:
             self.napy = -1
             self.napx = 0
-        if [self.x, self.y] in down:
+        if [round(self.x), round(self.y)] in down:
             self.napy = 1
             self.napx = 0
         self.x += self.speed * self.napx
@@ -310,8 +317,8 @@ class Drop:
     def __init__(self, x, y, speed, x0, y0, heal=False, met=False):
         self.x = x
         self.y = y
-        self.speed = speed
-        self.speedfly = speed
+        self.speed = speed * cellsize / 20
+        self.speedfly = speed * cellsize / 20
         self.t = False
         self.m = False
         self.x0 = x0
@@ -322,7 +329,7 @@ class Drop:
             self.met = met
 
     def fly(self):
-        if round(self.x) != round(self.x0) and round(self.y0) != round(self.y) and not self.m and self.a < self.speed:
+        if round(self.x) != round(self.x0) and round(self.y0) != round(self.y) and not self.m and self.a < self.speed and self.speed > 0.03:
             self.x0 += (self.x - self.x0) / math.sqrt((self.x - self.x0) ** 2 +
                                                       (self.y - self.y0) ** 2) * self.speedfly - self.a
             self.y0 += (self.y - self.y0) / math.sqrt((self.x - self.x0) ** 2 +
@@ -333,18 +340,18 @@ class Drop:
 
     def draw(self):
         if self.heal:
-            outline_mask(healim, (self.x0, self.y0))
-            window.blit(pygame.transform.scale(healim, (5, 5)), (self.x0, self.y0))
+            outline_mask2(healim, (self.x0, self.y0))
+            window.blit(pygame.transform.scale(healim, (5 * cellsize / 20, 5 * cellsize / 20)), (self.x0, self.y0))
             # pygame.draw.rect(window, 'red', (self.x0, self.y0, 5, 5))
         else:
-            outline_mask(self.met, (self.x0, self.y0))
-            window.blit(pygame.transform.scale(self.met, (5, 5)), (self.x0, self.y0))
+            outline_mask2(self.met, (self.x0, self.y0))
+            window.blit(pygame.transform.scale(self.met, (5 * cellsize / 20, 5 * cellsize / 20)), (self.x0, self.y0))
             # pygame.draw.rect(window, 'gray', (self.x0, self.y0, 5, 5))
 
     def take(self):
         x = player.x + 8
         y = player.y + 8
-        if math.sqrt((x - self.x0) ** 2 + (y - self.y0) ** 2) < 30:
+        if math.sqrt((x - self.x0) ** 2 + (y - self.y0) ** 2) < cellsize * 3:
             self.t = True
         if self.t:
             self.x0 += (x - self.x0) / math.sqrt((x - self.x0) ** 2 + (y - self.y0) ** 2) * self.speed
@@ -385,41 +392,41 @@ def createfloor():
     for y in range(len(Map)):
         for x in range(len(Map[0])):
             if Map[y][x] == 0:
-                window.blit(sand, (x * cellsize, y * cellsize))
+                window.blit(pygame.transform.scale(ssand, (cellsize, cellsize)), (x * cellsize, y * cellsize))
 
 
 def createwall():
-    cropped = pygame.Surface((20, 20))
-    # cropped.fill((240, 181, 65))
+    cropped = pygame.Surface((20, 20), pygame.SRCALPHA)
+    cropped.fill((240, 181, 65))
     for y in range(len(Map)):
         for x in range(len(Map[0])):
             if (y == 0 and x == 0) or (y == 0 and x == 33) or (y == 22 and x == 0) or (y == 22 and x == 33):
                 cropped.blit(ss, (0, 0), (20, 20, 20, 20))
-                window.blit(pygame.transform.scale(cropped, (20, 20)), (x * cellsize, y * cellsize))
+                window.blit(pygame.transform.scale(cropped, (cellsize, cellsize)), (x * cellsize, y * cellsize))
             elif y == 0:
                 cropped.blit(ss, (0, 0), (20, 40, 20, 20))
-                window.blit(pygame.transform.scale(cropped, (20, 20)), (x * cellsize, y * cellsize))
+                window.blit(pygame.transform.scale(cropped, (cellsize, cellsize)), (x * cellsize, y * cellsize))
             elif y == 22:
                 cropped.blit(ss, (0, 0), (20, 0, 20, 20))
-                window.blit(pygame.transform.scale(cropped, (20, 20)), (x * cellsize, y * cellsize))
+                window.blit(pygame.transform.scale(cropped, (cellsize, cellsize)), (x * cellsize, y * cellsize))
             elif x == 33:
                 cropped.blit(ss, (0, 0), (0, 20, 20, 20))
-                window.blit(pygame.transform.scale(cropped, (20, 20)), (x * cellsize, y * cellsize))
+                window.blit(pygame.transform.scale(cropped, (cellsize, cellsize)), (x * cellsize, y * cellsize))
             elif x == 0:
                 cropped.blit(ss, (0, 0), (40, 20, 20, 20))
-                window.blit(pygame.transform.scale(cropped, (20, 20)), (x * cellsize, y * cellsize))
+                window.blit(pygame.transform.scale(cropped, (cellsize, cellsize)), (x * cellsize, y * cellsize))
             if x == 0 and y == 10:
                 cropped.blit(ss, (0, 0), (40, 40, 20, 20))
-                window.blit(pygame.transform.scale(cropped, (20, 20)), (x * cellsize, y * cellsize))
+                window.blit(pygame.transform.scale(cropped, (cellsize, cellsize)), (x * cellsize, y * cellsize))
             if x == 0 and y == 12:
                 cropped.blit(ss, (0, 0), (40, 0, 20, 20))
-                window.blit(pygame.transform.scale(cropped, (20, 20)), (x * cellsize, y * cellsize))
+                window.blit(pygame.transform.scale(cropped, (cellsize, cellsize)), (x * cellsize, y * cellsize))
             if x == 33 and y == 10:
                 cropped.blit(ss, (0, 0), (0, 40, 20, 20))
-                window.blit(pygame.transform.scale(cropped, (20, 20)), (x * cellsize, y * cellsize))
+                window.blit(pygame.transform.scale(cropped, (cellsize, cellsize)), (x * cellsize, y * cellsize))
             if x == 33 and y == 12:
                 cropped.blit(ss, (0, 0), (0, 0, 20, 20))
-                window.blit(pygame.transform.scale(cropped, (20, 20)), (x * cellsize, y * cellsize))
+                window.blit(pygame.transform.scale(cropped, (cellsize, cellsize)), (x * cellsize, y * cellsize))
 
 
 def meatcreate(x, y, hp, speed, size, color, reward):
@@ -463,39 +470,39 @@ def windowrender():
 
 
 def ui():
-    pygame.draw.rect(display, (58, 63, 94), [1360, 0, 241, 921])
-    greentow1 = pygame.transform.scale(greentow, (120, 120))
-    outline_mask1(greentow1, (1420, 170))
-    display.blit(pygame.transform.scale(greentow, (120, 120)), (1420, 170))
+    pygame.draw.rect(display, (48, 48, 48), [68 * cellsize, 0, 12.05 * cellsize, height1])
+    greentow1 = pygame.transform.scale(greentow, (6 * cellsize, 6 * cellsize))
+    outline_mask1(greentow1, (71 * cellsize, 8.5 * cellsize))
+    display.blit(pygame.transform.scale(greentow, (6 * cellsize, 6 * cellsize)), (71 * cellsize, 8.5 * cellsize))
     cost = myfont.render('10', False, 'white')
-    display.blit(cost, (1467, 285))
-    yellowtow1 = pygame.transform.scale(yellowtow, (120, 120))
-    outline_mask1(yellowtow1, (1420, 350))
-    display.blit(pygame.transform.scale(yellowtow, (120, 120)), (1420, 350))
+    display.blit(cost, (cellsize * 73.35, cellsize * 14.25))
+    yellowtow1 = pygame.transform.scale(yellowtow, (cellsize * 6, cellsize * 6))
+    outline_mask1(yellowtow1, (cellsize * 71, 17.5 * cellsize))
+    display.blit(pygame.transform.scale(yellowtow, (cellsize * 6, cellsize * 6)), (71 * cellsize, 17.5 * cellsize))
     cost = myfont.render('15', False, 'white')
-    display.blit(cost, (1467, 465))
-    redtow1 = pygame.transform.scale(redtow, (120, 120))
-    outline_mask1(redtow1, (1420, 520))
-    display.blit(pygame.transform.scale(redtow, (120, 120)), (1420, 520))
+    display.blit(cost, (73.35 * cellsize, 23.25 * cellsize))
+    redtow1 = pygame.transform.scale(redtow, (cellsize * 6, cellsize * 6))
+    outline_mask1(redtow1, (71 * cellsize, 26 * cellsize))
+    display.blit(pygame.transform.scale(redtow, (cellsize * 6, cellsize * 6)), (71 * cellsize, 26 * cellsize))
     cost = myfont.render('30', False, 'white')
-    display.blit(cost, (1467, 635))
-    bluetow1 = pygame.transform.scale(bluetow, (120, 120))
-    outline_mask1(bluetow1, (1420, 690))
-    display.blit(pygame.transform.scale(bluetow, (120, 120)), (1420, 690))
+    display.blit(cost, (73.35 * cellsize, 31.75 * cellsize))
+    bluetow1 = pygame.transform.scale(bluetow, (cellsize * 6, cellsize * 6))
+    outline_mask1(bluetow1, (71 * cellsize, 34.5 * cellsize))
+    display.blit(pygame.transform.scale(bluetow, (cellsize * 6, cellsize * 6)), (71 * cellsize, 34.5 * cellsize))
     money = myfont.render(str(plr.money), False, 'white')
     cost = myfont.render('50', False, 'white')
-    display.blit(cost, (1467, 805))
-    display.blit(money, (1461, 30))
+    display.blit(cost, (73.35 * cellsize, 40.25 * cellsize))
+    display.blit(money, (cellsize * countx * sclsz + cellsize * 5, 30))
     if towernum == 0:
         pass
     if towernum == 1:
-        pygame.draw.rect(display, 'white', [1402, 160, 160, 170], 4)
+        pygame.draw.rect(display, 'white', [70.1 * cellsize, 8 * cellsize, 8 * cellsize, 8.5 * cellsize], 4)
     if towernum == 2:
-        pygame.draw.rect(display, 'white', [1402, 340, 160, 170], 4)
+        pygame.draw.rect(display, 'white', [70.1 * cellsize, 17 * cellsize, 8 * cellsize, 8.5 * cellsize], 4)
     if towernum == 3:
-        pygame.draw.rect(display, 'white', [1402, 510, 160, 170], 4)
+        pygame.draw.rect(display, 'white', [70.1 * cellsize, 25.5 * cellsize, 8 * cellsize, 8.5 * cellsize], 4)
     if towernum == 4:
-        pygame.draw.rect(display, 'white', [1402, 680, 160, 170], 4)
+        pygame.draw.rect(display, 'white', [70.1 * cellsize, 34 * cellsize, 8 * cellsize, 8.5 * cellsize], 4)
 
 
 def uiswtch():
@@ -506,22 +513,26 @@ def uiswtch():
 
 
 def dieui():
+    global running
     mx, my = pygame.mouse.get_pos()
-    menu = pygame.Rect(width - 400, height + 50, 300, 70)
-    exit = pygame.Rect(width, height + 50, 300, 70)
+    menu = pygame.Rect(width - 20 * cellsize, height + 2.5 * cellsize, 15 * cellsize, 3.5 * cellsize)
+    exit = pygame.Rect(width, height + 2.5 * cellsize, 15 * cellsize, 3.5 * cellsize)
     pygame.draw.rect(display, 'gray', menu)
     pygame.draw.rect(display, 'gray', exit)
     if menu.collidepoint(mx, my):
         pygame.draw.rect(display, (112, 112, 112), menu)
     if exit.collidepoint(mx, my):
         pygame.draw.rect(display, (112, 112, 112), exit)
+        if dieuiclicked:
+            running = False
     f1 = myfont.render('Back to menu', False, 'white')
-    display.blit(f1, (width - 350, height + 60))
+    display.blit(f1, (width - 17.5 * cellsize, height + 3 * cellsize))
     f2 = myfont.render('Exit', False, 'white')
-    display.blit(f2, (width + 120, height + 60))
+    display.blit(f2, (width + 6 * cellsize, height + 3 * cellsize))
 
 
 def outline_mask(img, loc):
+    img = pygame.transform.scale(img, (cellsize, cellsize))
     mask = pygame.mask.from_surface(img)
     mask_outline = mask.outline()
     n = 0
@@ -532,6 +543,7 @@ def outline_mask(img, loc):
 
 
 def outline_mask1(img, loc):
+    img = pygame.transform.scale(img, (cellsize * 6, cellsize * 6))
     mask = pygame.mask.from_surface(img)
     mask_outline = mask.outline()
     n = 0
@@ -541,28 +553,39 @@ def outline_mask1(img, loc):
     pygame.draw.polygon(display, (255, 255, 255), mask_outline, 7)
 
 
+def outline_mask2(img, loc):
+    img = pygame.transform.scale(img, ( 5 * cellsize / 20, 5 * cellsize / 20))
+    mask = pygame.mask.from_surface(img)
+    mask_outline = mask.outline()
+    n = 0
+    for point in mask_outline:
+        mask_outline[n] = (point[0] + loc[0], point[1] + loc[1])
+        n += 1
+    pygame.draw.polygon(window, (255, 255, 255), mask_outline, 3)
+
+
 def maketower(n):
     global towernum
     x, y = getmpos()
     if maycreatetower(x, y) and x <= width:
         if n:
             if n == 1 and plr.money >= 10:
-                towers.append(CommonTower(x + cellsize / 2, y + cellsize / 2, 10, 'green', 40, 1, 10, 3.5))
+                towers.append(CommonTower(x + cellsize / 2, y + cellsize / 2, 10, 'green', 40, 1, 30, 2))
                 plr.money -= 10
                 tile_rects.append(pygame.Rect(x, y, cellsize, cellsize))
                 tile_rects_coord.append([x // cellsize, y // cellsize])
             if n == 2 and plr.money >= 15:
-                towers.append(QuadTower(x + cellsize / 2, y + cellsize / 2, 10, 'yellow', 30, 1, 15, 2))
+                towers.append(QuadTower(x + cellsize / 2, y + cellsize / 2, 10, 'yellow', 30, 1, 40, 1))
                 plr.money -= 15
                 tile_rects.append(pygame.Rect(x, y, cellsize, cellsize))
                 tile_rects_coord.append([x // cellsize, y // cellsize])
             if n == 4 and plr.money >= 50:
-                towers.append(HomingTower(x + cellsize / 2, y + cellsize / 2, 10, 'blue', 50, 1, 50, 2))
+                towers.append(HomingTower(x + cellsize / 2, y + cellsize / 2, 10, 'blue', 40, 1, 500, 0.7))
                 plr.money -= 50
                 tile_rects.append(pygame.Rect(x, y, cellsize, cellsize))
                 tile_rects_coord.append([x // cellsize, y // cellsize])
             if n == 3 and plr.money >= 30:
-                towers.append(TheEighthTower(x + cellsize / 2, y + cellsize / 2, 10, 'red', 20, 1, 30, 2))
+                towers.append(TheEighthTower(x + cellsize / 2, y + cellsize / 2, 10, 'red', 20, 1, 40, 1))
                 plr.money -= 30
                 tile_rects.append(pygame.Rect(x, y, cellsize, cellsize))
                 tile_rects_coord.append([x // cellsize, y // cellsize])
@@ -586,6 +609,13 @@ def checklife():
         alive = False
 
 
+def overwidth():
+    global alive
+    if meat:
+        if meat[0].x > cellsize * countx:
+            alive = False
+
+
 def createrad():
     if towernum:
         radius = cellsize * 3
@@ -604,6 +634,7 @@ def createrad():
 
 
 def run():
+    overwidth()
     if alive:
         global inviztime
         for tower in towers:
@@ -644,13 +675,14 @@ def run():
                         if ch == 5 or ch == 2:
                             adddrop(meats.x, meats.y, meats.x, meats.y, True)
                         meat.remove(meats)
-            if FreshMeat.rng(meats) > width:
-                meat.remove(meats)
             if inviztime > 500 and player.rect().colliderect(meats.rect):
                 player.hp -= 1
                 inviztime = 0
             else:
                 inviztime += 1
+    if len(meat) == 0:
+        for i in range(10):
+            meatcreate(meatstrt[0] - i * 20, meatstrt[1], 100, 0.5, 10, 'red', 10)
     else:
         for tower in towers:
             tower.draw()
@@ -682,7 +714,7 @@ plr = Player(100)
 for i in range(10):
     meatcreate(meatstrt[0] - i * 20, meatstrt[1], 100, 0.5, 10, 'red', 10)
 crosshair = Crosshair()
-player = e.Entity(*[21, 21], 16, 16, 10, 'player')
+player = e.Entity(*[cellsize + 1, cellsize + 1], 16, 16, 10, 'player')
 fullhp = player.hp
 playerhp = Healthpoints(fullhp, player.hp)
 running = True
@@ -745,7 +777,7 @@ while running:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     maketower(towernum)
-                    if getmpos()[0] >= 1361:
+                    if getmpos()[0] >= 68 * cellsize:
                         towernum = uiswtch()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_d:
@@ -793,9 +825,13 @@ while running:
         checklife()
         clock.tick(fps)
     else:
+        dieuiclicked = False
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    dieuiclicked = True
         createfloor()
         createwall()
         createway()
@@ -807,8 +843,8 @@ while running:
         ui()
         deadscreen.fill((0, 0, 0, 128))
         display.blit(pygame.transform.scale(deadscreen, (width1, height1)), (0, 0))
-        hp = myfont1.render('You died', False, 'white')
-        display.blit(hp, (width - 200, height - 200))
+        hp = myfont1.render('Game over!', False, 'white')
+        display.blit(hp, (width - 10 * cellsize, height - 10 * cellsize))
         dieui()
         crosshair.render()
         pygame.display.update()
