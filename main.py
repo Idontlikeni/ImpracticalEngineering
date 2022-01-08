@@ -14,7 +14,7 @@ clock = pygame.time.Clock()
 
 WINDOW_SIZE = (1600, 900)
 TILE_SIZE = 16
-screen = pygame.display.set_mode(WINDOW_SIZE, 0, 32)
+screen = pygame.display.set_mode(WINDOW_SIZE, pygame.RESIZABLE, 32)
 
 ss = e.spritesheet('data_img/spritesheet_2.png')
 
@@ -69,6 +69,11 @@ def main_menu():
             if event.type == MOUSEBUTTONDOWN:
                 if event.button == 1:
                     click = True
+            
+            if event.type == MOUSEBUTTONUP:
+                if event.button == 1:
+                    click = False
+
         screen.blit(pygame.transform.scale(display, WINDOW_SIZE), (0, 0))
         pygame.display.update()
         clock.tick(60)
@@ -134,7 +139,7 @@ def game():
         collision_types = player.move(player_movement,tile_rects, [])
 
         player.move_projectiles(tile_rects, world.get_enemies(), dt)
-        player.update()
+        player.update(mouse_angle)
         world.update(player, dt)
         world.draw(display, scroll)
         player.draw(display,scroll)
@@ -205,6 +210,8 @@ def options():
     uslza = 0
     SCALE_MULTIPLIER = 5
     cveta1 = (200, 200, 200)
+    cveta2 = (255, 255, 255)
+    cveta3 = (0, 255, 0)
     display = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER))
     while running:
         display.fill((0, 0, 0))
