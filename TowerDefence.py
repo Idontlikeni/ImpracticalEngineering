@@ -9,13 +9,21 @@ countx = 34
 county = 23
 sclsz = 2
 sclsz1 = 1.3
-width1 = 1920
-height1 = 1080
+width1 = 1600
+height1 = 900
 width = width1 / sclsz
 height = height1 / sclsz
 cellsize = (width - 120) // countx
+cellsize1 = (width / 2) // countx
+countx1 = round(width / 2 / cellsize)
+county1 = round(height / 2 / cellsize)
+if county1 * cellsize < height / 2:
+    county1 += 1
+if countx1 * cellsize < width / 2:
+    countx1 += 1
 fps = 60
 inviztime = 0
+inhub = 0
 bullets = []
 towers = []
 meat = []
@@ -25,6 +33,7 @@ walls = []
 way = []
 allmetal = []
 tile_rects = []
+tile_rects1 = []
 tile_rects_coord = []
 explosions = []
 towernum = 0
@@ -79,6 +88,8 @@ pygame.font.init()
 myfont = pygame.font.Font('MaredivRegular.ttf', round(1.5 * cellsize))
 myfont1 = pygame.font.Font('MaredivRegular.ttf', round(4 * cellsize))
 window = pygame.Surface((width, height))
+hubscreen = pygame.Surface((width / 2, height / 2))
+hubscreen.fill((50, 50, 50))
 display = pygame.display.set_mode((width1, height1))
 deadscreen = pygame.Surface((width, height), pygame.SRCALPHA)
 crosshairsurf = pygame.Surface((width, height), pygame.SRCALPHA)
@@ -112,6 +123,11 @@ for y in range(len(Map)):
         for x in range(len(Map[0])):
             if Map[y][x] != 0 and Map[y][x] != 9:
                 way.append([x, y])
+for x in range(countx1):
+    for y in range(county1):
+        if x == 0 or x == countx1 - 1 or y == 0 or y == county1 - 1:
+            tile_rects1.append(pygame.Rect(x * cellsize, y * cellsize, cellsize, cellsize))
+tile_rects1.remove(pygame.Rect(0, county1 // 2 * cellsize, cellsize, cellsize))
 
 
 class Player:
@@ -437,6 +453,11 @@ def createwall():
                 window.blit(cropped, (x * cellsize, y * cellsize))
 
 
+def hubwall():
+    for i in tile_rects1:
+        pygame.draw.rect(hubscreen, 'red', i, 1)
+
+
 def meatcreate(x, y, hp, speed, size, color, reward):
     meat.append(FreshMeat(x, y, hp, speed, size, color, reward))
 
@@ -637,6 +658,13 @@ def overwidth():
             alive = False
 
 
+def outrng():
+    global inhub
+    if player.x > cellsize * countx:
+        player.set_pos(20, 100)
+        inhub = True
+
+
 def createrad():
     if towernum:
         radius = cellsize * 3
@@ -800,7 +828,64 @@ yellowtow1 = pygame.transform.scale(yellowtow, (cellsize * 6, cellsize * 6))
 redtow1 = pygame.transform.scale(redtow, (cellsize * 6, cellsize * 6))
 bluetow1 = pygame.transform.scale(bluetow, (cellsize * 6, cellsize * 6))
 while running:
-    if alive:
+    if inhub:
+        hubscreen.fill((50, 50, 50))
+        player_movement = [0, 0]
+        dt = time.time() - last_time
+        dt *= 60
+        last_time = time.time()
+        if moving_right:
+            player_movement[0] += playerv * dt * speedcoef
+        if moving_left:
+            player_movement[0] -= playerv * dt * speedcoef
+        if moving_up:
+            player_movement[1] -= playerv * dt * speedcoef
+        if moving_down:
+            player_movement[1] += playerv * dt * speedcoef
+        player.move(player_movement, tile_rects1, [])
+        player.update()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_d:
+                    moving_right = True
+                if event.key == pygame.K_a:
+                    moving_left = True
+                if event.key == pygame.K_w:
+                    moving_up = True
+                if event.key == pygame.K_s:
+                    moving_down = True
+                if event.key == pygame.K_1:
+                    towernum = 1
+                if event.key == pygame.K_2:
+                    towernum = 2
+                if event.key == pygame.K_3:
+                    towernum = 3
+                if event.key == pygame.K_4:
+                    towernum = 4
+                if event.key == pygame.K_ESCAPE:
+                    if towernum != 0:
+                        towernum = 0
+                    else:
+                        running = False
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_d:
+                    moving_right = False
+                if event.key == pygame.K_a:
+                    moving_left = False
+                if event.key == pygame.K_w:
+                    moving_up = False
+                if event.key == pygame.K_s:
+                    moving_down = False
+        player.draw(hubscreen, [0, 0])
+        hubwall()
+        display.blit(pygame.transform.scale(hubscreen, (width1, height1)), (0, 0))
+        playerhp.draw(fullhp, player.hp)
+        crosshair.render()
+        pygame.display.update()
+        clock.tick(fps)
+    elif alive:
         for meats in meat:
             if math.sqrt((meats.x - (player.x + 8)) ** 2 + (meats.y - (player.y + 8)) ** 2) < cellsize * 2 and meats.slowed:
                 playerv = 0.5
@@ -864,6 +949,7 @@ while running:
         createwall()
         createway()
         run()
+        outrng()
         player.draw(window, [0, 0])
         createrad()
         for i, explosion in sorted(enumerate(explosions), reverse=True):
