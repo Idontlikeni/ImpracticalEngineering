@@ -9,8 +9,8 @@ countx = 34
 county = 23
 sclsz = 2
 sclsz1 = 1.3
-width1 = 1920
-height1 = 1080
+width1 = 1600
+height1 = 900
 width = width1 / sclsz
 height = height1 / sclsz
 cellsize = (width - 120) // countx
@@ -217,7 +217,7 @@ class Bullet:
     def __init__(self, x, y, size, color, damage, speed, direction):
         self.x = x
         self.y = y
-        self.size = size / sclsz1
+        self.size = size / sclsz1 * cellsize / 20
         self.color = color
         self.damage = damage
         self.speed = speed * cellsize / 20
@@ -276,7 +276,7 @@ class FreshMeat:
     def __init__(self, x, y, hp, speed, size, color, slowed=False):
         self.x = x
         self.y = y
-        self.size = size / sclsz1
+        self.size = size / sclsz1 * cellsize / 20
         self.color = color
         self.hp = hp
         self.speed = speed * cellsize / 20
@@ -646,11 +646,11 @@ def createrad():
         if maycreatetower(mx, my):
             pygame.draw.circle(window, 'green',
                                (mx // cellsize * cellsize + cellsize / 2, my // cellsize * cellsize + cellsize / 2),
-                               10 / sclsz1)
+                               0.5 * cellsize / sclsz1)
         else:
             pygame.draw.circle(window, 'red',
                                (mx // cellsize * cellsize + cellsize / 2, my // cellsize * cellsize + cellsize / 2),
-                               10 / sclsz1)
+                               0.5 * cellsize / sclsz1)
 
 
 def run():
@@ -708,9 +708,9 @@ def run():
             if spawntime > 300:
                 for i in range(10 + wawe * 2):
                     if wawe == 0:
-                        meatcreate(meatstrt[0] - i * 20, meatstrt[1], 100, 0.7, wawe + 10, 'red', False)
+                        meatcreate(meatstrt[0] - i * cellsize, meatstrt[1], 100, 0.7, wawe + 10, 'red', False)
                     else:
-                        meatcreate(meatstrt[0] - i * 20, meatstrt[1], wawe * 100, 0.7, wawe + 10, 'red', False)
+                        meatcreate(meatstrt[0] - i * cellsize, meatstrt[1], wawe * 100, 0.7, wawe + 10, 'red', False)
                 wawe += 1
                 spawntime = 0
             else:
@@ -745,7 +745,7 @@ def run():
 plr = Player(100)
 wawe = 0
 crosshair = Crosshair()
-player = e.Entity(*[cellsize + 1, cellsize + 1], 16, 16, 10, 'player')
+player = e.Entity(*[cellsize + 1, cellsize + 1], 0.8 * cellsize, 0.8 * cellsize, 10, 'player')
 fullhp = player.hp
 playerhp = Healthpoints(fullhp, player.hp)
 running = True
