@@ -147,11 +147,13 @@ class Healthpoints:
         if nowhp < 1:
             nowhp = 0
         pygame.draw.rect(display, 'black', (0.03 * width, 0.05 * height, 12.5 * cellsize, 2 * cellsize))
-        pygame.draw.rect(display, 'white', (0.03 * width, 0.05 * height, 12.5 * cellsize, 2 * cellsize), 8)
+        pygame.draw.rect(display, 'white', (0.03 * width - 0.2 * cellsize, 0.05 * height - 0.2 * cellsize,
+                                            12.5 * cellsize + 0.4 * cellsize, 2 * cellsize + 0.4 * cellsize))
+        pygame.draw.rect(display, 'black', (0.03 * width, 0.05 * height, 12.5 * cellsize, 2 * cellsize))
         pygame.draw.rect(display, 'red',
-                         (0.03 * width + 1, 0.05 * height + 1, (nowhp / fullhp) * 12.5 * cellsize - 1, 2 * cellsize - 1))
+                         (0.03 * width, 0.05 * height, (nowhp / fullhp) * 12.5 * cellsize, 2 * cellsize))
         hp = myfont.render(str(f'{nowhp}/{fullhp}'), False, 'white')
-        display.blit(hp, ((0.01 * width + 250 / 3) * cellsize / 20, 0.05 * height - (2 * cellsize / 20)))
+        display.blit(hp, (5.1 * cellsize, 0.9 * cellsize))
 
 
 class Tower:
