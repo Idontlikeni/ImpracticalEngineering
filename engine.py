@@ -1,4 +1,5 @@
 import pygame, math, os, random, itertools
+from pygame import display
 from pygame.locals import *
 
 global e_colorkey
@@ -29,6 +30,15 @@ def circle_surf(radius, color):
     pygame.draw.circle(surf, color, (radius, radius), radius)
     surf.set_colorkey((0, 0, 0))
     return surf
+
+def blitRotate(surf, image, pos, originPos, angle):
+    image_rect = image.get_rect(topleft = (pos[0] - originPos[0], pos[1]-originPos[1]))
+    offset_center_to_pivot = pygame.math.Vector2(pos) - image_rect.center
+    rotated_offset = offset_center_to_pivot.rotate(-angle)
+    rotated_image_center = (pos[0] - rotated_offset.x, pos[1] - rotated_offset.y)
+    rotated_image = pygame.transform.rotate(image, angle)
+    rotated_image_rect = rotated_image.get_rect(center = rotated_image_center)
+    surf.blit(rotated_image, rotated_image_rect)
 
 class spritesheet(object):
     def __init__(self, filename):
@@ -161,8 +171,7 @@ class World:  #  ZA WARUDOOOOOO
                 #  print(enemy.shootTimer)
                 enemy.update()
                 enemy.move(enemy.movement, self.get_rects(), [])
-                enemy.check_player(self.get_rects(), player)
-                enemy.shoot(0)
+                enemy.check_player(self.field, player)
                 enemy.move_projectiles(self.get_rects(), [player], dt)
         
         for i, effect in sorted(enumerate(self.effects), reverse=True):
@@ -422,59 +431,161 @@ class Enemy(Entity):
         self.is_waiting = False
         self.sees_enemy = False
         self.color = [255, 0, 0]
+        self.draw_pixels = []
+        self.debug = [[0, 0], [0, 0]]
+        self.player_angle = 0
+        self.player_dist = 0
 
     def wonder(self):
         pass
     
-    def check_player(self, map_rectangles, player):
-        pass
+    def shoot(self, angle):
+        if self.shootTimer >= 50:
+            projectile = Projectile(self.x + self.width / 2 - 4, self.y + self.height / 2 - 4, 8, 8, angle, 2, "enemy_projectile")
+            self.projectiles.append(projectile)
+            self.shootTimer = 0
+            return projectile
+        return None
+
+
+
+    def check_player(self, map, player):
+        self.draw_pixels = []
         x1 = player.x + player.width / 2
         y1 = player.y + player.height / 2
         x2 = self.x + self.width / 2
         y2 = self.y + self.height / 2
-        if math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2) <= 150:
-            self.color = [0, 255, 0]
+        dist = math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+        if dist <= 150: # can see player
+            self.player_dist = dist
+            angle = math.atan2(y1 - y2, x1 - x2)
+            sin_a = math.sin(angle)
+            cos_a = math.cos(angle)
+            self.debug = [[x2, y2], [x1, y1]]
+            for depth in range(int(dist)):
+                x = x2 + depth * cos_a
+                y = y2 + depth * sin_a
+                if map[int(y) // TILE_SIZE][int(x) // TILE_SIZE] != '0':
+                    self.can_see_player = False
+                    self.color = [255, 0, 0]
+                    break
+                self.draw_pixels.append([x, y])
+            else:
+                self.can_see_player = True
+                self.player_angle = angle
+                self.player_dist = dist
+                self.color = [0, 255, 0]
         else: 
             self.color = [255, 0, 0]
-            #  return True
+            return False
 
                 
     def update(self):
         super().update()
-        print(self.wait_timer)
+        #  print(self.wait_timer)
+        if self.can_see_player:
+            self.shoot(random.uniform(self.player_angle - 0.4, self.player_angle + 0.4))
         if self.is_waiting:
             self.wait_timer -= 1
             self.is_waiting = self.wait_timer > 0
             self.movement = [0, 0]
         else:
             if not self.is_wondering:
-                angle = math.radians(random.randint(0, 360))
+                angle = 0
+                dist = 0
+                if self.can_see_player:
+                    print('a')
+                    angle = random.uniform(self.player_angle - 0.7, self.player_angle + 0.7)
+                    dist = random.randint(30, max(51, int(self.player_dist)))
+                else:    
+                    angle = random.uniform(0, math.pi * 2)
+                    dist = random.randint(50, 170)
                 self.angle = angle
-                dist = random.randint(50, 170)
-                self.destination_pos = [self.x + self.width / 2 + math.cos(angle) * dist, self.y +  self.height / 2+ math.sin(angle) * dist]
-                print("new: ", math.cos(angle) * 100)
+                self.destination_pos = [self.x + math.cos(self.angle) * dist, self.y + math.sin(self.angle) * dist]
+                #  print("new: ", math.cos(angle) * 100)
                 self.is_wondering = True
                 self.movement = [math.cos(self.angle) * self.velocity, math.sin(self.angle) * self.velocity]
-                self.wonder_timer = int(dist * 4)
+                self.wonder_timer = int(dist * 2)
                 self.wait_timer -= 1
             self.wonder_timer -= 1
             #  print("update: ", math.cos(self.angle) * 100)
-            if (self.x - self.destination_pos[0] < 0.1 and self.y - self.destination_pos[1] < 0.1) or self.wonder_timer <= 0:
+            if (abs(self.x - self.destination_pos[0]) < self.width and abs(self.y - self.destination_pos[1]) < self.height) or self.wonder_timer <= 0:
                 self.is_waiting = True
-                self.wait_timer = random.randint(30, 80)
+                self.wait_timer = random.randint(30, 160)
                 self.is_wondering = False
 
         
     
     def draw(self, surface, scroll):
-        super().draw(surface, scroll)
+        pygame.draw.rect(surface, self.color, pygame.Rect(self.physical_object.x-scroll[0], self.physical_object.y-scroll[1],
+                                                           self.physical_object.width, self.physical_object.height), 1)
         pygame.draw.line(surface, self.color, (self.x - scroll[0], self.y - scroll[1]), 
         (self.destination_pos[0] - scroll[0], self.destination_pos[1] - scroll[1]))
+        for pixel in self.draw_pixels:
+            pygame.draw.rect(surface, (0, 255, 255), pygame.Rect(pixel[0] - scroll[0], pixel[1] - scroll[1], 1, 1))
+        pygame.draw.line(surface, (0, 0, 255), (self.debug[0][0] - scroll[0], self.debug[0][1] - scroll[1]),
+        (self.debug[1][0] - scroll[0], self.debug[1][1] - scroll[1]))
+
     
 
 class Player(Entity):
     def __init__(self, x, y, width, height, hp, type):
         super().__init__(x, y, width, height, hp, type)
+        self.primary_weapon = Weapon(self.x, self.y, 0, "data_img/weapon_1.png", self)
+    
+    def shoot(self, angle):
+        return super().shoot(angle)
+    
+    def update(self, mouse_angle):
+        self.primary_weapon.update()
+        self.primary_weapon.set_pos(self.x, self.y)
+        self.primary_weapon.set_angle(mouse_angle)
+        return super().update()
+
+    def draw(self, surface, scroll):
+        super().draw(surface, scroll)
+        self.primary_weapon.draw(surface, scroll)
+        
+
+class Weapon:
+    def __init__(self, x, y, angle, path, entity):
+        self.x = x
+        self.y = y
+        self.angle = angle
+        self.img = pygame.image.load(path).convert()
+        #  self.img.set_colorkey((0, 0, 0))
+        self.entity = entity
+        self.shootTimer = 50
+        self.cooldown = 50
+
+    def set_pos(self, x, y):
+        self.x = x
+        self.y = y
+    
+    def set_angle(self, angle):
+        self.angle = angle
+
+    def shoot(self, angle=None):
+        if angle is None:
+            angle = self.angle
+        
+        if self.shootTimer >= self.cooldown:
+            projectile = Projectile(self.x - 4, self.y - 4, 8, 8, angle, 8, self.entity.type + "_projectile")
+            self.entity.projectiles.append(projectile)
+            self.shootTimer = 0
+            return projectile
+        return None
+    
+    def draw(self, surface, scroll):
+
+        # blitRotate(surface, self.image, (self.x - scroll[0], self.y - scroll[1]), pivot, -math.degrees(self.angle))
+
+        copy_img = pygame.transform.rotate(self.img, -math.degrees(self.angle))
+        print(math.degrees(self.angle))
+        surface.blit(copy_img, (self.x - scroll[0], self.y - scroll[1]))
+
+    def update(self):
+        self.shootTimer += 1
 
 class Cursor(GameObject):
     def __init__(self, x, y, path):
@@ -514,6 +625,9 @@ class Projectile(Entity):
     def set_move_angle(self, angle):
         self.angle = angle
 
+class EnemyProjectiles(Projectile):
+    def __init__():
+        pass
 
 class Particle:
     def __init__(self, x, y, velocity, time, scroll):
