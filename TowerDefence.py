@@ -9,8 +9,8 @@ countx = 34
 county = 23
 sclsz = 2
 sclsz1 = 1.3
-width1 = 1600
-height1 = 900
+width1 = 1920
+height1 = 1080
 width = width1 / sclsz
 height = height1 / sclsz
 cellsize = (width - 120) // countx
@@ -30,6 +30,7 @@ explosions = []
 towernum = 0
 spawntime = 0
 playerv = 2
+speedcoef = cellsize / 20
 uirect = [pygame.Rect(68.05 * cellsize, 8 * cellsize, 12 * cellsize, 8.5 * cellsize),
           pygame.Rect(68.05 * cellsize, 17 * cellsize, 12 * cellsize, 8.5 * cellsize),
           pygame.Rect(68.05 * cellsize, 25.5 * cellsize, 12 * cellsize, 8.5 * cellsize),
@@ -811,13 +812,13 @@ while running:
         dt *= 60
         last_time = time.time()
         if moving_right:
-            player_movement[0] += playerv * dt
+            player_movement[0] += playerv * dt * speedcoef
         if moving_left:
-            player_movement[0] -= playerv * dt
+            player_movement[0] -= playerv * dt * speedcoef
         if moving_up:
-            player_movement[1] -= playerv * dt
+            player_movement[1] -= playerv * dt * speedcoef
         if moving_down:
-            player_movement[1] += playerv * dt
+            player_movement[1] += playerv * dt * speedcoef
         player.move(player_movement, tile_rects, [])
         player.update()
         for event in pygame.event.get():
