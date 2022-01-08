@@ -9,12 +9,11 @@ countx = 34
 county = 23
 sclsz = 2
 sclsz1 = 1.3
-width1 = 3840
-height1 = 2160
+width1 = 1920
+height1 = 1080
 width = width1 / sclsz
 height = height1 / sclsz
 cellsize = (width - 120) // countx
-cellost = (width - 120) % countx
 fps = 60
 inviztime = 0
 bullets = []
@@ -83,10 +82,13 @@ display = pygame.display.set_mode((width1, height1))
 deadscreen = pygame.Surface((width, height), pygame.SRCALPHA)
 crosshairsurf = pygame.Surface((width, height), pygame.SRCALPHA)
 ss = pygame.image.load('data_img/spritesheet_3.png').convert_alpha()
-sand = pygame.image.load('data_img/sand.png')
-ssand = pygame.Surface((20, 20), pygame.SRCALPHA)
-ssand.blit(sand, (0, 0), (0, 0, 20, 20))
-ssway = pygame.image.load('data_img/way.png')
+ss = pygame.transform.scale(ss, (3 * cellsize, 3 * cellsize))
+sand = pygame.image.load('data_img/sand.png').convert_alpha()
+sand = pygame.transform.scale(sand, (cellsize, cellsize))
+ssand = pygame.Surface((cellsize, cellsize), pygame.SRCALPHA)
+ssand.blit(sand, (0, 0), (0, 0, cellsize, cellsize))
+ssway = pygame.image.load('data_img/way.png').convert_alpha()
+cross = pygame.image.load('data_img/curs_4x2.png').convert_alpha()
 ss.set_colorkey((0, 0, 0))
 clock = pygame.time.Clock()
 for y in range(len(Map)):
@@ -105,6 +107,10 @@ for y in range(len(Map)):
             tile_rects.append(pygame.Rect(x * cellsize, y * cellsize, cellsize, cellsize))
             walls.append(pygame.Rect(x * cellsize, y * cellsize, cellsize, cellsize))
             tile_rects_coord.append([x, y])
+    for y in range(len(Map)):
+        for x in range(len(Map[0])):
+            if Map[y][x] != 0 and Map[y][x] != 9:
+                way.append([x, y])
 
 
 class Player:
@@ -160,7 +166,7 @@ class CommonTower(Tower):
 
     def draw(self):
         outline_mask(greentow, (self.x - cellsize / 2, self.y - cellsize / 2))
-        window.blit(pygame.transform.scale(greentow, (cellsize, cellsize)), (self.x - cellsize / 2, self.y - cellsize / 2))
+        window.blit(greentow, (self.x - cellsize / 2, self.y - cellsize / 2))
         # pygame.draw.circle(window, self.color, [self.x, self.y], self.size)
 
 
@@ -175,7 +181,7 @@ class QuadTower(Tower):
 
     def draw(self):
         outline_mask(yellowtow, (self.x - cellsize / 2, self.y - cellsize / 2))
-        window.blit(pygame.transform.scale(yellowtow, (cellsize, cellsize)), (self.x - cellsize / 2, self.y - cellsize / 2))
+        window.blit(yellowtow, (self.x - cellsize / 2, self.y - cellsize / 2))
 
 
 class TheEighthTower(Tower):
@@ -189,7 +195,7 @@ class TheEighthTower(Tower):
 
     def draw(self):
         outline_mask(redtow, (self.x - cellsize / 2, self.y - cellsize / 2))
-        window.blit(pygame.transform.scale(redtow, (cellsize, cellsize)), (self.x - cellsize / 2, self.y - cellsize / 2))
+        window.blit(redtow, (self.x - cellsize / 2, self.y - cellsize / 2))
 
 
 class HomingTower(Tower):
@@ -204,7 +210,7 @@ class HomingTower(Tower):
 
     def draw(self):
         outline_mask(bluetow, (self.x - cellsize / 2, self.y - cellsize / 2))
-        window.blit(pygame.transform.scale(bluetow, (cellsize, cellsize)), (self.x - cellsize / 2, self.y - cellsize / 2))
+        window.blit(bluetow, (self.x - cellsize / 2, self.y - cellsize / 2))
 
 
 class Bullet:
@@ -375,7 +381,7 @@ class Drop:
 
 class Crosshair:
     def __init__(self):
-        self.Cursor = pygame.image.load('data_img/curs_4x2.png')
+        self.Cursor = cross
         pygame.mouse.set_visible(False)
 
     def render(self):
@@ -388,48 +394,46 @@ def createway():
             if Map[y][x] != 0 and Map[y][x] != 9:
                 pygame.draw.rect(window, (186, 145, 65), [x * cellsize, y * cellsize,
                                                   cellsize, cellsize])
-                way.append([x, y])
 
 
 def createfloor():
     for y in range(len(Map)):
         for x in range(len(Map[0])):
             if Map[y][x] == 0:
-                window.blit(pygame.transform.scale(ssand, (cellsize, cellsize)), (x * cellsize, y * cellsize))
+                window.blit(ssand, (x * cellsize, y * cellsize))
 
 
 def createwall():
-    cropped = pygame.Surface((20, 20), pygame.SRCALPHA)
-    cropped.fill((240, 181, 65))
+    cropped = pygame.Surface((cellsize, cellsize), pygame.SRCALPHA)
     for y in range(len(Map)):
         for x in range(len(Map[0])):
             if (y == 0 and x == 0) or (y == 0 and x == 33) or (y == 22 and x == 0) or (y == 22 and x == 33):
-                cropped.blit(ss, (0, 0), (20, 20, 20, 20))
-                window.blit(pygame.transform.scale(cropped, (cellsize, cellsize)), (x * cellsize, y * cellsize))
+                cropped.blit(ss, (0, 0), (cellsize, cellsize, cellsize, cellsize))
+                window.blit(cropped, (x * cellsize, y * cellsize))
             elif y == 0:
-                cropped.blit(ss, (0, 0), (20, 40, 20, 20))
-                window.blit(pygame.transform.scale(cropped, (cellsize, cellsize)), (x * cellsize, y * cellsize))
+                cropped.blit(ss, (0, 0), (cellsize, 2 * cellsize, cellsize, cellsize))
+                window.blit(cropped, (x * cellsize, y * cellsize))
             elif y == 22:
-                cropped.blit(ss, (0, 0), (20, 0, 20, 20))
-                window.blit(pygame.transform.scale(cropped, (cellsize, cellsize)), (x * cellsize, y * cellsize))
+                cropped.blit(ss, (0, 0), (cellsize, 0, cellsize, cellsize))
+                window.blit(cropped, (x * cellsize, y * cellsize))
             elif x == 33:
-                cropped.blit(ss, (0, 0), (0, 20, 20, 20))
-                window.blit(pygame.transform.scale(cropped, (cellsize, cellsize)), (x * cellsize, y * cellsize))
+                cropped.blit(ss, (0, 0), (0, cellsize, cellsize, cellsize))
+                window.blit(cropped, (x * cellsize, y * cellsize))
             elif x == 0:
-                cropped.blit(ss, (0, 0), (40, 20, 20, 20))
-                window.blit(pygame.transform.scale(cropped, (cellsize, cellsize)), (x * cellsize, y * cellsize))
+                cropped.blit(ss, (0, 0), (2 * cellsize, cellsize, cellsize, cellsize))
+                window.blit(cropped, (x * cellsize, y * cellsize))
             if x == 0 and y == 10:
-                cropped.blit(ss, (0, 0), (40, 40, 20, 20))
-                window.blit(pygame.transform.scale(cropped, (cellsize, cellsize)), (x * cellsize, y * cellsize))
+                cropped.blit(ss, (0, 0), (2 * cellsize, 2 * cellsize, cellsize, cellsize))
+                window.blit(cropped, (x * cellsize, y * cellsize))
             if x == 0 and y == 12:
-                cropped.blit(ss, (0, 0), (40, 0, 20, 20))
-                window.blit(pygame.transform.scale(cropped, (cellsize, cellsize)), (x * cellsize, y * cellsize))
+                cropped.blit(ss, (0, 0), (2 * cellsize, 0, cellsize, cellsize))
+                window.blit(cropped, (x * cellsize, y * cellsize))
             if x == 33 and y == 10:
-                cropped.blit(ss, (0, 0), (0, 40, 20, 20))
-                window.blit(pygame.transform.scale(cropped, (cellsize, cellsize)), (x * cellsize, y * cellsize))
+                cropped.blit(ss, (0, 0), (0, 2 * cellsize, cellsize, cellsize))
+                window.blit(cropped, (x * cellsize, y * cellsize))
             if x == 33 and y == 12:
-                cropped.blit(ss, (0, 0), (0, 0, 20, 20))
-                window.blit(pygame.transform.scale(cropped, (cellsize, cellsize)), (x * cellsize, y * cellsize))
+                cropped.blit(ss, (0, 0), (0, 0, cellsize, cellsize))
+                window.blit(cropped, (x * cellsize, y * cellsize))
 
 
 def meatcreate(x, y, hp, speed, size, color, reward):
@@ -479,22 +483,22 @@ def ui():
     display.blit(can, (cellsize * 72, 4.9 * cellsize))
     greentow1 = pygame.transform.scale(greentow, (6 * cellsize, 6 * cellsize))
     outline_mask1(greentow1, (71 * cellsize, 8.5 * cellsize))
-    display.blit(pygame.transform.scale(greentow, (6 * cellsize, 6 * cellsize)), (71 * cellsize, 8.5 * cellsize))
+    display.blit(greentow1, (71 * cellsize, 8.5 * cellsize))
     cost = myfont.render('10', False, 'white')
     display.blit(cost, (cellsize * 73.35, cellsize * 14.25))
     yellowtow1 = pygame.transform.scale(yellowtow, (cellsize * 6, cellsize * 6))
     outline_mask1(yellowtow1, (cellsize * 71, 17.5 * cellsize))
-    display.blit(pygame.transform.scale(yellowtow, (cellsize * 6, cellsize * 6)), (71 * cellsize, 17.5 * cellsize))
+    display.blit(yellowtow1, (71 * cellsize, 17.5 * cellsize))
     cost = myfont.render('15', False, 'white')
     display.blit(cost, (73.35 * cellsize, 23.25 * cellsize))
     redtow1 = pygame.transform.scale(redtow, (cellsize * 6, cellsize * 6))
     outline_mask1(redtow1, (71 * cellsize, 26 * cellsize))
-    display.blit(pygame.transform.scale(redtow, (cellsize * 6, cellsize * 6)), (71 * cellsize, 26 * cellsize))
+    display.blit(redtow1, (71 * cellsize, 26 * cellsize))
     cost = myfont.render('30', False, 'white')
     display.blit(cost, (73.35 * cellsize, 31.75 * cellsize))
     bluetow1 = pygame.transform.scale(bluetow, (cellsize * 6, cellsize * 6))
     outline_mask1(bluetow1, (71 * cellsize, 34.5 * cellsize))
-    display.blit(pygame.transform.scale(bluetow, (cellsize * 6, cellsize * 6)), (71 * cellsize, 34.5 * cellsize))
+    display.blit(bluetow1, (71 * cellsize, 34.5 * cellsize))
     money = myfont.render(str(plr.money), False, 'white')
     cost = myfont.render('50', False, 'white')
     display.blit(cost, (73.35 * cellsize, 40.25 * cellsize))
@@ -519,7 +523,7 @@ def uiswtch():
 
 
 def dieui():
-    global running, alive, bullets, towers, meat, drops, heals, wawe, playerv
+    global running, alive, bullets, towers, meat, drops, heals, wawe, playerv, player_movement
     mx, my = pygame.mouse.get_pos()
     retry = pygame.Rect(width - 20 * cellsize, height + 2.5 * cellsize, 15 * cellsize, 3.5 * cellsize)
     exit = pygame.Rect(width, height + 2.5 * cellsize, 15 * cellsize, 3.5 * cellsize)
@@ -539,6 +543,7 @@ def dieui():
             player.hp = 10
             plr.money = 100
             playerv = 2
+            player_movement = [0, 0]
     if exit.collidepoint(mx, my):
         pygame.draw.rect(display, (112, 112, 112), exit)
         if dieuiclicked:
@@ -550,7 +555,6 @@ def dieui():
 
 
 def outline_mask(img, loc):
-    img = pygame.transform.scale(img, (cellsize, cellsize))
     mask = pygame.mask.from_surface(img)
     mask_outline = mask.outline()
     n = 0
@@ -561,7 +565,6 @@ def outline_mask(img, loc):
 
 
 def outline_mask1(img, loc):
-    img = pygame.transform.scale(img, (cellsize * 6, cellsize * 6))
     mask = pygame.mask.from_surface(img)
     mask_outline = mask.outline()
     n = 0
@@ -709,9 +712,9 @@ def run():
             if spawntime > 300:
                 for i in range(10 + wawe * 2):
                     if wawe == 0:
-                        meatcreate(meatstrt[0] - i * 20, meatstrt[1], 100, 0.7, wawe + 10, 'red', True)
+                        meatcreate(meatstrt[0] - i * 20, meatstrt[1], 100, 0.7, wawe + 10, 'red', False)
                     else:
-                        meatcreate(meatstrt[0] - i * 20, meatstrt[1], wawe * 100, 0.7, wawe + 10, 'red', True)
+                        meatcreate(meatstrt[0] - i * 20, meatstrt[1], wawe * 100, 0.7, wawe + 10, 'red', False)
                 wawe += 1
                 spawntime = 0
             else:
@@ -756,36 +759,45 @@ moving_up = False
 moving_down = False
 last_time = time.time()
 greentower = pygame.image.load('data_img/greentower.png').convert_alpha()
-greentow = pygame.Surface((20, 20), pygame.SRCALPHA)
-greentow.blit(greentower, (0, 0), (0, 0, 20, 20))
+greentower = pygame.transform.scale(greentower, (cellsize, cellsize))
+greentow = pygame.Surface((cellsize, cellsize), pygame.SRCALPHA)
+greentow.blit(greentower, (0, 0), (0, 0, cellsize, cellsize))
 yellowtower = pygame.image.load('data_img/yellowtower.png').convert_alpha()
-yellowtow = pygame.Surface((20, 20), pygame.SRCALPHA)
-yellowtow.blit(yellowtower, (0, 0), (0, 0, 20, 20))
+yellowtower = pygame.transform.scale(yellowtower, (cellsize, cellsize))
+yellowtow = pygame.Surface((cellsize, cellsize), pygame.SRCALPHA)
+yellowtow.blit(yellowtower, (0, 0), (0, 0, cellsize, cellsize))
 redtower = pygame.image.load('data_img/redtower.png').convert_alpha()
-redtow = pygame.Surface((20, 20), pygame.SRCALPHA)
-redtow.blit(redtower, (0, 0), (0, 0, 20, 20))
+redtower = pygame.transform.scale(redtower, (cellsize, cellsize))
+redtow = pygame.Surface((cellsize, cellsize), pygame.SRCALPHA)
+redtow.blit(redtower, (0, 0), (0, 0, cellsize, cellsize))
 bluetower = pygame.image.load('data_img/bluetower.png').convert_alpha()
-bluetow = pygame.Surface((20, 20), pygame.SRCALPHA)
-bluetow.blit(bluetower, (0, 0), (0, 0, 20, 20))
+bluetower = pygame.transform.scale(bluetower, (cellsize, cellsize))
+bluetow = pygame.Surface((cellsize, cellsize), pygame.SRCALPHA)
+bluetow.blit(bluetower, (0, 0), (0, 0, cellsize, cellsize))
 metim = pygame.image.load('data_img/metal.png').convert_alpha()
-metal = pygame.Surface((5, 5), pygame.SRCALPHA)
-metal.blit(metim, (0, 0), (0, 0, 5, 5))
+metim = pygame.transform.scale(metim, (cellsize / 4, cellsize / 4))
+metal = pygame.Surface((cellsize / 4, cellsize / 4), pygame.SRCALPHA)
+metal.blit(metim, (0, 0), (0, 0, cellsize / 4, cellsize / 4))
 metim1 = pygame.image.load('data_img/metal1.png').convert_alpha()
-metal1 = pygame.Surface((5, 5), pygame.SRCALPHA)
-metal1.blit(metim1, (0, 0), (0, 0, 5, 5))
+metim1 = pygame.transform.scale(metim1, (cellsize / 4, cellsize / 4))
+metal1 = pygame.Surface((cellsize / 4, cellsize / 4), pygame.SRCALPHA)
+metal1.blit(metim1, (0, 0), (0, 0, cellsize / 4, cellsize / 4))
 metim2 = pygame.image.load('data_img/metal2.png').convert_alpha()
-metal2 = pygame.Surface((5, 5), pygame.SRCALPHA)
-metal2.blit(metim2, (0, 0), (0, 0, 5, 5))
+metim22 = pygame.transform.scale(metim2, (cellsize / 4, cellsize / 4))
+metal2 = pygame.Surface((cellsize / 4, cellsize / 4), pygame.SRCALPHA)
+metal2.blit(metim2, (0, 0), (0, 0, cellsize / 4, cellsize / 4))
 metim3 = pygame.image.load('data_img/metal3.png').convert_alpha()
-metal3 = pygame.Surface((5, 5), pygame.SRCALPHA)
-metal3.blit(metim3, (0, 0), (0, 0, 5, 5))
+metim3 = pygame.transform.scale(metim3, (cellsize / 4, cellsize / 4))
+metal3 = pygame.Surface((cellsize / 4, cellsize / 4), pygame.SRCALPHA)
+metal3.blit(metim3, (0, 0), (0, 0, cellsize / 4, cellsize / 4))
 allmetal.append(metal)
 allmetal.append(metal1)
 allmetal.append(metal2)
 allmetal.append(metal3)
 helim = pygame.image.load('data_img/heal.png').convert_alpha()
-healim = pygame.Surface((5, 5), pygame.SRCALPHA)
-healim.blit(helim, (0, 0), (0, 0, 5, 5))
+helim = pygame.transform.scale(helim, (cellsize / 4, cellsize / 4))
+healim = pygame.Surface((cellsize / 4, cellsize / 4), pygame.SRCALPHA)
+healim.blit(helim, (0, 0), (0, 0, cellsize / 4, cellsize / 4))
 while running:
     if alive:
         for meats in meat:
@@ -798,7 +810,6 @@ while running:
         dt = time.time() - last_time
         dt *= 60
         last_time = time.time()
-        display.fill((0, 0, 0))
         if moving_right:
             player_movement[0] += playerv * dt
         if moving_left:
@@ -890,7 +901,6 @@ while running:
         display.blit(hp, (width - 10 * cellsize, height - 10 * cellsize))
         dieui()
         crosshair.render()
-        pygame.display.update()
         pygame.display.update()
         clock.tick(fps)
 pygame.quit()
