@@ -580,9 +580,9 @@ def dieui():
             tile_rects = tile_rects[:lenwalls]
             wawe = 0
             alive = True
-            player.set_pos(cellsize + 1, cellsize + 1)
+            player.set_pos(cellsize * countx - player.width, cellsize * 11.1)
             player.hp = 10
-            plr.money = 100
+            plr.money = 35
             playerv = 2
             player_movement = [0, 0]
     if exit.collidepoint(mx, my):
@@ -694,7 +694,7 @@ def outrng():
         # heals = []
         wawe = 0
         alive = True
-        player.set_pos(cellsize * countx - 1, cellsize * 11.1)
+        player.set_pos(cellsize * countx - player.width, cellsize * 11.1)
         inhub = False
     elif player.y < 0 and inhub:
         inhub = False
@@ -809,7 +809,7 @@ def run():
 plr = Player(35)
 wawe = 0
 crosshair = Crosshair()
-player = e.Entity(*[cellsize + 1, cellsize + 1], 0.8 * cellsize, 0.8 * cellsize, 10, 'player')
+player = e.Entity(*[cellsize * countx - 0.8 * cellsize, cellsize * 11.1], 0.8 * cellsize, 0.8 * cellsize, 10, 'player')
 fullhp = player.hp
 playerhp = Healthpoints(fullhp, player.hp)
 running = True
@@ -862,6 +862,7 @@ greentow1 = pygame.transform.scale(greentow, (6 * cellsize, 6 * cellsize))
 yellowtow1 = pygame.transform.scale(yellowtow, (cellsize * 6, cellsize * 6))
 redtow1 = pygame.transform.scale(redtow, (cellsize * 6, cellsize * 6))
 bluetow1 = pygame.transform.scale(bluetow, (cellsize * 6, cellsize * 6))
+# player.hp = 0
 while running:
     if inhub:
         hubscreen.fill((50, 50, 50))
@@ -1036,7 +1037,7 @@ while running:
         deadscreen.fill((0, 0, 0, 128))
         display.blit(pygame.transform.scale(deadscreen, (width1, height1)), (0, 0))
         hp = myfont1.render('Game over!', False, 'white')
-        display.blit(hp, (width - 10 * cellsize, height - 10 * cellsize))
+        display.blit(hp, (width - 13.4 * cellsize, height - 10 * cellsize))
         dieui()
         crosshair.render()
     showfps()
