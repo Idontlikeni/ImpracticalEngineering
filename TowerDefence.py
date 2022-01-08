@@ -516,16 +516,16 @@ def ui():
     display.blit(cost, (cellsize * 73.35, cellsize * 14.25))
     outline_mask1(yellowtow1, (cellsize * 71, 17.5 * cellsize))
     display.blit(yellowtow1, (71 * cellsize, 17.5 * cellsize))
-    cost = myfont.render('15', False, 'white')
+    cost = myfont.render('30', False, 'white')
     display.blit(cost, (73.35 * cellsize, 23.25 * cellsize))
     outline_mask1(redtow1, (71 * cellsize, 26 * cellsize))
     display.blit(redtow1, (71 * cellsize, 26 * cellsize))
-    cost = myfont.render('30', False, 'white')
+    cost = myfont.render('55', False, 'white')
     display.blit(cost, (73.35 * cellsize, 31.75 * cellsize))
     outline_mask1(bluetow1, (71 * cellsize, 34.5 * cellsize))
     display.blit(bluetow1, (71 * cellsize, 34.5 * cellsize))
     money = myfont.render(str(plr.money), False, 'white')
-    cost = myfont.render('50', False, 'white')
+    cost = myfont.render('85', False, 'white')
     display.blit(cost, (73.35 * cellsize, 40.25 * cellsize))
     display.blit(money, (cellsize * countx * sclsz + cellsize * 5, 30))
     if towernum == 0:
@@ -632,26 +632,26 @@ def maketower(n):
     if maycreatetower(x, y) and x <= width:
         if n:
             if n == 1 and plr.money >= 10:
-                towers.append(CommonTower(x + cellsize / 2, y + cellsize / 2, 10, 'green', 40, 1, 30, 2))
+                towers.append(CommonTower(x + cellsize / 2, y + cellsize / 2, 10, 'green', 20, 1.3, 30, 1.4))
                 plr.money -= 10
                 tile_rects.append(pygame.Rect(x, y, cellsize, cellsize))
                 tile_rects_coord.append([x // cellsize, y // cellsize])
                 towernum = 0
-            if n == 2 and plr.money >= 15:
-                towers.append(QuadTower(x + cellsize / 2, y + cellsize / 2, 10, 'yellow', 30, 1.3, 40, 1))
-                plr.money -= 15
-                tile_rects.append(pygame.Rect(x, y, cellsize, cellsize))
-                tile_rects_coord.append([x // cellsize, y // cellsize])
-                towernum = 0
-            if n == 4 and plr.money >= 50:
-                towers.append(HomingTower(x + cellsize / 2, y + cellsize / 2, 10, 'blue', 40, 2, 50, 0.7))
-                plr.money -= 50
-                tile_rects.append(pygame.Rect(x, y, cellsize, cellsize))
-                tile_rects_coord.append([x // cellsize, y // cellsize])
-                towernum = 0
-            if n == 3 and plr.money >= 30:
-                towers.append(TheEighthTower(x + cellsize / 2, y + cellsize / 2, 10, 'red', 20, 1.5, 40, 1))
+            if n == 2 and plr.money >= 30:
+                towers.append(QuadTower(x + cellsize / 2, y + cellsize / 2, 10, 'yellow', 30, 1.5, 40, 1.2))
                 plr.money -= 30
+                tile_rects.append(pygame.Rect(x, y, cellsize, cellsize))
+                tile_rects_coord.append([x // cellsize, y // cellsize])
+                towernum = 0
+            if n == 4 and plr.money >= 85:
+                towers.append(HomingTower(x + cellsize / 2, y + cellsize / 2, 10, 'blue', 45, 1.3, 50, 1))
+                plr.money -= 85
+                tile_rects.append(pygame.Rect(x, y, cellsize, cellsize))
+                tile_rects_coord.append([x // cellsize, y // cellsize])
+                towernum = 0
+            if n == 3 and plr.money >= 55:
+                towers.append(TheEighthTower(x + cellsize / 2, y + cellsize / 2, 10, 'red', 35, 1.7, 40, 1))
+                plr.money -= 55
                 tile_rects.append(pygame.Rect(x, y, cellsize, cellsize))
                 tile_rects_coord.append([x // cellsize, y // cellsize])
                 towernum = 0
@@ -772,9 +772,9 @@ def run():
             if spawntime > 300:
                 for i in range(10 + wawe * 2):
                     if wawe == 0:
-                        meatcreate(meatstrt[0] - i * cellsize, meatstrt[1], 100, 0.7, wawe + 10, 'red', False)
+                        meatcreate(meatstrt[0] - 2 * i * cellsize, meatstrt[1], 50, 0.5, wawe + 10, 'red', False)
                     else:
-                        meatcreate(meatstrt[0] - i * cellsize, meatstrt[1], wawe * 100, 0.7, wawe + 10, 'red', False)
+                        meatcreate(meatstrt[0] - 2 * i * cellsize, meatstrt[1], wawe * 50, 0.6, wawe + 10, 'red', False)
                 wawe += 1
                 spawntime = 0
             else:
@@ -806,7 +806,7 @@ def run():
                     bullets.remove(bullet)
 
 
-plr = Player(100)
+plr = Player(35)
 wawe = 0
 crosshair = Crosshair()
 player = e.Entity(*[cellsize + 1, cellsize + 1], 0.8 * cellsize, 0.8 * cellsize, 10, 'player')
@@ -927,7 +927,7 @@ while running:
         for meats in meat:
             if math.sqrt((meats.x - (player.x + 8)) ** 2 + (meats.y - (player.y + 8)) ** 2) < cellsize * 2 and\
                     meats.slowed:
-                playerv = 0.5
+                playerv = 1
                 break
             else:
                 playerv = 2
