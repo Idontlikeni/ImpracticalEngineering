@@ -22,6 +22,8 @@ if county1 * cellsize < height / 2:
 if countx1 * cellsize < width / 2:
     countx1 += 1
 fps = 60
+flscr = False
+show = False
 inviztime = 0
 inhub = False
 bullets = []
@@ -128,6 +130,8 @@ for x in range(countx1):
         if x == 0 or x == countx1 - 1 or y == 0 or y == county1 - 1:
             tile_rects1.append(pygame.Rect(x * cellsize, y * cellsize, cellsize, cellsize))
 tile_rects1.remove(pygame.Rect(0, county1 // 2 * cellsize, cellsize, cellsize))
+tile_rects1.remove(pygame.Rect(countx1 // 2 * cellsize, 0, cellsize, cellsize))
+lenwalls = len(tile_rects)
 
 
 class Player:
@@ -239,7 +243,7 @@ class Bullet:
         self.size = size / sclsz1 * cellsize / 20
         self.color = color
         self.damage = damage
-        self.speed = speed * cellsize / 20
+        self.speed = speed * cellsize / 20 * 60 / clock.get_fps()
         self.rect = pygame.Rect(x - size, y - size, size * 2, size * 2)
         self.direction = direction
 
@@ -298,7 +302,7 @@ class FreshMeat:
         self.size = size / sclsz1 * cellsize / 20
         self.color = color
         self.hp = hp
-        self.speed = speed * cellsize / 20
+        self.speed = speed * cellsize / 20 * 60 / clock.get_fps()
         self.point = 0
         self.slowed = slowed
         self.napx = 1
@@ -345,7 +349,7 @@ class Drop:
     def __init__(self, x, y, speed, x0, y0, heal=False, met=False):
         self.x = x
         self.y = y
-        self.speed = speed * cellsize / 20
+        self.speed = speed * cellsize / 20 * 60 / clock.get_fps()
         self.speedfly = speed * cellsize / 20
         self.t = False
         self.m = False
@@ -536,6 +540,21 @@ def ui():
         pygame.draw.rect(display, 'white', [70.1 * cellsize, 34 * cellsize, 8 * cellsize, 8.5 * cellsize], 4)
 
 
+def showfps():
+    if show:
+        cost = myfont.render(f'{clock.get_fps()}', False, 'white')
+        display.blit(cost, (0, 0))
+
+
+def fullscrn():
+    global flscr, display
+    if flscr:
+        display = pygame.display.set_mode((width1, height1))
+    else:
+        display = pygame.display.set_mode((width1, height1), pygame.FULLSCREEN)
+    flscr = not flscr
+
+
 def uiswtch():
     x, y = getmpos()
     for i in uirect:
@@ -544,7 +563,7 @@ def uiswtch():
 
 
 def dieui():
-    global running, alive, bullets, towers, meat, drops, heals, wawe, playerv, player_movement
+    global running, alive, bullets, towers, meat, drops, heals, wawe, playerv, player_movement, tile_rects
     mx, my = pygame.mouse.get_pos()
     retry = pygame.Rect(width - 20 * cellsize, height + 2.5 * cellsize, 15 * cellsize, 3.5 * cellsize)
     exit = pygame.Rect(width, height + 2.5 * cellsize, 15 * cellsize, 3.5 * cellsize)
@@ -558,6 +577,7 @@ def dieui():
             meat = []
             drops = []
             heals = []
+            tile_rects = tile_rects[:lenwalls]
             wawe = 0
             alive = True
             player.set_pos(cellsize + 1, cellsize + 1)
@@ -666,7 +686,7 @@ def outrng():
     if player.x > cellsize * countx:
         player.set_pos(0, 6.1 * cellsize)
         inhub = True
-    elif player.x + player.width < 0:
+    elif player.x + player.width < 0 and inhub:
         # bullets = []
         # towers = []
         # meat = []
@@ -675,6 +695,8 @@ def outrng():
         wawe = 0
         alive = True
         player.set_pos(cellsize * countx - 1, cellsize * 11.1)
+        inhub = False
+    elif player.y < 0 and inhub:
         inhub = False
 
 
@@ -848,13 +870,13 @@ while running:
         dt *= 60
         last_time = time.time()
         if moving_right:
-            player_movement[0] += playerv * dt * speedcoef
+            player_movement[0] += playerv * dt * speedcoef * 60 / clock.get_fps()
         if moving_left:
-            player_movement[0] -= playerv * dt * speedcoef
+            player_movement[0] -= playerv * dt * speedcoef * 60 / clock.get_fps()
         if moving_up:
-            player_movement[1] -= playerv * dt * speedcoef
+            player_movement[1] -= playerv * dt * speedcoef * 60 / clock.get_fps()
         if moving_down:
-            player_movement[1] += playerv * dt * speedcoef
+            player_movement[1] += playerv * dt * speedcoef * 60 / clock.get_fps()
         player.move(player_movement, tile_rects1, [])
         player.update()
         for event in pygame.event.get():
@@ -877,6 +899,10 @@ while running:
                     towernum = 3
                 if event.key == pygame.K_4:
                     towernum = 4
+                if event.key == pygame.K_F5:
+                    show = not show
+                if event.key == pygame.K_F11:
+                    fullscrn()
                 if event.key == pygame.K_ESCAPE:
                     if towernum != 0:
                         towernum = 0
@@ -897,8 +923,6 @@ while running:
         display.blit(pygame.transform.scale(hubscreen, (width1, height1)), (0, 0))
         playerhp.draw(fullhp, player.hp)
         crosshair.render()
-        pygame.display.update()
-        clock.tick(fps)
     elif alive:
         for meats in meat:
             if math.sqrt((meats.x - (player.x + 8)) ** 2 + (meats.y - (player.y + 8)) ** 2) < cellsize * 2 and\
@@ -930,6 +954,15 @@ while running:
                     if getmpos()[0] >= 68 * cellsize:
                         towernum = uiswtch()
             if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_F5:
+                    show = not show
+                if event.key == pygame.K_F11:
+                    fullscrn()
+                if event.key == pygame.K_F1:
+                    if fps == 120:
+                        fps = 60
+                    else:
+                        fps = 120
                 if event.key == pygame.K_d:
                     moving_right = True
                 if event.key == pygame.K_a:
@@ -977,12 +1010,15 @@ while running:
         playerhp.draw(fullhp, player.hp)
         ui()
         crosshair.render()
-        pygame.display.update()
         checklife()
-        clock.tick(fps)
     else:
         dieuiclicked = False
         for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_F5:
+                    show = not show
+                if event.key == pygame.K_F11:
+                    fullscrn()
             if event.type == pygame.QUIT:
                 run = False
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -1003,6 +1039,7 @@ while running:
         display.blit(hp, (width - 10 * cellsize, height - 10 * cellsize))
         dieui()
         crosshair.render()
-        pygame.display.update()
-        clock.tick(fps)
+    showfps()
+    pygame.display.update()
+    clock.tick(fps)
 pygame.quit()
