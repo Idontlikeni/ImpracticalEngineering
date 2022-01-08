@@ -23,7 +23,7 @@ if countx1 * cellsize < width / 2:
     countx1 += 1
 fps = 60
 inviztime = 0
-inhub = 0
+inhub = False
 bullets = []
 towers = []
 meat = []
@@ -357,7 +357,8 @@ class Drop:
             self.met = met
 
     def fly(self):
-        if round(self.x) != round(self.x0) and round(self.y0) != round(self.y) and not self.m and self.a < self.speed and self.speed > 0.03:
+        if round(self.x) != round(self.x0) and round(self.y0) != round(self.y) and\
+                not self.m and self.a < self.speed and self.speed > 0.03:
             self.x0 += (self.x - self.x0) / math.sqrt((self.x - self.x0) ** 2 +
                                                       (self.y - self.y0) ** 2) * self.speedfly - self.a
             self.y0 += (self.y - self.y0) / math.sqrt((self.x - self.x0) ** 2 +
@@ -661,10 +662,20 @@ def overwidth():
 
 
 def outrng():
-    global inhub
+    global inhub, running, alive, bullets, towers, meat, drops, heals, wawe, playerv, player_movement
     if player.x > cellsize * countx:
-        player.set_pos(20, 100)
+        player.set_pos(0, 6.1 * cellsize)
         inhub = True
+    elif player.x + player.width < 0:
+        # bullets = []
+        # towers = []
+        # meat = []
+        # drops = []
+        # heals = []
+        wawe = 0
+        alive = True
+        player.set_pos(cellsize * countx - 1, cellsize * 11.1)
+        inhub = False
 
 
 def createrad():
@@ -880,6 +891,7 @@ while running:
                     moving_up = False
                 if event.key == pygame.K_s:
                     moving_down = False
+        outrng()
         player.draw(hubscreen, [0, 0])
         hubwall()
         display.blit(pygame.transform.scale(hubscreen, (width1, height1)), (0, 0))
@@ -889,7 +901,8 @@ while running:
         clock.tick(fps)
     elif alive:
         for meats in meat:
-            if math.sqrt((meats.x - (player.x + 8)) ** 2 + (meats.y - (player.y + 8)) ** 2) < cellsize * 2 and meats.slowed:
+            if math.sqrt((meats.x - (player.x + 8)) ** 2 + (meats.y - (player.y + 8)) ** 2) < cellsize * 2 and\
+                    meats.slowed:
                 playerv = 0.5
                 break
             else:
