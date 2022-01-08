@@ -481,22 +481,18 @@ def ui():
     pygame.draw.rect(display, 'white', [70.1 * cellsize, 4.5 * cellsize, 8 * cellsize, 3 * cellsize], 4)
     can = myfont.render('Cancel', False, 'white')
     display.blit(can, (cellsize * 72, 4.9 * cellsize))
-    greentow1 = pygame.transform.scale(greentow, (6 * cellsize, 6 * cellsize))
     outline_mask1(greentow1, (71 * cellsize, 8.5 * cellsize))
     display.blit(greentow1, (71 * cellsize, 8.5 * cellsize))
     cost = myfont.render('10', False, 'white')
     display.blit(cost, (cellsize * 73.35, cellsize * 14.25))
-    yellowtow1 = pygame.transform.scale(yellowtow, (cellsize * 6, cellsize * 6))
     outline_mask1(yellowtow1, (cellsize * 71, 17.5 * cellsize))
     display.blit(yellowtow1, (71 * cellsize, 17.5 * cellsize))
     cost = myfont.render('15', False, 'white')
     display.blit(cost, (73.35 * cellsize, 23.25 * cellsize))
-    redtow1 = pygame.transform.scale(redtow, (cellsize * 6, cellsize * 6))
     outline_mask1(redtow1, (71 * cellsize, 26 * cellsize))
     display.blit(redtow1, (71 * cellsize, 26 * cellsize))
     cost = myfont.render('30', False, 'white')
     display.blit(cost, (73.35 * cellsize, 31.75 * cellsize))
-    bluetow1 = pygame.transform.scale(bluetow, (cellsize * 6, cellsize * 6))
     outline_mask1(bluetow1, (71 * cellsize, 34.5 * cellsize))
     display.blit(bluetow1, (71 * cellsize, 34.5 * cellsize))
     money = myfont.render(str(plr.money), False, 'white')
@@ -575,7 +571,7 @@ def outline_mask1(img, loc):
 
 
 def outline_mask2(img, loc):
-    img = pygame.transform.scale(img, ( 5 * cellsize / 20, 5 * cellsize / 20))
+    img = pygame.transform.scale(img, (5 * cellsize / 20, 5 * cellsize / 20))
     mask = pygame.mask.from_surface(img)
     mask_outline = mask.outline()
     n = 0
@@ -798,6 +794,10 @@ helim = pygame.image.load('data_img/heal.png').convert_alpha()
 helim = pygame.transform.scale(helim, (cellsize / 4, cellsize / 4))
 healim = pygame.Surface((cellsize / 4, cellsize / 4), pygame.SRCALPHA)
 healim.blit(helim, (0, 0), (0, 0, cellsize / 4, cellsize / 4))
+greentow1 = pygame.transform.scale(greentow, (6 * cellsize, 6 * cellsize))
+yellowtow1 = pygame.transform.scale(yellowtow, (cellsize * 6, cellsize * 6))
+redtow1 = pygame.transform.scale(redtow, (cellsize * 6, cellsize * 6))
+bluetow1 = pygame.transform.scale(bluetow, (cellsize * 6, cellsize * 6))
 while running:
     if alive:
         for meats in meat:
