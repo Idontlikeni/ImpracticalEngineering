@@ -3,7 +3,7 @@ from pygame import display
 from pygame.locals import *
 
 global e_colorkey
-e_colorkey = (255,255,255)
+e_colorkey = (255, 255, 255)
 
 TILE_SIZE = 20
 
