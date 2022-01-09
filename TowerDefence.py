@@ -25,7 +25,8 @@ fps = 60
 flscr = False
 show = False
 inviztime = 0
-inhub = False
+inhub = True
+meatend = False
 bullets = []
 towers = []
 meat = []
@@ -696,15 +697,15 @@ def overwidth():
 
 def outrng():
     global inhub, running, alive, bullets, towers, meat, drops, heals, wawe, playerv, player_movement
-    if player.x > cellsize * countx:
+    if player.x > cellsize * countx and meatend:
         player.set_pos(0, 6.1 * cellsize)
         inhub = True
     elif player.x + player.width < 0 and inhub:
-        # bullets = []
-        # towers = []
-        # meat = []
-        # drops = []
-        # heals = []
+        bullets = []
+        towers = []
+        meat = []
+        drops = []
+        heals = []
         wawe = 0
         alive = True
         player.set_pos(cellsize * countx - player.width, cellsize * 11.1)
@@ -748,10 +749,7 @@ def createrad():
 def run():
     overwidth()
     if alive:
-        global spawntime
-        global inviztime
-        global wawe
-        global playerv
+        global spawntime, inviztime, wawe, playerv, meatend
         for tower in towers:
             tower.draw()
             tower.fire()
@@ -807,6 +805,10 @@ def run():
                 spawntime = 0
             else:
                 spawntime += 1
+        if len(meat) == 0 and wawe >= 3:
+            meatend = True
+        else:
+            meatend = False
     else:
         for tower in towers:
             tower.draw()
@@ -837,7 +839,7 @@ def run():
 plr = Player(35)
 wawe = 0
 crosshair = Crosshair()
-player = e.Entity(*[cellsize * countx - 0.8 * cellsize, cellsize * 11.1], 0.8 * cellsize, 0.8 * cellsize, 10, 'player')
+player = e.Entity(*[cellsize * 1.5, cellsize * 1.5], 0.8 * cellsize, 0.8 * cellsize, 10, 'player')
 fullhp = player.hp
 playerhp = Healthpoints(fullhp, player.hp)
 running = True
@@ -892,6 +894,7 @@ redtow1 = pygame.transform.scale(redtow, (cellsize * 6, cellsize * 6))
 bluetow1 = pygame.transform.scale(bluetow, (cellsize * 6, cellsize * 6))
 # player.hp = 0
 while running:
+    print(player.x, player.y)
     if inhub:
         hubscreen.fill((50, 50, 50))
         player_movement = [0, 0]
