@@ -12,11 +12,18 @@ pygame.mixer.set_num_channels(64)
 random.seed()
 clock = pygame.time.Clock()
 
-WINDOW_SIZE = (1600, 900)
+WINDOW_SIZE = (1920, 1080)
 TILE_SIZE = 16
 screen = pygame.display.set_mode(WINDOW_SIZE, pygame.RESIZABLE, 32)
+flscr = False
 
-ss = e.spritesheet('data_img/spritesheet_2.png')
+def fullscrn():
+    global flscr, screen
+    if flscr:
+        screen = pygame.display.set_mode(WINDOW_SIZE)
+    else:
+        screen = pygame.display.set_mode(WINDOW_SIZE, pygame.FULLSCREEN)
+    flscr = not flscr
 
 def main_menu():
     pygame.mouse.set_visible(True)
@@ -69,7 +76,7 @@ def main_menu():
             if event.type == MOUSEBUTTONDOWN:
                 if event.button == 1:
                     click = True
-            
+
             if event.type == MOUSEBUTTONUP:
                 if event.button == 1:
                     click = False
@@ -78,19 +85,20 @@ def main_menu():
         pygame.display.update()
         clock.tick(60)
 
+
 def game():
     SCALE_MULTIPLIER = 4
     display = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER))
 
     clicked = False
     running = True
-    
+
     moving_right = False
     moving_left = False
     moving_up = False
     moving_down = False
 
-    true_scroll = [0,0]
+    true_scroll = [0, 0]
     scroll = [0, 0]
 
     last_time = time.time()
@@ -100,7 +108,8 @@ def game():
     world.generate_map()
     player = e.Player(*world.get_start_pos(), 16, 16, 10, 'player')
     cursor = e.Cursor(0, 0, 'data_img/curs3.png')
-    
+    portal = e.Portal(*world.get_start_pos(), 10, 'portal')
+
     particles = []
 
     while running:
@@ -118,7 +127,9 @@ def game():
         scroll[0] = int(scroll[0])
         scroll[1] = int(scroll[1])
 
-        mouse_angle = math.atan2(mouse_pos[1] / SCALE_MULTIPLIER - player.y - player.height / 2 + scroll[1], mouse_pos[0] / SCALE_MULTIPLIER - player.x - player.width / 2 + scroll[0])
+        mouse_angle = math.atan2(
+            mouse_pos[1] / SCALE_MULTIPLIER - player.y - player.height / 2 + scroll[1],
+            mouse_pos[0] / SCALE_MULTIPLIER - player.x - player.width / 2 + scroll[0])
 
         #  scroll = [0, 0]
 
@@ -135,19 +146,21 @@ def game():
             player_movement[1] += 2 * dt
         if clicked == True:
             player.shoot(mouse_angle)
-        
-        collision_types = player.move(player_movement,tile_rects, [])
+
+        collision_types = player.move(player_movement, tile_rects, [])
 
         player.move_projectiles(tile_rects, world.get_enemies(), dt)
         player.update(mouse_angle)
+        print(portal.update(player))
+        portal.draw(display, scroll)
         world.update(player, dt)
         world.draw(display, scroll)
-        player.draw(display,scroll)
+        player.draw(display, scroll)
         player.draw_projectiles(display, scroll)
         #  print(player.hp)
         #  player.move(player_movement)
         #  pygame.draw.line(display, (0, 255, 0), (player.x + player.width / 2 - scroll[0], player.y + player.height / 2 - scroll[1]), ((pygame.mouse.get_pos()[0] // SCALE_MULTIPLIER), (pygame.mouse.get_pos()[1] // SCALE_MULTIPLIER)))
-        
+
         #  particles.append(e.Particle(player.x - scroll[0] + player.width // 2, player.y - scroll[1] + player.height // 2, scroll))
 
         for i, particle in sorted(enumerate(particles), reverse=True):
@@ -174,6 +187,10 @@ def game():
                     moving_down = True
                 if event.key == K_ESCAPE:
                     running = False
+                if event.key == pygame.K_F11:
+                    fullscrn()
+                if event.key == pygame.K_f:
+                    use = True
             if event.type == KEYUP:
                 if event.key == K_d:
                     moving_right = False
@@ -183,6 +200,8 @@ def game():
                     moving_up = False
                 if event.key == K_s:
                     moving_down = False
+                if event.key == pygame.K_f:
+                    use = False
             if event.type == MOUSEBUTTONDOWN:
                 if event.button == 1:
                     #  print(math.atan2(mouse_pos[1] / SCALE_MULTIPLIER - player.y, mouse_pos[0] / SCALE_MULTIPLIER - player.x))
@@ -191,8 +210,6 @@ def game():
                 if event.button == 1:
                     clicked = False
 
-                    
-        
         screen.blit(pygame.transform.scale(display, WINDOW_SIZE), (0, 0))
         pygame.display.update()
         clock.tick(60)
@@ -262,8 +279,6 @@ def options():
             if m + 1 <= 100:
                 m += 1
 
-
-        print(usl1)
         screen.blit(pygame.transform.scale(display, WINDOW_SIZE), (0, 0))
         pygame.display.update()
         clock.tick(60)
