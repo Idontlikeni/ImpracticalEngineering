@@ -805,7 +805,7 @@ def run():
                 spawntime = 0
             else:
                 spawntime += 1
-        if len(meat) == 0 and wawe >= 3:
+        if len(meat) == 0 and (wawe >= 3 or wawe == 0):
             meatend = True
         else:
             meatend = False
@@ -894,7 +894,7 @@ redtow1 = pygame.transform.scale(redtow, (cellsize * 6, cellsize * 6))
 bluetow1 = pygame.transform.scale(bluetow, (cellsize * 6, cellsize * 6))
 # player.hp = 0
 while running:
-    print(player.x, player.y)
+    pygame.mouse.set_visible(False)
     if inhub:
         hubscreen.fill((50, 50, 50))
         player_movement = [0, 0]
