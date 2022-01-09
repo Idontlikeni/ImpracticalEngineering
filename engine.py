@@ -15,6 +15,7 @@ def collision_test(object_1,object_list):
     collision_list = []
     for obj in object_list:
         if obj.colliderect(object_1):
+
             collision_list.append(obj)
     return collision_list
 
@@ -83,6 +84,7 @@ class World:  #  ZA WARUDOOOOOO
         self.enemies_count = 0
         self.effects = []
         self.tile_size = tile_size
+        self.usable_entities = []
 
         ss1 = spritesheet('data_img/spritesheet_3.png')
         ss2 = spritesheet('data_img/spritesheet_4.png')
@@ -161,6 +163,9 @@ class World:  #  ZA WARUDOOOOOO
 
     def add_enemy(self, enemy):
         self.enemies.append(enemy)
+
+    def add_usable_entity(self, entity):
+        self.usable_entities.append(entity)
 
     def update(self, player, dt):
         for i, enemy in sorted(enumerate(self.enemies), reverse=True):
@@ -417,6 +422,31 @@ class Entity(GameObject):
                 #  print(self, collisions['data'][0])
                 self.projectiles.remove(projectile)
 
+class Portal(Entity):
+    def __init__(self, x, y, radius, type):
+        super().__init__(x, y, radius * 2, radius * 2, 1, type)
+        self.radius = radius
+        self.can_be_used = False
+        self.use_img = pygame.image.load("data_img/use_item_pic.png")
+        
+    def update(self, player):
+        x1 = player.x + player.width / 2
+        y1 = player.y + player.height / 2
+        x2 = self.x
+        y2 = self.y
+        dist = math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+        if dist <= player.width / 2 + self.radius:
+            self.can_be_used = True
+            return True
+        self.can_be_used = False
+        return False
+        
+
+    def draw(self, surface, scroll):
+        pygame.draw.circle(surface, (128, 0, 200), (self.x - scroll[0], self.y - scroll[1]), self.radius)
+        if self.can_be_used:
+            surface.blit(self.use_img, (self.x - scroll[0] - self.use_img.get_width() / 2, self.y - scroll[1] - self.radius - self.use_img.get_height()))
+
 class Enemy(Entity):
     def __init__(self, x, y, width, height, hp, type):
         super().__init__(x, y, width, height, hp, type)
@@ -435,17 +465,13 @@ class Enemy(Entity):
         self.debug = [[0, 0], [0, 0]]
         self.player_angle = 0
         self.player_dist = 0
+        self.primary_weapon = RustyRifle(self.x, self.y, 0, "data_img/weapon_2.png", self)
 
     def wonder(self):
         pass
     
     def shoot(self, angle):
-        if self.shootTimer >= 50:
-            projectile = Projectile(self.x + self.width / 2 - 4, self.y + self.height / 2 - 4, 8, 8, angle, 2, "enemy_projectile")
-            self.projectiles.append(projectile)
-            self.shootTimer = 0
-            return projectile
-        return None
+        return self.primary_weapon.shoot(angle)
 
 
 
@@ -482,9 +508,11 @@ class Enemy(Entity):
                 
     def update(self):
         super().update()
+        self.primary_weapon.update()
+        self.primary_weapon.set_pos(self.x, self.y)
         #  print(self.wait_timer)
         if self.can_see_player:
-            self.shoot(random.uniform(self.player_angle - 0.4, self.player_angle + 0.4))
+            self.shoot(random.uniform(self.player_angle - 0.7, self.player_angle + 0.7))
         if self.is_waiting:
             self.wait_timer -= 1
             self.is_waiting = self.wait_timer > 0
@@ -494,7 +522,6 @@ class Enemy(Entity):
                 angle = 0
                 dist = 0
                 if self.can_see_player:
-                    print('a')
                     angle = random.uniform(self.player_angle - 0.7, self.player_angle + 0.7)
                     dist = random.randint(30, max(51, int(self.player_dist)))
                 else:    
@@ -513,18 +540,20 @@ class Enemy(Entity):
                 self.is_waiting = True
                 self.wait_timer = random.randint(30, 160)
                 self.is_wondering = False
+            self.primary_weapon.set_angle(self.angle)
 
         
     
     def draw(self, surface, scroll):
+        self.primary_weapon.draw(surface, scroll)
         pygame.draw.rect(surface, self.color, pygame.Rect(self.physical_object.x-scroll[0], self.physical_object.y-scroll[1],
                                                            self.physical_object.width, self.physical_object.height), 1)
-        pygame.draw.line(surface, self.color, (self.x - scroll[0], self.y - scroll[1]), 
-        (self.destination_pos[0] - scroll[0], self.destination_pos[1] - scroll[1]))
-        for pixel in self.draw_pixels:
-            pygame.draw.rect(surface, (0, 255, 255), pygame.Rect(pixel[0] - scroll[0], pixel[1] - scroll[1], 1, 1))
-        pygame.draw.line(surface, (0, 0, 255), (self.debug[0][0] - scroll[0], self.debug[0][1] - scroll[1]),
-        (self.debug[1][0] - scroll[0], self.debug[1][1] - scroll[1]))
+        # pygame.draw.line(surface, self.color, (self.x - scroll[0], self.y - scroll[1]), 
+        # (self.destination_pos[0] - scroll[0], self.destination_pos[1] - scroll[1]))
+        # for pixel in self.draw_pixels:
+        #     pygame.draw.rect(surface, (0, 255, 255), pygame.Rect(pixel[0] - scroll[0], pixel[1] - scroll[1], 1, 1))
+        # pygame.draw.line(surface, (0, 0, 255), (self.debug[0][0] - scroll[0], self.debug[0][1] - scroll[1]),
+        # (self.debug[1][0] - scroll[0], self.debug[1][1] - scroll[1]))
 
     
 
@@ -546,7 +575,9 @@ class Player(Entity):
     def draw(self, surface, scroll):
         super().draw(surface, scroll)
         self.primary_weapon.draw(surface, scroll)
-        
+    
+    def use(self):
+        pass
 
 class Weapon:
     def __init__(self, x, y, angle, path, entity):
@@ -588,6 +619,26 @@ class Weapon:
     def update(self):
         self.shootTimer += 1
 
+class RustyRifle(Weapon):
+    def __init__(self, x, y, angle, path, entity):
+        super().__init__(x, y, angle, path, entity)
+        self.shootTimer = 60
+        self.cooldown = 60
+    
+    def shoot(self, angle=None):
+        
+        if self.shootTimer >= self.cooldown:
+            if angle is None:
+                angle = self.angle
+            else:
+                self.angle = angle
+            projectile = Projectile(self.entity.x + self.entity.width / 2 + math.cos(angle) * self.img_width, self.entity.y + self.entity.height / 2 + math.sin(angle) * self.img_width, 8, 8, angle, 2, self.entity.type + "_projectile")
+            self.entity.projectiles.append(projectile)
+            self.shootTimer = 0
+            self.cooldown = random.randint(60, 180)
+            return projectile
+        return None
+
 class Cursor(GameObject):
     def __init__(self, x, y, path):
         self.x = x
@@ -627,7 +678,7 @@ class Projectile(Entity):
         self.angle = angle
 
 class EnemyProjectiles(Projectile):
-    def __init__():
+    def __init__(self):
         pass
 
 class Particle:
