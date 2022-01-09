@@ -534,7 +534,8 @@ class Player(Entity):
         self.primary_weapon = Weapon(self.x, self.y, 0, "data_img/weapon_1.png", self)
     
     def shoot(self, angle):
-        return super().shoot(angle)
+        return self.primary_weapon.shoot(angle)
+        #  return super().shoot(angle)
     
     def update(self, mouse_angle):
         self.primary_weapon.update()
@@ -553,10 +554,11 @@ class Weapon:
         self.y = y
         self.angle = angle
         self.img = pygame.image.load(path).convert()
-        #  self.img.set_colorkey((0, 0, 0))
+        self.img.set_colorkey((0, 0, 0))
         self.entity = entity
-        self.shootTimer = 50
-        self.cooldown = 50
+        self.shootTimer = 10
+        self.cooldown = 10
+        self.img_width = self.img.get_width()
 
     def set_pos(self, x, y):
         self.x = x
@@ -568,9 +570,8 @@ class Weapon:
     def shoot(self, angle=None):
         if angle is None:
             angle = self.angle
-        
         if self.shootTimer >= self.cooldown:
-            projectile = Projectile(self.x - 4, self.y - 4, 8, 8, angle, 8, self.entity.type + "_projectile")
+            projectile = Projectile(self.entity.x + self.entity.width / 2 + math.cos(angle) * self.img_width, self.entity.y + self.entity.height / 2 + math.sin(angle) * self.img_width, 8, 8, angle, 8, self.entity.type + "_projectile")
             self.entity.projectiles.append(projectile)
             self.shootTimer = 0
             return projectile
@@ -578,11 +579,11 @@ class Weapon:
     
     def draw(self, surface, scroll):
 
-        # blitRotate(surface, self.image, (self.x - scroll[0], self.y - scroll[1]), pivot, -math.degrees(self.angle))
+        blitRotate(surface, self.img, (self.x - scroll[0] + self.entity.width / 2, self.y - scroll[1] + self.entity.height / 2), (0, 0), -math.degrees(self.angle))
 
-        copy_img = pygame.transform.rotate(self.img, -math.degrees(self.angle))
-        print(math.degrees(self.angle))
-        surface.blit(copy_img, (self.x - scroll[0], self.y - scroll[1]))
+        # copy_img = pygame.transform.rotate(self.img, -math.degrees(self.angle))
+        # print(math.degrees(self.angle))
+        # surface.blit(copy_img, (self.x - scroll[0], self.y - scroll[1]))
 
     def update(self):
         self.shootTimer += 1
