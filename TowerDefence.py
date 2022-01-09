@@ -9,8 +9,13 @@ countx = 34
 county = 23
 sclsz = 2
 sclsz1 = 1.3
+<<<<<<< Updated upstream
 width1 = 1600
 height1 = 900
+=======
+width1 = 3840 / 2
+height1 = 2160 / 2
+>>>>>>> Stashed changes
 width = width1 / sclsz
 height = height1 / sclsz
 cellsize = (width - 120) // countx
