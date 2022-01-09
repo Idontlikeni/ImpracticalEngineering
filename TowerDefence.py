@@ -9,13 +9,8 @@ countx = 34
 county = 23
 sclsz = 2
 sclsz1 = 1.3
-<<<<<<< Updated upstream
 width1 = 1600
 height1 = 900
-=======
-width1 = 3840 / 2
-height1 = 2160 / 2
->>>>>>> Stashed changes
 width = width1 / sclsz
 height = height1 / sclsz
 cellsize = (width - 120) // countx
@@ -94,7 +89,7 @@ if 'fullscreen.txt' in os.listdir(os.getcwd()):
     stats = open('fullscreen.txt', 'r')
     x = stats.readlines()
     if x:
-        if x[0] == 1:
+        if x[0] == "1":
             flscr = True
         else:
             flscr = False
@@ -109,9 +104,9 @@ window = pygame.Surface((width, height))
 hubscreen = pygame.Surface((width / 2, height / 2))
 hubscreen.fill((50, 50, 50))
 if flscr:
-    monitor = pygame.display.set_mode((width1, height1))
-else:
     monitor = pygame.display.set_mode((width1, height1), pygame.FULLSCREEN)
+else:
+    monitor = pygame.display.set_mode((width1, height1))
 deadscreen = pygame.Surface((width, height), pygame.SRCALPHA)
 crosshairsurf = pygame.Surface((width, height), pygame.SRCALPHA)
 ss = pygame.image.load('data_img/spritesheet_3.png').convert_alpha()
