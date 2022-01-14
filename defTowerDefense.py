@@ -893,184 +893,232 @@ yellowtow1 = pygame.transform.scale(yellowtow, (cellsize * 6, cellsize * 6))
 redtow1 = pygame.transform.scale(redtow, (cellsize * 6, cellsize * 6))
 bluetow1 = pygame.transform.scale(bluetow, (cellsize * 6, cellsize * 6))
 # player.hp = 0
-while running:
-    pygame.mouse.set_visible(False)
-    if inhub:
-        hubscreen.fill((50, 50, 50))
-        player_movement = [0, 0]
-        dt = time.time() - last_time
-        dt *= 60
-        last_time = time.time()
-        if moving_right:
-            player_movement[0] += playerv * dt * speedcoef * 60 / clock.get_fps()
-        if moving_left:
-            player_movement[0] -= playerv * dt * speedcoef * 60 / clock.get_fps()
-        if moving_up:
-            player_movement[1] -= playerv * dt * speedcoef * 60 / clock.get_fps()
-        if moving_down:
-            player_movement[1] += playerv * dt * speedcoef * 60 / clock.get_fps()
-        player.move(player_movement, tile_rects1, [])
-        player.update()
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_d:
-                    moving_right = True
-                if event.key == pygame.K_a:
-                    moving_left = True
-                if event.key == pygame.K_w:
-                    moving_up = True
-                if event.key == pygame.K_s:
-                    moving_down = True
-                if event.key == pygame.K_1:
-                    towernum = 1
-                if event.key == pygame.K_2:
-                    towernum = 2
-                if event.key == pygame.K_3:
-                    towernum = 3
-                if event.key == pygame.K_4:
-                    towernum = 4
-                if event.key == pygame.K_F5:
-                    show = not show
-                if event.key == pygame.K_F11:
-                    fullscrn()
-                if event.key == pygame.K_ESCAPE:
-                    if towernum != 0:
-                        towernum = 0
-                    else:
-                        running = False
-            if event.type == pygame.KEYUP:
-                if event.key == pygame.K_d:
-                    moving_right = False
-                if event.key == pygame.K_a:
-                    moving_left = False
-                if event.key == pygame.K_w:
-                    moving_up = False
-                if event.key == pygame.K_s:
-                    moving_down = False
-        outrng()
-        player.draw(hubscreen, [0, 0])
-        hubwall()
-        monitor.blit(pygame.transform.scale(hubscreen, (width1, height1)), (0, 0))
-        playerhp.draw(fullhp, player.hp)
-        crosshair.render()
-    elif alive:
-        for meats in meat:
-            if math.sqrt((meats.x - (player.x + 8)) ** 2 + (meats.y - (player.y + 8)) ** 2) < cellsize * 2 and\
-                    meats.slowed:
-                playerv = 1
-                break
-            else:
-                playerv = 2
-        player_movement = [0, 0]
-        dt = time.time() - last_time
-        dt *= 60
-        last_time = time.time()
-        if moving_right:
-            player_movement[0] += playerv * dt * speedcoef
-        if moving_left:
-            player_movement[0] -= playerv * dt * speedcoef
-        if moving_up:
-            player_movement[1] -= playerv * dt * speedcoef
-        if moving_down:
-            player_movement[1] += playerv * dt * speedcoef
-        player.move(player_movement, tile_rects, [])
-        player.update()
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                run = False
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1:
-                    maketower(towernum)
-                    if getmpos()[0] >= 68 * cellsize:
-                        towernum = uiswtch()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_F5:
-                    show = not show
-                if event.key == pygame.K_F11:
-                    fullscrn()
-                if event.key == pygame.K_F1:
-                    if fps == 120:
-                        fps = 60
-                    else:
-                        fps = 120
-                if event.key == pygame.K_d:
-                    moving_right = True
-                if event.key == pygame.K_a:
-                    moving_left = True
-                if event.key == pygame.K_w:
-                    moving_up = True
-                if event.key == pygame.K_s:
-                    moving_down = True
-                if event.key == pygame.K_1:
-                    towernum = 1
-                if event.key == pygame.K_2:
-                    towernum = 2
-                if event.key == pygame.K_3:
-                    towernum = 3
-                if event.key == pygame.K_4:
-                    towernum = 4
-                if event.key == pygame.K_ESCAPE:
-                    if towernum != 0:
-                        towernum = 0
-                    else:
-                        running = False
-            if event.type == pygame.KEYUP:
-                if event.key == pygame.K_d:
-                    moving_right = False
-                if event.key == pygame.K_a:
-                    moving_left = False
-                if event.key == pygame.K_w:
-                    moving_up = False
-                if event.key == pygame.K_s:
-                    moving_down = False
-        createfloor()
-        createwall()
-        createway()
-        run()
-        outrng()
-        player.draw(window, [0, 0])
-        createrad()
-        for i, explosion in sorted(enumerate(explosions), reverse=True):
-            explosion.update()
-            explosion.draw(window)
-            if len(explosion.particles) == 0:
-                del explosion
-                explosions.pop(i)
-        monitor.blit(pygame.transform.scale(window, (width1, height1)), (0, 0))
-        playerhp.draw(fullhp, player.hp)
-        ui()
-        crosshair.render()
-        checklife()
-    else:
-        dieuiclicked = False
-        for event in pygame.event.get():
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_F5:
-                    show = not show
-                if event.key == pygame.K_F11:
-                    fullscrn()
-            if event.type == pygame.QUIT:
-                run = False
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1:
-                    dieuiclicked = True
-        createfloor()
-        createwall()
-        createway()
-        run()
-        player.draw(window, [0, 0])
-        monitor.blit(pygame.transform.scale(window, (width1, height1)), (0, 0))
-        playerhp.draw(fullhp, player.hp)
-        ui()
-        deadscreen.fill((0, 0, 0, 128))
-        monitor.blit(pygame.transform.scale(deadscreen, (width1, height1)), (0, 0))
-        hp = myfont1.render('Game over!', False, 'white')
-        monitor.blit(hp, (width - 13.4 * cellsize, height - 10 * cellsize))
-        dieui()
-        crosshair.render()
-    showfps()
-    pygame.display.update()
-    clock.tick(fps)
-pygame.quit()
+
+
+def towerdefence():
+    # global last_time
+    # global moving_up
+    # global moving_down
+    # global moving_right
+    # global moving_left
+    # global running
+    # global playerhp
+    # global fullhp
+    # global player
+    # global  crosshair
+    # global wawe
+    # global plr
+    # global greentower
+    # global greentow
+    # global yellowtower
+    # global yellowtow
+    # global greentower
+    # global greentow
+    # global bluetower
+    # global bluetow
+    # global metal
+    # global metim
+    # global metim1
+    # global metal1
+    # global metim2
+    # global metal2
+    # global metim3
+    # global metal3
+    # global allmetal
+    # global helim
+    # global greentower1
+    # global redtower1
+    # global bluetower1
+    # global yellowtower1
+    global countx, county, sclsz, sclsz1, width1, height1, width, height, cellsize, cellsize1, countx1, county1, fps
+    global flscr, show, inviztime, inhub, meatend, bullets, towers, meat, drops, heals, walls, way, allmetal, tile_rects
+    global tile_rects1, tile_rects_coord, explosions, towernum, spawntime, playerv, speedcoef, uirect, Map, down
+    global right, up, left, napr, mousx, mousy, dieuiclicked, alive, myfont, myfont1, window, hubscreen, monitor
+    global deadscreen, crosshairsurf, ss, sand, ssand, ssway, cross, clock, lenwalls, meatstrt, plr, wawe, crosshair
+    global player, fullhp, playerhp, running, moving_right, moving_left, moving_up, moving_down, last_time, greentower
+    global greentow, yellowtower, yellowtow, redtower, redtow, bluetower, bluetow, metim, metal, metim1, metal1, metim2
+    global metal2, metim3, metal3, allmetal, helim, healim, greentow1, yellowtow1, redtow1, bluetow1
+    while running:
+        pygame.mouse.set_visible(False)
+        # if inhub:
+        #     hubscreen.fill((50, 50, 50))
+        #     player_movement = [0, 0]
+        #     dt = time.time() - last_time
+        #     dt *= 60
+        #     last_time = time.time()
+        #     if moving_right:
+        #         player_movement[0] += playerv * dt * speedcoef * 60 / clock.get_fps()
+        #     if moving_left:
+        #         player_movement[0] -= playerv * dt * speedcoef * 60 / clock.get_fps()
+        #     if moving_up:
+        #         player_movement[1] -= playerv * dt * speedcoef * 60 / clock.get_fps()
+        #     if moving_down:
+        #         player_movement[1] += playerv * dt * speedcoef * 60 / clock.get_fps()
+        #     player.move(player_movement, tile_rects1, [])
+        #     player.update()
+        #     for event in pygame.event.get():
+        #         if event.type == pygame.QUIT:
+        #             running = False
+        #         if event.type == pygame.KEYDOWN:
+        #             if event.key == pygame.K_d:
+        #                 moving_right = True
+        #             if event.key == pygame.K_a:
+        #                 moving_left = True
+        #             if event.key == pygame.K_w:
+        #                 moving_up = True
+        #             if event.key == pygame.K_s:
+        #                 moving_down = True
+        #             if event.key == pygame.K_1:
+        #                 towernum = 1
+        #             if event.key == pygame.K_2:
+        #                 towernum = 2
+        #             if event.key == pygame.K_3:
+        #                 towernum = 3
+        #             if event.key == pygame.K_4:
+        #                 towernum = 4
+        #             if event.key == pygame.K_F5:
+        #                 show = not show
+        #             if event.key == pygame.K_F11:
+        #                 fullscrn()
+        #             if event.key == pygame.K_ESCAPE:
+        #                 if towernum != 0:
+        #                     towernum = 0
+        #                 else:
+        #                     running = False
+        #         if event.type == pygame.KEYUP:
+        #             if event.key == pygame.K_d:
+        #                 moving_right = False
+        #             if event.key == pygame.K_a:
+        #                 moving_left = False
+        #             if event.key == pygame.K_w:
+        #                 moving_up = False
+        #             if event.key == pygame.K_s:
+        #                 moving_down = False
+        #     outrng()
+        #     player.draw(hubscreen, [0, 0])
+        #     hubwall()
+        #     monitor.blit(pygame.transform.scale(hubscreen, (width1, height1)), (0, 0))
+        #     playerhp.draw(fullhp, player.hp)
+        #     crosshair.render()
+        if alive:
+            for meats in meat:
+                if math.sqrt((meats.x - (player.x + 8)) ** 2 + (meats.y - (player.y + 8)) ** 2) < cellsize * 2 and\
+                        meats.slowed:
+                    playerv = 1
+                    break
+                else:
+                    playerv = 2
+            player_movement = [0, 0]
+            dt = time.time() - last_time
+            dt *= 60
+            last_time = time.time()
+            if moving_right:
+                player_movement[0] += playerv * dt * speedcoef
+            if moving_left:
+                player_movement[0] -= playerv * dt * speedcoef
+            if moving_up:
+                player_movement[1] -= playerv * dt * speedcoef
+            if moving_down:
+                player_movement[1] += playerv * dt * speedcoef
+            player.move(player_movement, tile_rects, [])
+            player.update()
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 1:
+                        maketower(towernum)
+                        if getmpos()[0] >= 68 * cellsize:
+                            towernum = uiswtch()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_F5:
+                        show = not show
+                    if event.key == pygame.K_F11:
+                        fullscrn()
+                    if event.key == pygame.K_F1:
+                        if fps == 120:
+                            fps = 60
+                        else:
+                            fps = 120
+                    if event.key == pygame.K_d:
+                        moving_right = True
+                    if event.key == pygame.K_a:
+                        moving_left = True
+                    if event.key == pygame.K_w:
+                        moving_up = True
+                    if event.key == pygame.K_s:
+                        moving_down = True
+                    if event.key == pygame.K_1:
+                        towernum = 1
+                    if event.key == pygame.K_2:
+                        towernum = 2
+                    if event.key == pygame.K_3:
+                        towernum = 3
+                    if event.key == pygame.K_4:
+                        towernum = 4
+                    if event.key == pygame.K_ESCAPE:
+                        if towernum != 0:
+                            towernum = 0
+                        else:
+                            running = False
+                if event.type == pygame.KEYUP:
+                    if event.key == pygame.K_d:
+                        moving_right = False
+                    if event.key == pygame.K_a:
+                        moving_left = False
+                    if event.key == pygame.K_w:
+                        moving_up = False
+                    if event.key == pygame.K_s:
+                        moving_down = False
+            createfloor()
+            createwall()
+            createway()
+            run()
+            outrng()
+            player.draw(window, [0, 0])
+            createrad()
+            for i, explosion in sorted(enumerate(explosions), reverse=True):
+                explosion.update()
+                explosion.draw(window)
+                if len(explosion.particles) == 0:
+                    del explosion
+                    explosions.pop(i)
+            monitor.blit(pygame.transform.scale(window, (width1, height1)), (0, 0))
+            playerhp.draw(fullhp, player.hp)
+            ui()
+            crosshair.render()
+            checklife()
+        else:
+            dieuiclicked = False
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_F5:
+                        show = not show
+                    if event.key == pygame.K_F11:
+                        fullscrn()
+                if event.type == pygame.QUIT:
+                    running = False
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 1:
+                        dieuiclicked = True
+            createfloor()
+            createwall()
+            createway()
+            run()
+            player.draw(window, [0, 0])
+            monitor.blit(pygame.transform.scale(window, (width1, height1)), (0, 0))
+            playerhp.draw(fullhp, player.hp)
+            ui()
+            deadscreen.fill((0, 0, 0, 128))
+            monitor.blit(pygame.transform.scale(deadscreen, (width1, height1)), (0, 0))
+            hp = myfont1.render('Game over!', False, 'white')
+            monitor.blit(hp, (width - 13.4 * cellsize, height - 10 * cellsize))
+            dieui()
+            crosshair.render()
+        showfps()
+        pygame.display.update()
+        clock.tick(fps)
+    pygame.quit()
+
+
+towerdefence()
