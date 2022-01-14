@@ -1168,44 +1168,60 @@ def fullscrn(display):
 
 
 def main_menu():
+    running = True
     pygame.mouse.set_visible(True)
     SCALE_MULTIPLIER = 5
     click = False
-    cveta1 = (0, 255, 0)
-    cveta2 = (255, 255, 255)
-    cveta3 = (0, 255, 0)
     font = pygame.font.Font('MaredivRegular.ttf', 15)
-    display = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER))
-    while True:
-        display.fill((0, 0, 0))
+    display = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER), pygame.SRCALPHA)
+    stars = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER + 100, WINDOW_SIZE[1] / SCALE_MULTIPLIER + 100))
+    stars.fill((15, 11, 66))
+    for i in range(300):
+        stars.fill(pygame.Color('white'),
+                    (random.random() * width,
+                     random.random() * height, 1, 1))
+    while running:
         mx, my = pygame.mouse.get_pos()
-        button_1 = pygame.Rect(WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 50, 50, 100, 25)
-        button_2 = pygame.Rect(WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 50, 100, 100, 25)
+        playbtn = pygame.Rect(132, 110, 120, 25)
+        optionsbtn = pygame.Rect(132, 145, 120, 25)
+        exitbtn = pygame.Rect(132, 180, 120, 25)
         mx = mx / SCALE_MULTIPLIER
         my = my / SCALE_MULTIPLIER
-        if button_1.collidepoint((mx, my)):
-            cveta = (200, 25, 23)
-            cveta1 = (255, 128, 0)
+        if playbtn.collidepoint((mx, my)):
+            cveta = (78, 29, 92)
+            cveta1 = (214, 136, 17)
             if click:
                 trade_area()
         else:
-            cveta = (255, 255, 255)
-            cveta1 = (0, 255, 0)
-        if button_2.collidepoint((mx, my)):
-            cveta2 = (200, 25, 23)
-            cveta3 = (255, 128, 0)
+            cveta = (109, 29, 112)
+            cveta1 = (255, 235, 214)
+        if optionsbtn.collidepoint((mx, my)):
+            cveta2 = (78, 29, 92)
+            cveta3 = (214, 136, 17)
             if click:
                 options()
         else:
-            cveta2 = (255, 255, 255)
-            cveta3 = (0, 255, 0)
-        pygame.draw.rect(display, cveta, button_1)
-        pygame.draw.rect(display, (cveta2), button_2)
-        text = font.render("play", True, (cveta1))
-        display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 15, 50))
+            cveta2 = (109, 29, 112)
+            cveta3 = (255, 235, 214)
+        if exitbtn.collidepoint((mx, my)):
+            cveta4 = (78, 29, 92)
+            cveta5 = (214, 136, 17)
+            if click:
+                running = False
+        else:
+            cveta4 = (109, 29, 112)
+            cveta5 = (255, 235, 214)
+        pygame.draw.rect(display, cveta, playbtn)
+        pygame.draw.rect(display, cveta2, optionsbtn)
+        pygame.draw.rect(display, cveta4, exitbtn)
+        text = font.render("play", True, cveta1)
+        display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 15, 110))
 
-        text = font.render("options", True, (cveta3))
-        display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 25, 100))
+        text = font.render("options", True, cveta3)
+        display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 25, 145))
+
+        text = font.render("exit", True, cveta5)
+        display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 15, 180))
         click = False
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -1222,7 +1238,7 @@ def main_menu():
             if event.type == MOUSEBUTTONUP:
                 if event.button == 1:
                     click = False
-
+        screen.blit(pygame.transform.scale(stars, (WINDOW_SIZE[0] + 100, WINDOW_SIZE[1] + 100)), (0, 0))
         screen.blit(pygame.transform.scale(display, WINDOW_SIZE), (0, 0))
         pygame.display.update()
         clock.tick(60)
