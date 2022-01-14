@@ -178,6 +178,7 @@ class World:  #  ZA WARUDOOOOOO
         for i, enemy in sorted(enumerate(self.enemies), reverse=True):
             if enemy.dead:
                 enemy.die(self)
+                self.effects.append(Explosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2))
                 del enemy
                 self.enemies.pop(i)
             else:
@@ -189,6 +190,9 @@ class World:  #  ZA WARUDOOOOOO
         
         for i, drop in sorted(enumerate(self.drops), reverse=True):
             drop.update(player)
+            if drop.dead:
+                del drop
+                self.drops.pop(i)
 
         for i, entity in sorted(enumerate(self.usable_entities), reverse=True):
             entity.update(player)
@@ -197,7 +201,7 @@ class World:  #  ZA WARUDOOOOOO
             effect.update()
             if len(effect.particles) == 0:
                 del effect
-                effect.pop(i)
+                self.effects.pop(i)
     
     def draw(self, display, scroll):
         for y in range(len(self.field)):
@@ -265,11 +269,11 @@ class World:  #  ZA WARUDOOOOOO
         for i, drop in sorted(enumerate(self.drops), reverse=True):
             drop.draw(display, scroll)
 
-        for effect in self.effects:
-            effect.draw(display, scroll)
-
         for i, entity in sorted(enumerate(self.usable_entities), reverse=True):
             entity.draw(display, scroll)
+
+        for effect in self.effects:
+            effect.draw(display, scroll)
 
     def get_rects(self):
         return self.tile_rects
@@ -506,7 +510,14 @@ class Entity(GameObject):
                 self.projectiles.remove(projectile)
     
     def die(self, world):
-        world.drops.append(Drop(self.x, self.y, 7, 7, 'data_img/ammo1.png'))
+        num = random.randint(0, 100)
+        if num <= 40:
+            world.drops.append(AmmoDrop(self.x, self.y, 7, 7))
+        else:
+            num = random.randint(0, 100)
+            if num <= 20:
+                world.drops.append(HealthDrop(self.x, self.y, 7, 7))
+        
 
 class Drop(GameObject):
     def __init__(self, x, y, width, height, path):
@@ -514,6 +525,7 @@ class Drop(GameObject):
         self.img = pygame.image.load(path)
         self.following = False
         self.velocity = 2.5
+        self.dead = False
         
     
     def update(self, player):
@@ -523,8 +535,9 @@ class Drop(GameObject):
         y2 = self.y + self.height / 2
         dist = math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
 
-        if dist <= 2:
+        if dist <= 5:
             self.picked_action(player)
+            self.dead = True
 
         if dist <= 20:
             self.following = True
@@ -534,8 +547,8 @@ class Drop(GameObject):
             self.y += (y1 - self.y) / math.sqrt((x1 - self.x) ** 2 + (y1 - self.y) ** 2) * self.velocity
         
 
-        def picked_action(self, player):
-            pass
+    def picked_action(self, player):
+        pass
 
 
     def draw(self, surface, scroll):
@@ -556,7 +569,7 @@ class AmmoDrop(Drop):
 
 class HealthDrop(Drop):
     def __init__(self, x, y, width, height):
-        super().__init__(x, y, width, height, 'data_img/health.png')\
+        super().__init__(x, y, width, height, 'data_img/healt.png')\
 
 
     def picked_action(self, player):
@@ -727,6 +740,7 @@ class Player(Entity):
     def __init__(self, x, y, width, height, hp, type):
         super().__init__(x, y, width, height, hp, type)
         self.primary_weapon = Weapon(self.x, self.y, 0, "data_img/weapon_1.png", self)
+        self.ammo = 128
     
     def shoot(self, angle):
         return self.primary_weapon.shoot(angle)
@@ -907,11 +921,11 @@ class ExplodeParticle(Particle):
         self.y += self.velocity * math.sin(self.angle)
         self.length -= 0.9
 
-    def draw(self, display):
+    def draw(self, display, scroll):
         #  display.set_colorkey((0,0,0))
         #  pygame.draw.circle(display, (241, 100, 31, 255), [int(self.x), int(self.y)], int(self.time * 2))
-        pygame.draw.line(display, (255, 255, 255), (self.x, self.y), 
-        (self.length * math.cos(self.angle) + self.x, self.length * math.sin(self.angle) + self.y), self.width)
+        pygame.draw.line(display, (255, 255, 255), (self.x - scroll[0], self.y - scroll[1]), 
+        (self.length * math.cos(self.angle) + self.x - scroll[0], self.length * math.sin(self.angle) + self.y - scroll[1]) , self.width)
 
 class Explosion:
     def __init__(self, x, y) -> None:
@@ -929,6 +943,6 @@ class Explosion:
                 del particle
                 self.particles.pop(i)
             
-    def draw(self, display):
+    def draw(self, display, scroll):
         for particle in self.particles:
-            particle.draw(display)
+            particle.draw(display, scroll)
