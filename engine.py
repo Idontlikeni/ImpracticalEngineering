@@ -47,7 +47,6 @@ class spritesheet(object):
     
     # Load a specific image from a specific rectangle
     def image_at(self, rectangle, colorkey = None):
-        "Loads image from x,y,x+offset,y+offset"
         rect = pygame.Rect(rectangle)
         image = pygame.Surface(rect.size).convert()
         image.blit(self.sheet, (0, 0), rect)
@@ -85,6 +84,7 @@ class World:  #  ZA WARUDOOOOOO
         self.effects = []
         self.tile_size = tile_size
         self.usable_entities = []
+        self.drops = []
 
         ss1 = spritesheet('data_img/spritesheet_3.png')
         ss2 = spritesheet('data_img/spritesheet_4.png')
@@ -111,7 +111,7 @@ class World:  #  ZA WARUDOOOOOO
             self.field[self.height - 1][i] = 'x'
         
         numer_of_cells = random.randint(self.width * self.height, self.width * self.height * 2)
-        self.enemies_count = random.randint(10, 25)
+        self.enemies_count = random.randint(10, 15)
         #  print(self.enemies_count, numer_of_cells)
 
         for i in range(self.enemies_count):
@@ -152,6 +152,10 @@ class World:  #  ZA WARUDOOOOOO
                 x += 1
             y += 1
     
+    def check_use(self, player):
+        for entity in self.usable_entities:
+            entity.used()
+
     def to_screen_coordinates(self, x, y):
         return x * self.tile_size, y * self.tile_size
 
@@ -167,9 +171,13 @@ class World:  #  ZA WARUDOOOOOO
     def add_usable_entity(self, entity):
         self.usable_entities.append(entity)
 
+    def add_drop(self, drop):
+        self.drops.append(drop)
+
     def update(self, player, dt):
         for i, enemy in sorted(enumerate(self.enemies), reverse=True):
-            if enemy.hp <= 0:
+            if enemy.dead:
+                enemy.die(self)
                 del enemy
                 self.enemies.pop(i)
             else:
@@ -179,6 +187,12 @@ class World:  #  ZA WARUDOOOOOO
                 enemy.check_player(self.field, player)
                 enemy.move_projectiles(self.get_rects(), [player], dt)
         
+        for i, drop in sorted(enumerate(self.drops), reverse=True):
+            drop.update(player)
+
+        for i, entity in sorted(enumerate(self.usable_entities), reverse=True):
+            entity.update(player)
+
         for i, effect in sorted(enumerate(self.effects), reverse=True):
             effect.update()
             if len(effect.particles) == 0:
@@ -247,8 +261,15 @@ class World:  #  ZA WARUDOOOOOO
         for enemy in self.enemies:
             enemy.draw(display, scroll)
             enemy.draw_projectiles(display, scroll)
+
+        for i, drop in sorted(enumerate(self.drops), reverse=True):
+            drop.draw(display, scroll)
+
         for effect in self.effects:
-            effect.draw(display)
+            effect.draw(display, scroll)
+
+        for i, entity in sorted(enumerate(self.usable_entities), reverse=True):
+            entity.draw(display, scroll)
 
     def get_rects(self):
         return self.tile_rects
@@ -262,6 +283,28 @@ class World:  #  ZA WARUDOOOOOO
     def get_enemies(self):
         return self.enemies
 
+class TradeWorld(World):
+    def __init__(self, width, height, tile_size):
+        super().__init__(width, height, tile_size)
+
+    def generate_map(self):
+        for i in range(self.height):
+            self.field[i][0] = 'x'
+        for i in range(self.height):
+            self.field[i][self.width - 1] = 'x'
+        for i in range(self.width):
+            self.field[0][i] = 'x'
+        for i in range(self.width):
+            self.field[self.height - 1][i] = 'x'
+    
+        y = 0
+        for row in self.field:
+            x = 0
+            for tile in row:
+                if tile != '0' and tile != '1':
+                    self.tile_rects.append(pygame.Rect(x * self.tile_size, y * self.tile_size, self.tile_size, self.tile_size))
+                x += 1
+            y += 1
 
 class GameObject:
     def __init__(self, x, y, width, height):
@@ -375,10 +418,42 @@ class Entity(GameObject):
         self.id += 1
         self.hp = hp
         self.movement = [0, 0]
+        self.animations_frames = {}
+        self.animation_database = {}
+        self.animation_database['idle'] = self.load_animations('data_img/animations/idle', [6, 6, 6, 6, 6,])
+        self.action = 'idle'
+        self.frame = 0
+        self.is_flipped = False
+        self.image = None
+        self.dead = False
+
+
+    def load_animations(self, path, frame_durations):
+        ss = spritesheet(path + '.png')
+        animation_name = path.split('/')[-1]
+        animation_frame_data = []
+        n = 0
+        for frame in frame_durations:
+            animation_frame_id = animation_name + '_' + str(n)
+            animation_image = ss.image_at((n * 16, 0, 16, 16), (0, 0, 0))
+            self.animations_frames[animation_frame_id] = animation_image.copy()
+            for i in range(frame):
+                animation_frame_data.append(animation_frame_id)
+            n += 1
+        return animation_frame_data
+
+    def change_action(action_var, frame_var, new_value):
+        if action_var != new_value:
+            action_var = new_value
+            frame = 0
+        return action_var, frame
+
 
     def draw(self, surface, scroll):
         pygame.draw.rect(surface, (255, 0, 0), pygame.Rect(self.physical_object.x-scroll[0], self.physical_object.y-scroll[1],
                                                            self.physical_object.width, self.physical_object.height), 1)
+        if self.image != None:
+            surface.blit(self.image, (self.physical_object.x-scroll[0], self.physical_object.y-scroll[1]))
     
     def set_pos(self,x,y):
         self.x = x
@@ -389,8 +464,16 @@ class Entity(GameObject):
         self.physical_object.rect.y = y
 
     def update(self):
-        if self.shootTimer < 50:
-            self.shootTimer += 1
+        if self.hp <= 0:
+            self.dead = True
+        else:
+            self.frame += 1
+            if self.frame >= len(self.animation_database[self.action]):
+                self.frame = 0
+            image_id = self.animation_database[self.action][self.frame]
+            self.image = self.animations_frames[image_id]
+            if self.shootTimer < 50:
+                self.shootTimer += 1
     
     def move(self, movement, platforms, enemies):
         collisions = self.physical_object.move(movement,platforms, enemies)
@@ -421,6 +504,69 @@ class Entity(GameObject):
             if len(collisions['data']) > 0:
                 #  print(self, collisions['data'][0])
                 self.projectiles.remove(projectile)
+    
+    def die(self, world):
+        world.drops.append(Drop(self.x, self.y, 7, 7, 'data_img/ammo1.png'))
+
+class Drop(GameObject):
+    def __init__(self, x, y, width, height, path):
+        super().__init__(x, y, width, height)
+        self.img = pygame.image.load(path)
+        self.following = False
+        self.velocity = 2.5
+        
+    
+    def update(self, player):
+        x1 = player.x + player.width / 2
+        y1 = player.y + player.height / 2
+        x2 = self.x + self.width / 2
+        y2 = self.y + self.height / 2
+        dist = math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+
+        if dist <= 2:
+            self.picked_action(player)
+
+        if dist <= 20:
+            self.following = True
+        
+        if self.following:
+            self.x += (x1 - self.x) / math.sqrt((x1 - self.x) ** 2 + (y1 - self.y) ** 2) * self.velocity
+            self.y += (y1 - self.y) / math.sqrt((x1 - self.x) ** 2 + (y1 - self.y) ** 2) * self.velocity
+        
+
+        def picked_action(self, player):
+            pass
+
+
+    def draw(self, surface, scroll):
+        pygame.draw.rect(surface, (255, 0, 0), pygame.Rect(self.x-scroll[0], self.y-scroll[1],
+                                                           self.width, self.height), 1)
+        if self.img != None:
+            surface.blit(self.img, (self.x-scroll[0], self.y-scroll[1]))
+
+
+class AmmoDrop(Drop):
+    def __init__(self, x, y, width, height):
+        super().__init__(x, y, width, height, 'data_img/ammo1.png')
+    
+
+    def picked_action(self, player):
+        player.ammo += 32
+
+
+class HealthDrop(Drop):
+    def __init__(self, x, y, width, height):
+        super().__init__(x, y, width, height, 'data_img/health.png')\
+
+
+    def picked_action(self, player):
+        player.hp += 2
+
+
+class UsableEntity(Entity):
+    def __init__(self, x, y, width, height, hp, type):
+        super().__init__(x, y, width, height, hp, type)
+
 
 class Portal(Entity):
     def __init__(self, x, y, radius, type):
@@ -428,8 +574,16 @@ class Portal(Entity):
         self.radius = radius
         self.can_be_used = False
         self.use_img = pygame.image.load("data_img/use_item_pic.png")
+        self.angle2 = random.uniform(0, math.pi * 2)
+        self.angle3 = random.uniform(0, math.pi * 2)
+        self.pos2 = [math.cos(self.angle2) * 2.5, math.sin(self.angle2) * 2.5]
+        self.pos3 = [math.cos(self.angle3), math.sin(self.angle3)]
         
     def update(self, player):
+        self.angle2 += 0.2
+        self.angle3 += 0.2
+        self.pos2 = [math.cos(self.angle2) * 2.5, math.sin(self.angle2) * 2.5]
+        self.pos3 = [math.cos(self.angle3), math.sin(self.angle3)]
         x1 = player.x + player.width / 2
         y1 = player.y + player.height / 2
         x2 = self.x
@@ -444,8 +598,19 @@ class Portal(Entity):
 
     def draw(self, surface, scroll):
         pygame.draw.circle(surface, (128, 0, 200), (self.x - scroll[0], self.y - scroll[1]), self.radius)
+        pygame.draw.circle(surface, (100, 0, 175), (self.x - scroll[0] + self.pos2[0], self.y - scroll[1] + self.pos2[1]), self.radius / 1.3)
+        pygame.draw.circle(surface, (100, 0, 175), (self.x - scroll[0], self.y - scroll[1]), self.radius * 0.8, 1)
+        pygame.draw.circle(surface, (100, 0, 175), (self.x - scroll[0], self.y - scroll[1]), self.radius * 0.7, 1)
+        pygame.draw.circle(surface, (80, 0, 150), (self.x - scroll[0] + self.pos3[0], self.y - scroll[1] + self.pos3[1]), self.radius / 2)
+        pygame.draw.circle(surface, (100, 0, 175), (self.x - scroll[0], self.y - scroll[1]), self.radius * 1, 1)
         if self.can_be_used:
             surface.blit(self.use_img, (self.x - scroll[0] - self.use_img.get_width() / 2, self.y - scroll[1] - self.radius - self.use_img.get_height()))
+
+    def used(self):
+        if self.can_be_used:
+            return True
+        return False
+    
 
 class Enemy(Entity):
     def __init__(self, x, y, width, height, hp, type):
@@ -467,12 +632,13 @@ class Enemy(Entity):
         self.player_dist = 0
         self.primary_weapon = RustyRifle(self.x, self.y, 0, "data_img/weapon_2.png", self)
 
+
     def wonder(self):
         pass
     
+
     def shoot(self, angle):
         return self.primary_weapon.shoot(angle)
-
 
 
     def check_player(self, map, player):
@@ -573,8 +739,9 @@ class Player(Entity):
         return super().update()
 
     def draw(self, surface, scroll):
-        super().draw(surface, scroll)
         self.primary_weapon.draw(surface, scroll)
+        super().draw(surface, scroll)
+        
     
     def use(self):
         pass
@@ -622,7 +789,7 @@ class Weapon:
 class RustyRifle(Weapon):
     def __init__(self, x, y, angle, path, entity):
         super().__init__(x, y, angle, path, entity)
-        self.shootTimer = 60
+        self.shootTimer = 0
         self.cooldown = 60
     
     def shoot(self, angle=None):
