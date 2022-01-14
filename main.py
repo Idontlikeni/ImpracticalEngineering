@@ -1174,9 +1174,9 @@ def main_menu():
     click = False
     font = pygame.font.Font('MaredivRegular.ttf', 15)
     display = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER), pygame.SRCALPHA)
-    stars = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER + 100, WINDOW_SIZE[1] / SCALE_MULTIPLIER + 100))
+    stars = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER + 400, WINDOW_SIZE[1] / SCALE_MULTIPLIER + 400))
     stars.fill((15, 11, 66))
-    for i in range(300):
+    for i in range(500):
         stars.fill(pygame.Color('white'),
                     (random.random() * width,
                      random.random() * height, 1, 1))
@@ -1238,7 +1238,8 @@ def main_menu():
             if event.type == MOUSEBUTTONUP:
                 if event.button == 1:
                     click = False
-        screen.blit(pygame.transform.scale(stars, (WINDOW_SIZE[0] + 100, WINDOW_SIZE[1] + 100)), (0, 0))
+        mpx, mpy, = pygame.mouse.get_pos()
+        screen.blit(pygame.transform.scale(stars, (WINDOW_SIZE[0] + 400, WINDOW_SIZE[1] + 400)), ((mpx - WINDOW_SIZE[0] / 2) / 30, (mpy - WINDOW_SIZE[1] / 2) / 30))
         screen.blit(pygame.transform.scale(display, WINDOW_SIZE), (0, 0))
         pygame.display.update()
         clock.tick(60)
