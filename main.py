@@ -18,12 +18,6 @@ TILE_SIZE = 16
 screen = pygame.display.set_mode(WINDOW_SIZE, 0, 32)
 flscr = False
 # Vladimir's code
-import random
-import os
-import pygame
-import math
-import time
-import engine as e
 
 countx = 34
 county = 23
@@ -1261,6 +1255,7 @@ def trade_area():
     moving_left = False
     moving_up = False
     moving_down = False
+    
     true_scroll = [0, 0]
     scroll = [0, 0]
 
@@ -1316,17 +1311,25 @@ def trade_area():
             if portal1.used():
                 game()
             if portal2.used():
-                towerdefence()
+                towerDefense()
 
         if player_movement[0] != 0 and player_movement[1] != 0:
             player_movement[0] *= math.sin(math.pi / 4)
             player_movement[1] *= math.sin(math.pi / 4)
+
+        if player_movement[0] != 0 or player_movement[1] != 0:
+            if player_movement[0] > 0:
+                player.is_flipped = False
+            if player_movement[0] < 0:
+                player.is_flipped = True
+            player.change_action('running')
+        elif player_movement[0] == 0 and player_movement[1] == 0:
+            player.change_action('idle')
+
         collision_types = player.move(player_movement, tile_rects, [])
 
         player.move_projectiles(tile_rects, world.get_enemies(), dt)
         player.update(mouse_angle)
-        print(portal1.update(player))
-        print(portal2.update(player))
         world.update(player, dt)
         world.draw(display, scroll)
         player.draw(display, scroll)
@@ -1402,7 +1405,7 @@ def game():
     moving_left = False
     moving_up = False
     moving_down = False
-
+    
     true_scroll = [0, 0]
     scroll = [0, 0]
 
@@ -1459,6 +1462,15 @@ def game():
         if player_movement[0] != 0 and player_movement[1] != 0:
             player_movement[0] *= math.sin(math.pi / 4)
             player_movement[1] *= math.sin(math.pi / 4)
+        
+        if player_movement[0] != 0 or player_movement[1] != 0:
+            if player_movement[0] > 0:
+                player.is_flipped = False
+            if player_movement[0] < 0:
+                player.is_flipped = True
+            player.change_action('running')
+        elif player_movement[0] == 0 and player_movement[1] == 0:
+            player.change_action('idle')
 
         collision_types = player.move(player_movement, tile_rects, [])
 
