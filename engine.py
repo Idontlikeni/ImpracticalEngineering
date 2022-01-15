@@ -201,6 +201,7 @@ class World:  #  ZA WARUDOOOOOO
             effect.update()
             if len(effect.particles) == 0:
                 del effect
+                effect.pop(i)
                 self.effects.pop(i)
     
     def draw(self, display, scroll):
@@ -268,7 +269,7 @@ class World:  #  ZA WARUDOOOOOO
 
         for i, drop in sorted(enumerate(self.drops), reverse=True):
             drop.draw(display, scroll)
-
+            
         for i, entity in sorted(enumerate(self.usable_entities), reverse=True):
             entity.draw(display, scroll)
 
@@ -649,7 +650,6 @@ class Enemy(Entity):
     def wonder(self):
         pass
     
-
     def shoot(self, angle):
         return self.primary_weapon.shoot(angle)
 
@@ -741,6 +741,7 @@ class Player(Entity):
         super().__init__(x, y, width, height, hp, type)
         self.primary_weapon = Weapon(self.x, self.y, 0, "data_img/weapon_1.png", self)
         self.ammo = 128
+
     
     def shoot(self, angle):
         return self.primary_weapon.shoot(angle)
@@ -921,6 +922,7 @@ class ExplodeParticle(Particle):
         self.y += self.velocity * math.sin(self.angle)
         self.length -= 0.9
 
+
     def draw(self, display, scroll):
         #  display.set_colorkey((0,0,0))
         #  pygame.draw.circle(display, (241, 100, 31, 255), [int(self.x), int(self.y)], int(self.time * 2))
@@ -943,6 +945,7 @@ class Explosion:
                 del particle
                 self.particles.pop(i)
             
+
     def draw(self, display, scroll):
         for particle in self.particles:
             particle.draw(display, scroll)
