@@ -186,7 +186,7 @@ class World:  #  ZA WARUDOOOOOO
                 enemy.update()
                 enemy.move(enemy.movement, self.get_rects(), [])
                 enemy.check_player(self.field, player)
-                enemy.move_projectiles(self.get_rects(), [player], dt)
+                enemy.move_projectiles(self, [player], dt)
         
         for i, drop in sorted(enumerate(self.drops), reverse=True):
             drop.update(player)
@@ -199,7 +199,7 @@ class World:  #  ZA WARUDOOOOOO
 
         for i, effect in sorted(enumerate(self.effects), reverse=True):
             effect.update()
-            if len(effect.particles) == 0:
+            if effect.dead:
                 del effect
                 self.effects.pop(i)
     
@@ -499,14 +499,15 @@ class Entity(GameObject):
         for projectile in self.projectiles:
             projectile.draw(surface, scroll)
 
-    def move_projectiles(self, platforms, enemies, dt):
+    def move_projectiles(self, world, enemies, dt):
         for count, projectile in enumerate(self.projectiles):
-            collisions = projectile.move(platforms, enemies, dt)
+            collisions = projectile.move(world, enemies, dt)
             #  print(collisions)
             
             if len(collisions['data']) > 0:
                 #  print(self, collisions['data'][0])
                 self.projectiles.remove(projectile)
+                world.effects.append(BulletDeathParticle(projectile.x + projectile.width / 2, projectile.y + projectile.height / 2))
     
     def die(self, world):
         num = random.randint(0, 100)
@@ -845,9 +846,9 @@ class Projectile(Entity):
         self.velocity = velocity
         self.type = 'projectile'
 
-    def move(self, platforms, enemies, dt):
+    def move(self, world, enemies, dt):
         movement = [math.cos(self.angle) * self.velocity * dt, math.sin(self.angle) * self.velocity * dt]
-        collisions = self.physical_object.move(movement,platforms,enemies)
+        collisions = self.physical_object.move(movement,world.get_rects(),enemies)
         self.x = self.physical_object.x
         self.y = self.physical_object.y
         if len(collisions['enemies']) > 0:
@@ -873,6 +874,7 @@ class Particle:
         self.time = time
         self.spent_time = 0
         self.scroll = scroll
+        self.dead = False
 
     def __init__(self, x, y, scroll):
         self.x = x
@@ -898,6 +900,25 @@ class Particle:
         
         pygame.draw.circle(display, (255, 255, 255), 
         [int(self.x - scroll[0] + self.scroll[0]), int(self.y - scroll[1] + self.scroll[1])], int(self.time))
+
+
+class BulletDeathParticle(Particle):
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.dead = False
+        self.time = random.randint(3, 4)
+        self.radius = 0.5
+    
+    def update(self):
+        self.time -= 0.5
+        self.radius += 2
+        if self.time <= 1.5:
+            self.dead = True
+    
+    def draw(self, display, scroll=[0, 0]):
+        pygame.draw.circle(display, (255, 255, 255), (self.x - scroll[0], self.y - scroll[1]), self.radius, int(self.time))
+
 
 class ExplodeParticle(Particle):
     def __init__(self, x, y, velocity, time):
@@ -934,6 +955,7 @@ class Explosion:
     def __init__(self, x, y) -> None:
         self.x = x
         self.y = y
+        self.dead = False
         self.particles = []
         for i in range(random.randint(5, 8)):
             self.particles.append(ExplodeParticle(x, y))
@@ -945,6 +967,9 @@ class Explosion:
             if particle.length <= 0:
                 del particle
                 self.particles.pop(i)
+        
+        if len(self.particles) == 0:
+            self.dead = True
             
     def draw(self, display, scroll):
         for particle in self.particles:
