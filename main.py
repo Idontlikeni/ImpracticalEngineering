@@ -1111,7 +1111,7 @@ def towerdefence():
             createrad()
             for i, explosion in sorted(enumerate(explosions), reverse=True):
                 explosion.update()
-                explosion.draw(window)
+                explosion.draw(window, [0, 0])
                 if len(explosion.particles) == 0:
                     del explosion
                     explosions.pop(i)
@@ -1311,7 +1311,7 @@ def trade_area():
             if portal1.used():
                 game()
             if portal2.used():
-                towerDefense()
+                towerdefence()
 
         if player_movement[0] != 0 and player_movement[1] != 0:
             player_movement[0] *= math.sin(math.pi / 4)
