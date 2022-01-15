@@ -1069,6 +1069,7 @@ def towerdefence():
         clock.tick(fps)
 
 
+
 def fullscrn(display):
     global flscr
     if flscr:
@@ -1076,7 +1077,6 @@ def fullscrn(display):
     else:
         display = pygame.display.set_mode(WINDOW_SIZE, pygame.FULLSCREEN)
     flscr = not flscr
-
 
 def main_menu():
     running = True
@@ -1165,6 +1165,10 @@ def main_menu():
             if event.type == MOUSEBUTTONUP:
                 if event.button == 1:
                     click = False
+
+            if event.type == MOUSEBUTTONUP:
+                if event.button == 1:
+                    click = False
         mpx, mpy, = pygame.mouse.get_pos()
         screen.blit(pygame.transform.scale(stars, (WINDOW_SIZE[0] + 400, WINDOW_SIZE[1] + 400)),
                     ((mpx - WINDOW_SIZE[0] / 2) / 10 - 200, (mpy - WINDOW_SIZE[1] / 2) / 10 - 200))
@@ -1191,7 +1195,6 @@ def trade_area():
     moving_left = False
     moving_up = False
     moving_down = False
-
     true_scroll = [0, 0]
     scroll = [0, 0]
 
@@ -1252,7 +1255,6 @@ def trade_area():
         if player_movement[0] != 0 and player_movement[1] != 0:
             player_movement[0] *= math.sin(math.pi / 4)
             player_movement[1] *= math.sin(math.pi / 4)
-
         collision_types = player.move(player_movement, tile_rects, [])
 
         player.move_projectiles(tile_rects, world.get_enemies(), dt)
