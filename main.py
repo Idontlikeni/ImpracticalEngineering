@@ -569,6 +569,13 @@ def ui():
         pygame.draw.rect(monitor, 'white', [70.1 * cellsize, 25.5 * cellsize, 8 * cellsize, 8.5 * cellsize], 4)
     if towernum == 4:
         pygame.draw.rect(monitor, 'white', [70.1 * cellsize, 34 * cellsize, 8 * cellsize, 8.5 * cellsize], 4)
+    pygame.draw.rect(monitor, 'white', [0.5 * width - 5 * cellsize, 0.045 * height, 10 * cellsize, 2.2 * cellsize], 4)
+    if spawntime == 0:
+        hp = myfont.render(str(f'Wave: {wawe1}/3'), False, 'white')
+        monitor.blit(hp, (17.2 * cellsize, 0.9 * cellsize))
+    else:
+        hp = myfont.render(str(f'Next wave: {300 - spawntime}'), False, 'white')
+        monitor.blit(hp, (16.5 * cellsize, 0.9 * cellsize))
 
 
 def showfps():
@@ -750,78 +757,158 @@ def createrad():
 
 
 def run():
+    global spawntime, inviztime, wawe, playerv, meatend, wawe1
     overwidth()
     if alive:
-        global spawntime, inviztime, wawe, playerv, meatend
-        for drop in drops:
-            drop.fly()
-            drop.take()
-            drop.draw()
-            if drop.taked():
-                drops.remove(drop)
-                plr.money += 1
-        for bullet in bullets:
-            bullet.move()
-            bullet.draw()
-            # pygame.draw.rect(window, 'red', bullet.rect, 1)
-            if player.rect().colliderect(bullet.rect):
-                player.hp -= 1
-                bullets.remove(bullet)
-                break
-            for wall in walls:
-                if wall.colliderect(bullet.rect):
-                    bullets.remove(bullet)
-                    break
-            for tower in towers:
-                if tower.rect.colliderect(bullet.rect) and bullet.tower != tower:
-                    tile_rects.remove(pygame.Rect(tower.x - cellsize / 2, tower.y - cellsize / 2, cellsize, cellsize))
-                    towerrects.remove(pygame.Rect(tower.x - cellsize / 2, tower.y - cellsize / 2, cellsize, cellsize))
-                    tile_rects_coord.remove([(tower.x - cellsize / 2) // cellsize, (tower.y - cellsize / 2) // cellsize])
-                    towers.remove(tower)
-                    bullets.remove(bullet)
-                    explosions.append(e.Explosion(tower.x, tower.y))
-                    break
-        for meats in meat:
-            meats.draw()
-            meats.go()
+        if not meatend:
+            for drop in drops:
+                drop.fly()
+                drop.take()
+                drop.draw()
+                if drop.taked():
+                    drops.remove(drop)
+                    plr.money += 1
             for bullet in bullets:
-                if Bullet.rng(bullet) > width or bullet.x < 0:
+                bullet.move()
+                bullet.draw()
+                # pygame.draw.rect(window, 'red', bullet.rect, 1)
+                if player.rect().colliderect(bullet.rect):
+                    player.hp -= 1
                     bullets.remove(bullet)
-                elif meats.rect.colliderect(bullet.rect):
-                    meats.damage(bullet.damage)
-                    bullets.remove(bullet)
-            if not meats.check():
-                if meats in meat:
-                    for i in range(random.randint(3, 5)):
-                        adddrop(meats.x, meats.y, meats.x, meats.y)
-                    ch = random.randint(1, 10)
-                    if ch == 5 or ch == 2:
-                        adddrop(meats.x, meats.y, meats.x, meats.y, True)
-                    explosions.append(e.Explosion(meats.x, meats.y))
-                    meat.remove(meats)
-            if inviztime > 500 and player.rect().colliderect(meats.rect):
-                player.hp -= 1
-                inviztime = 0
+                    break
+                for wall in walls:
+                    if wall.colliderect(bullet.rect):
+                        bullets.remove(bullet)
+                        break
+                for tower in towers:
+                    if tower.rect.colliderect(bullet.rect) and bullet.tower != tower:
+                        tile_rects.remove(pygame.Rect(tower.x - cellsize / 2, tower.y - cellsize / 2, cellsize, cellsize))
+                        towerrects.remove(pygame.Rect(tower.x - cellsize / 2, tower.y - cellsize / 2, cellsize, cellsize))
+                        tile_rects_coord.remove([(tower.x - cellsize / 2) // cellsize, (tower.y - cellsize / 2) // cellsize])
+                        towers.remove(tower)
+                        bullets.remove(bullet)
+                        explosions.append(e.Explosion(tower.x, tower.y))
+                        break
+            for meats in meat:
+                meats.draw()
+                meats.go()
+                for bullet in bullets:
+                    if Bullet.rng(bullet) > width or bullet.x < 0:
+                        bullets.remove(bullet)
+                    elif meats.rect.colliderect(bullet.rect):
+                        meats.damage(bullet.damage)
+                        bullets.remove(bullet)
+                if not meats.check():
+                    if meats in meat:
+                        for i in range(random.randint(3, 5)):
+                            adddrop(meats.x, meats.y, meats.x, meats.y)
+                        ch = random.randint(1, 10)
+                        if ch == 5 or ch == 2:
+                            adddrop(meats.x, meats.y, meats.x, meats.y, True)
+                        explosions.append(e.Explosion(meats.x, meats.y))
+                        meat.remove(meats)
+                if inviztime > 500 and player.rect().colliderect(meats.rect):
+                    player.hp -= 1
+                    inviztime = 0
+                else:
+                    inviztime += 1
+            if len(meat) == 0 and wawe < 3:
+                if spawntime > 300:
+                    for i in range(10 + wawe * 5):
+                        if wawe == 0:
+                            meatcreate(meatstrt[0] - 2 * i * cellsize, meatstrt[1], 50, 0.5, wawe + 10, 'red', False)
+                        else:
+                            meatcreate(meatstrt[0] - 2 * i * cellsize, meatstrt[1], wawe * 50 + wawe1 * 20, 0.5 + wawe1 * 0.1, wawe + 10, 'red', False)
+                    wawe += 1
+                    if wawe == 3 and wawe1 != 3:
+                        wawe1 += 1
+                        wawe = 0
+                    if wawe == 3 and wawe1 < 3:
+                        wawe1 += 1
+                    spawntime = 0
+                else:
+                    spawntime += 1
+            if len(meat) == 0 and (wawe1 >= 3 or wawe1 == 0):
+                meatend = True
             else:
-                inviztime += 1
-        if len(meat) == 0 and wawe < 3:
-            if spawntime > 300:
-                for i in range(10 + wawe * 2):
-                    if wawe == 0:
-                        meatcreate(meatstrt[0] - 2 * i * cellsize, meatstrt[1], 50, 0.5, wawe + 10, 'red', False)
-                    else:
-                        meatcreate(meatstrt[0] - 2 * i * cellsize, meatstrt[1], wawe * 50, 0.6, wawe + 10, 'red', False)
-                wawe += 1
-                spawntime = 0
-            else:
-                spawntime += 1
-        if len(meat) == 0 and (wawe >= 3 or wawe == 0):
-            meatend = True
+                meatend = False
+            for tower in towers:
+                tower.draw()
+                tower.fire(tower)
         else:
-            meatend = False
-        for tower in towers:
-            tower.draw()
-            tower.fire(tower)
+            for drop in drops:
+                drop.fly()
+                drop.take()
+                drop.draw()
+                if drop.taked():
+                    drops.remove(drop)
+                    plr.money += 1
+            for bullet in bullets:
+                bullet.move()
+                bullet.draw()
+                # pygame.draw.rect(window, 'red', bullet.rect, 1)
+                if player.rect().colliderect(bullet.rect):
+                    player.hp -= 1
+                    bullets.remove(bullet)
+                    break
+                for wall in walls:
+                    if wall.colliderect(bullet.rect):
+                        bullets.remove(bullet)
+                        break
+                for tower in towers:
+                    if tower.rect.colliderect(bullet.rect) and bullet.tower != tower:
+                        tile_rects.remove(pygame.Rect(tower.x - cellsize / 2, tower.y - cellsize / 2, cellsize, cellsize))
+                        towerrects.remove(pygame.Rect(tower.x - cellsize / 2, tower.y - cellsize / 2, cellsize, cellsize))
+                        tile_rects_coord.remove([(tower.x - cellsize / 2) // cellsize, (tower.y - cellsize / 2) // cellsize])
+                        towers.remove(tower)
+                        bullets.remove(bullet)
+                        explosions.append(e.Explosion(tower.x, tower.y))
+                        break
+            for meats in meat:
+                meats.draw()
+                meats.go()
+                for bullet in bullets:
+                    if Bullet.rng(bullet) > width or bullet.x < 0:
+                        bullets.remove(bullet)
+                    elif meats.rect.colliderect(bullet.rect):
+                        meats.damage(bullet.damage)
+                        bullets.remove(bullet)
+                if not meats.check():
+                    if meats in meat:
+                        for i in range(random.randint(3, 5)):
+                            adddrop(meats.x, meats.y, meats.x, meats.y)
+                        ch = random.randint(1, 10)
+                        if ch == 5 or ch == 2:
+                            adddrop(meats.x, meats.y, meats.x, meats.y, True)
+                        explosions.append(e.Explosion(meats.x, meats.y))
+                        meat.remove(meats)
+                if inviztime > 500 and player.rect().colliderect(meats.rect):
+                    player.hp -= 1
+                    inviztime = 0
+                else:
+                    inviztime += 1
+            if len(meat) == 0 and wawe < 3:
+                if spawntime > 300:
+                    for i in range(10 + wawe * 5):
+                        if wawe == 0:
+                            meatcreate(meatstrt[0] - 2 * i * cellsize, meatstrt[1], 50, 0.5, wawe + 10, 'red', False)
+                        else:
+                            meatcreate(meatstrt[0] - 2 * i * cellsize, meatstrt[1], wawe * 50 + wawe1 * 20, 0.5 + wawe1 * 0.1, wawe + 10, 'red', False)
+                    wawe += 1
+                    if wawe == 3 and wawe1 != 3:
+                        wawe1 += 1
+                        wawe = 0
+                    if wawe == 3 and wawe1 < 3:
+                        wawe1 += 1
+                    spawntime = 0
+                else:
+                    spawntime += 1
+            if len(meat) == 0 and (wawe1 >= 3 or wawe1 == 0):
+                meatend = True
+            else:
+                meatend = False
+            for tower in towers:
+                tower.draw()
     else:
         for drop in drops:
             drop.fly()
@@ -851,6 +938,7 @@ def run():
 
 plr = Player(35)
 wawe = 0
+wawe1 = 1
 crosshair = Crosshair()
 player = e.Player(*[cellsize * countx - 0.8 * cellsize, cellsize * 11], 0.8 * cellsize, 0.8 * cellsize, 10, 'player')
 fullhp = player.hp
@@ -907,9 +995,6 @@ redtow1 = pygame.transform.scale(redtow, (cellsize * 6, cellsize * 6))
 bluetow1 = pygame.transform.scale(bluetow, (cellsize * 6, cellsize * 6))
 
 
-# player.hp = 0
-
-
 def towerdefence():
     global countx, county, sclsz, sclsz1, width1, height1, width, height, cellsize, cellsize1, countx1, county1, fps
     global flscr, show, inviztime, inhub, meatend, bullets, towers, meat, drops, heals, walls, way, allmetal, tile_rects
@@ -932,10 +1017,14 @@ def towerdefence():
     player.hp = 10
     plr.money = 35
     playerv = 2
+    t = 0
     moving_right = False
     while running:
         pygame.mouse.set_visible(False)
         if alive:
+            # if meatend and t == 0:
+            #     winwin(monitor)
+            #     t = 1
             for meats in meat:
                 if math.sqrt((meats.x - (player.x + 8)) ** 2 + (meats.y - (player.y + 8)) ** 2) < cellsize * 2 and \
                         meats.slowed:
@@ -1154,6 +1243,70 @@ def ingamemenu(surface):
         clock.tick(60)
 
 
+def winwin(surface):
+    running = True
+    pygame.mouse.set_visible(True)
+    SCALE_MULTIPLIER = 5
+    click = False
+    font = pygame.font.Font('MaredivRegular.ttf', 20)
+    display = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER), pygame.SRCALPHA)
+    background = pygame.Surface(WINDOW_SIZE, pygame.SRCALPHA)
+    background.blit(pygame.transform.scale(surface, WINDOW_SIZE), (0, 0))
+    while running:
+        display.fill((0, 0, 0, 200))
+        screen.blit(background, (0, 0))
+        mx, my = pygame.mouse.get_pos()
+        playbtn = pygame.Rect(WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 20, 106, 36, 23)
+        optionsbtn = pygame.Rect(WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 35, 141, 69, 23)
+        exitbtn = pygame.Rect(WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 20, 176, 36, 19)
+        mx = mx / SCALE_MULTIPLIER
+        my = my / SCALE_MULTIPLIER
+        if playbtn.collidepoint((mx, my)):
+            cveta1 = (214, 136, 17)
+            if click:
+                break
+        else:
+            cveta1 = (255, 235, 214)
+        if optionsbtn.collidepoint((mx, my)):
+            cveta3 = (214, 136, 17)
+            if click:
+                running = False
+        else:
+            cveta3 = (255, 235, 214)
+        if exitbtn.collidepoint((mx, my)):
+            cveta5 = (214, 136, 17)
+            if click:
+                return True
+        else:
+            cveta5 = (255, 235, 214)
+        text1 = font.render("YOU WIN!", True, cveta3)
+        display.blit(text1, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 5, 135))
+        text = font.render("OK", True, cveta3)
+        display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 5, 135))
+        click = False
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == KEYDOWN:
+                if event.key == K_ESCAPE:
+                    running = False
+            if event.type == MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    click = True
+
+            if event.type == MOUSEBUTTONUP:
+                if event.button == 1:
+                    click = False
+
+            if event.type == MOUSEBUTTONUP:
+                if event.button == 1:
+                    click = False
+        screen.blit(pygame.transform.scale(display, WINDOW_SIZE), (0, 0))
+        pygame.display.update()
+        clock.tick(60)
+
+
 def main_menu():
     running = True
     pygame.mouse.set_visible(True)
@@ -1287,6 +1440,7 @@ def trade_area():
     particles = []
 
     while running:
+        pygame.mouse.set_visible(False)
         dt = time.time() - last_time
         dt *= 60
         last_time = time.time()
@@ -1426,7 +1580,6 @@ def game():
 
     last_time = time.time()
 
-    pygame.mouse.set_visible(False)
     world = e.World(48, 48, 20)
     world.generate_map()
     player = e.Player(*world.get_start_pos(), 16, 16, 10, 'player')
@@ -1436,6 +1589,7 @@ def game():
     particles = []
 
     while running:
+        pygame.mouse.set_visible(False)
         dt = time.time() - last_time
         dt *= 60
         last_time = time.time()
