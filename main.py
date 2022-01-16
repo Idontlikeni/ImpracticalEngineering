@@ -18,13 +18,6 @@ TILE_SIZE = 16
 screen = pygame.display.set_mode(WINDOW_SIZE, 0, 32)
 flscr = False
 # Vladimir's code
-import random
-import os
-import pygame
-import math
-import time
-import engine as e
-
 countx = 34
 county = 23
 sclsz = 2
@@ -1070,6 +1063,7 @@ def towerdefence():
 
 
 
+
 def fullscrn(display):
     global flscr
     if flscr:
@@ -1079,10 +1073,12 @@ def fullscrn(display):
     flscr = not flscr
 
 def main_menu():
-    running = True
     pygame.mouse.set_visible(True)
     SCALE_MULTIPLIER = 5
     click = False
+    cveta1 = (0, 255, 0)
+    cveta2 = (255, 255, 255)
+    cveta3 = (0, 255, 0)
     font = pygame.font.Font('MaredivRegular.ttf', 15)
     display = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER), pygame.SRCALPHA)
     stars = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER + 400, WINDOW_SIZE[1] / SCALE_MULTIPLIER + 400))
@@ -1109,46 +1105,33 @@ def main_menu():
                     random.random() * height, 1, 1))
     while running:
         mx, my = pygame.mouse.get_pos()
-        playbtn = pygame.Rect(132, 110, 120, 25)
-        optionsbtn = pygame.Rect(132, 145, 120, 25)
-        exitbtn = pygame.Rect(132, 180, 120, 25)
+        button_1 = pygame.Rect(WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 50, 50, 100, 25)
+        button_2 = pygame.Rect(WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 50, 100, 100, 25)
         mx = mx / SCALE_MULTIPLIER
         my = my / SCALE_MULTIPLIER
-        if playbtn.collidepoint((mx, my)):
-            cveta = (78, 29, 92)
-            cveta1 = (214, 136, 17)
+        if button_1.collidepoint((mx, my)):
+            cveta = (200, 25, 23)
+            cveta1 = (255, 128, 0)
             if click:
                 trade_area()
         else:
-            cveta = (109, 29, 112)
-            cveta1 = (255, 235, 214)
-        if optionsbtn.collidepoint((mx, my)):
-            cveta2 = (78, 29, 92)
-            cveta3 = (214, 136, 17)
+            cveta = (255, 255, 255)
+            cveta1 = (0, 255, 0)
+        if button_2.collidepoint((mx, my)):
+            cveta2 = (200, 25, 23)
+            cveta3 = (255, 128, 0)
             if click:
                 options()
         else:
-            cveta2 = (109, 29, 112)
-            cveta3 = (255, 235, 214)
-        if exitbtn.collidepoint((mx, my)):
-            cveta4 = (78, 29, 92)
-            cveta5 = (214, 136, 17)
-            if click:
-                running = False
-        else:
-            cveta4 = (109, 29, 112)
-            cveta5 = (255, 235, 214)
-        pygame.draw.rect(display, cveta, playbtn)
-        pygame.draw.rect(display, cveta2, optionsbtn)
-        pygame.draw.rect(display, cveta4, exitbtn)
-        text = font.render("play", True, cveta1)
-        display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 15, 110))
+            cveta2 = (255, 255, 255)
+            cveta3 = (0, 255, 0)
+        pygame.draw.rect(display, cveta, button_1)
+        pygame.draw.rect(display, (cveta2), button_2)
+        text = font.render("play", True, (cveta1))
+        display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 15, 50))
 
-        text = font.render("options", True, cveta3)
-        display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 25, 145))
-
-        text = font.render("exit", True, cveta5)
-        display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 15, 180))
+        text = font.render("options", True, (cveta3))
+        display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 25, 100))
         click = False
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -1182,6 +1165,9 @@ def main_menu():
         pygame.display.update()
         clock.tick(60)
 
+def towerDefense():
+    pass
+
 
 def trade_area():
     SCALE_MULTIPLIER = 4
@@ -1195,6 +1181,7 @@ def trade_area():
     moving_left = False
     moving_up = False
     moving_down = False
+    
     true_scroll = [0, 0]
     scroll = [0, 0]
 
@@ -1250,17 +1237,25 @@ def trade_area():
             if portal1.used():
                 game()
             if portal2.used():
-                towerdefence()
+                towerDefense()
 
         if player_movement[0] != 0 and player_movement[1] != 0:
             player_movement[0] *= math.sin(math.pi / 4)
             player_movement[1] *= math.sin(math.pi / 4)
+
+        if player_movement[0] != 0 or player_movement[1] != 0:
+            if player_movement[0] > 0:
+                player.is_flipped = False
+            if player_movement[0] < 0:
+                player.is_flipped = True
+            player.change_action('running')
+        elif player_movement[0] == 0 and player_movement[1] == 0:
+            player.change_action('idle')
+
         collision_types = player.move(player_movement, tile_rects, [])
 
-        player.move_projectiles(tile_rects, world.get_enemies(), dt)
+        player.move_projectiles(world, world.get_enemies(), dt)
         player.update(mouse_angle)
-        # print(portal1.update(player))
-        # print(portal2.update(player))
         world.update(player, dt)
         world.draw(display, scroll)
         player.draw(display, scroll)
@@ -1323,7 +1318,6 @@ def trade_area():
         clock.tick(60)
     pygame.mouse.set_visible(True)
 
-
 def game():
     SCALE_MULTIPLIER = 4
     display = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER))
@@ -1336,7 +1330,7 @@ def game():
     moving_left = False
     moving_up = False
     moving_down = False
-
+    
     true_scroll = [0, 0]
     scroll = [0, 0]
 
@@ -1393,10 +1387,19 @@ def game():
         if player_movement[0] != 0 and player_movement[1] != 0:
             player_movement[0] *= math.sin(math.pi / 4)
             player_movement[1] *= math.sin(math.pi / 4)
+        
+        if player_movement[0] != 0 or player_movement[1] != 0:
+            if player_movement[0] > 0:
+                player.is_flipped = False
+            if player_movement[0] < 0:
+                player.is_flipped = True
+            player.change_action('running')
+        elif player_movement[0] == 0 and player_movement[1] == 0:
+            player.change_action('idle')
 
         collision_types = player.move(player_movement, tile_rects, [])
 
-        player.move_projectiles(tile_rects, world.get_enemies(), dt)
+        player.move_projectiles(world, world.get_enemies(), dt)
         player.update(mouse_angle)
         world.update(player, dt)
         world.draw(display, scroll)

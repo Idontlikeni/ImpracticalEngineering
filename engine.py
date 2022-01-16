@@ -186,7 +186,7 @@ class World:  #  ZA WARUDOOOOOO
                 enemy.update()
                 enemy.move(enemy.movement, self.get_rects(), [])
                 enemy.check_player(self.field, player)
-                enemy.move_projectiles(self.get_rects(), [player], dt)
+                enemy.move_projectiles(self, [player], dt)
         
         for i, drop in sorted(enumerate(self.drops), reverse=True):
             drop.update(player)
@@ -199,9 +199,8 @@ class World:  #  ZA WARUDOOOOOO
 
         for i, effect in sorted(enumerate(self.effects), reverse=True):
             effect.update()
-            if len(effect.particles) == 0:
+            if effect.dead:
                 del effect
-                effect.pop(i)
                 self.effects.pop(i)
     
     def draw(self, display, scroll):
@@ -269,7 +268,7 @@ class World:  #  ZA WARUDOOOOOO
 
         for i, drop in sorted(enumerate(self.drops), reverse=True):
             drop.draw(display, scroll)
-            
+
         for i, entity in sorted(enumerate(self.usable_entities), reverse=True):
             entity.draw(display, scroll)
 
@@ -425,12 +424,12 @@ class Entity(GameObject):
         self.movement = [0, 0]
         self.animations_frames = {}
         self.animation_database = {}
-        self.animation_database['idle'] = self.load_animations('data_img/animations/idle', [6, 6, 6, 6, 6,])
         self.action = 'idle'
         self.frame = 0
         self.is_flipped = False
         self.image = None
         self.dead = False
+        self.animation_database['idle'] = self.load_animations('data_img/animations/idle', [6, 6, 6, 6, 6,])
 
 
     def load_animations(self, path, frame_durations):
@@ -447,18 +446,17 @@ class Entity(GameObject):
             n += 1
         return animation_frame_data
 
-    def change_action(action_var, frame_var, new_value):
-        if action_var != new_value:
-            action_var = new_value
-            frame = 0
-        return action_var, frame
+    def change_action(self, new_value):
+        if new_value != self.action:
+            self.frame = 0
+        self.action = new_value
 
 
     def draw(self, surface, scroll):
         pygame.draw.rect(surface, (255, 0, 0), pygame.Rect(self.physical_object.x-scroll[0], self.physical_object.y-scroll[1],
                                                            self.physical_object.width, self.physical_object.height), 1)
         if self.image != None:
-            surface.blit(self.image, (self.physical_object.x-scroll[0], self.physical_object.y-scroll[1]))
+            surface.blit(pygame.transform.flip(self.image, self.is_flipped, False), (self.physical_object.x-scroll[0], self.physical_object.y-scroll[1]))
     
     def set_pos(self,x,y):
         self.x = x
@@ -501,14 +499,15 @@ class Entity(GameObject):
         for projectile in self.projectiles:
             projectile.draw(surface, scroll)
 
-    def move_projectiles(self, platforms, enemies, dt):
+    def move_projectiles(self, world, enemies, dt):
         for count, projectile in enumerate(self.projectiles):
-            collisions = projectile.move(platforms, enemies, dt)
+            collisions = projectile.move(world, enemies, dt)
             #  print(collisions)
             
             if len(collisions['data']) > 0:
                 #  print(self, collisions['data'][0])
                 self.projectiles.remove(projectile)
+                world.effects.append(BulletDeathParticle(projectile.x + projectile.width / 2, projectile.y + projectile.height / 2))
     
     def die(self, world):
         num = random.randint(0, 100)
@@ -519,6 +518,145 @@ class Entity(GameObject):
             if num <= 20:
                 world.drops.append(HealthDrop(self.x, self.y, 7, 7))
         
+
+class Enemy(Entity):
+    def __init__(self, x, y, width, height, hp, type):
+        super().__init__(x, y, width, height, hp, type)
+        self.can_see_player = False
+        self.is_wondering = False
+        self.destination_pos = [x, y]
+        self.angle = 0
+        self.movement = [0, 0]
+        self.wonder_timer = 0
+        self.velocity = 0.8
+        self.wait_timer = 0
+        self.is_waiting = False
+        self.sees_enemy = False
+        self.color = [255, 0, 0]
+        self.draw_pixels = []
+        self.debug = [[0, 0], [0, 0]]
+        self.player_angle = 0
+        self.player_dist = 0
+        self.primary_weapon = RustyRifle(self.x, self.y, 0, "data_img/weapon_2.png", self)
+
+
+    def wonder(self):
+        pass
+    
+
+    def shoot(self, angle):
+        return self.primary_weapon.shoot(angle)
+
+
+    def check_player(self, map, player):
+        self.draw_pixels = []
+        x1 = player.x + player.width / 2
+        y1 = player.y + player.height / 2
+        x2 = self.x + self.width / 2
+        y2 = self.y + self.height / 2
+        dist = math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+        if dist <= 150: # can see player
+            self.player_dist = dist
+            angle = math.atan2(y1 - y2, x1 - x2)
+            sin_a = math.sin(angle)
+            cos_a = math.cos(angle)
+            self.debug = [[x2, y2], [x1, y1]]
+            for depth in range(int(dist)):
+                x = x2 + depth * cos_a
+                y = y2 + depth * sin_a
+                if map[int(y) // TILE_SIZE][int(x) // TILE_SIZE] != '0':
+                    self.can_see_player = False
+                    self.color = [255, 0, 0]
+                    break
+                self.draw_pixels.append([x, y])
+            else:
+                self.can_see_player = True
+                self.player_angle = angle
+                self.player_dist = dist
+                self.color = [0, 255, 0]
+        else: 
+            self.color = [255, 0, 0]
+            return False
+
+                
+    def update(self):
+        super().update()
+        self.primary_weapon.update()
+        self.primary_weapon.set_pos(self.x, self.y)
+        #  print(self.wait_timer)
+        if self.can_see_player:
+            self.shoot(random.uniform(self.player_angle - 0.7, self.player_angle + 0.7))
+        if self.is_waiting:
+            self.wait_timer -= 1
+            self.is_waiting = self.wait_timer > 0
+            self.movement = [0, 0]
+        else:
+            if not self.is_wondering:
+                angle = 0
+                dist = 0
+                if self.can_see_player:
+                    angle = random.uniform(self.player_angle - 0.7, self.player_angle + 0.7)
+                    dist = random.randint(30, max(51, int(self.player_dist)))
+                else:    
+                    angle = random.uniform(0, math.pi * 2)
+                    dist = random.randint(50, 170)
+                self.angle = angle
+                self.destination_pos = [self.x + math.cos(self.angle) * dist, self.y + math.sin(self.angle) * dist]
+                #  print("new: ", math.cos(angle) * 100)
+                self.is_wondering = True
+                self.movement = [math.cos(self.angle) * self.velocity, math.sin(self.angle) * self.velocity]
+                self.wonder_timer = int(dist * 2)
+                self.wait_timer -= 1
+            self.wonder_timer -= 1
+            #  print("update: ", math.cos(self.angle) * 100)
+            if (abs(self.x - self.destination_pos[0]) < self.width and abs(self.y - self.destination_pos[1]) < self.height) or self.wonder_timer <= 0:
+                self.is_waiting = True
+                self.wait_timer = random.randint(30, 160)
+                self.is_wondering = False
+            self.primary_weapon.set_angle(self.angle)
+
+        
+    
+    def draw(self, surface, scroll):
+        self.primary_weapon.draw(surface, scroll)
+        pygame.draw.rect(surface, self.color, pygame.Rect(self.physical_object.x-scroll[0], self.physical_object.y-scroll[1],
+                                                           self.physical_object.width, self.physical_object.height), 1)
+        # pygame.draw.line(surface, self.color, (self.x - scroll[0], self.y - scroll[1]), 
+        # (self.destination_pos[0] - scroll[0], self.destination_pos[1] - scroll[1]))
+        # for pixel in self.draw_pixels:
+        #     pygame.draw.rect(surface, (0, 255, 255), pygame.Rect(pixel[0] - scroll[0], pixel[1] - scroll[1], 1, 1))
+        # pygame.draw.line(surface, (0, 0, 255), (self.debug[0][0] - scroll[0], self.debug[0][1] - scroll[1]),
+        # (self.debug[1][0] - scroll[0], self.debug[1][1] - scroll[1]))
+
+    
+
+class Player(Entity):
+    def __init__(self, x, y, width, height, hp, type):
+        super().__init__(x, y, width, height, hp, type)
+        self.primary_weapon = Weapon(self.x, self.y, 0, "data_img/weapon_1.png", self)
+        self.ammo = 128
+        self.animation_database['idle'] = self.load_animations('data_img/animations/idle', [6, 6, 6, 6, 6,])
+        self.animation_database['running'] = self.load_animations('data_img/animations/running', [5, 5, 5, 5, 5, 5])
+
+    def shoot(self, angle):
+        return self.primary_weapon.shoot(angle)
+        #  return super().shoot(angle)
+    
+    def update(self, mouse_angle):
+        self.primary_weapon.update()
+        self.primary_weapon.set_pos(self.x, self.y)
+        self.primary_weapon.set_angle(mouse_angle)
+        return super().update()
+
+    def draw(self, surface, scroll):
+        self.primary_weapon.draw(surface, scroll)
+        super().draw(surface, scroll)
+        
+    
+    def use(self):
+        pass
+
+
 
 class Drop(GameObject):
     def __init__(self, x, y, width, height, path):
@@ -626,141 +764,6 @@ class Portal(Entity):
         return False
     
 
-class Enemy(Entity):
-    def __init__(self, x, y, width, height, hp, type):
-        super().__init__(x, y, width, height, hp, type)
-        self.can_see_player = False
-        self.is_wondering = False
-        self.destination_pos = [x, y]
-        self.angle = 0
-        self.movement = [0, 0]
-        self.wonder_timer = 0
-        self.velocity = 0.8
-        self.wait_timer = 0
-        self.is_waiting = False
-        self.sees_enemy = False
-        self.color = [255, 0, 0]
-        self.draw_pixels = []
-        self.debug = [[0, 0], [0, 0]]
-        self.player_angle = 0
-        self.player_dist = 0
-        self.primary_weapon = RustyRifle(self.x, self.y, 0, "data_img/weapon_2.png", self)
-
-
-    def wonder(self):
-        pass
-    
-    def shoot(self, angle):
-        return self.primary_weapon.shoot(angle)
-
-
-    def check_player(self, map, player):
-        self.draw_pixels = []
-        x1 = player.x + player.width / 2
-        y1 = player.y + player.height / 2
-        x2 = self.x + self.width / 2
-        y2 = self.y + self.height / 2
-        dist = math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
-        if dist <= 150: # can see player
-            self.player_dist = dist
-            angle = math.atan2(y1 - y2, x1 - x2)
-            sin_a = math.sin(angle)
-            cos_a = math.cos(angle)
-            self.debug = [[x2, y2], [x1, y1]]
-            for depth in range(int(dist)):
-                x = x2 + depth * cos_a
-                y = y2 + depth * sin_a
-                if map[int(y) // TILE_SIZE][int(x) // TILE_SIZE] != '0':
-                    self.can_see_player = False
-                    self.color = [255, 0, 0]
-                    break
-                self.draw_pixels.append([x, y])
-            else:
-                self.can_see_player = True
-                self.player_angle = angle
-                self.player_dist = dist
-                self.color = [0, 255, 0]
-        else: 
-            self.color = [255, 0, 0]
-            return False
-
-                
-    def update(self):
-        super().update()
-        self.primary_weapon.update()
-        self.primary_weapon.set_pos(self.x, self.y)
-        #  print(self.wait_timer)
-        if self.can_see_player:
-            self.shoot(random.uniform(self.player_angle - 0.7, self.player_angle + 0.7))
-        if self.is_waiting:
-            self.wait_timer -= 1
-            self.is_waiting = self.wait_timer > 0
-            self.movement = [0, 0]
-        else:
-            if not self.is_wondering:
-                angle = 0
-                dist = 0
-                if self.can_see_player:
-                    angle = random.uniform(self.player_angle - 0.7, self.player_angle + 0.7)
-                    dist = random.randint(30, max(51, int(self.player_dist)))
-                else:    
-                    angle = random.uniform(0, math.pi * 2)
-                    dist = random.randint(50, 170)
-                self.angle = angle
-                self.destination_pos = [self.x + math.cos(self.angle) * dist, self.y + math.sin(self.angle) * dist]
-                #  print("new: ", math.cos(angle) * 100)
-                self.is_wondering = True
-                self.movement = [math.cos(self.angle) * self.velocity, math.sin(self.angle) * self.velocity]
-                self.wonder_timer = int(dist * 2)
-                self.wait_timer -= 1
-            self.wonder_timer -= 1
-            #  print("update: ", math.cos(self.angle) * 100)
-            if (abs(self.x - self.destination_pos[0]) < self.width and abs(self.y - self.destination_pos[1]) < self.height) or self.wonder_timer <= 0:
-                self.is_waiting = True
-                self.wait_timer = random.randint(30, 160)
-                self.is_wondering = False
-            self.primary_weapon.set_angle(self.angle)
-
-        
-    
-    def draw(self, surface, scroll):
-        self.primary_weapon.draw(surface, scroll)
-        pygame.draw.rect(surface, self.color, pygame.Rect(self.physical_object.x-scroll[0], self.physical_object.y-scroll[1],
-                                                           self.physical_object.width, self.physical_object.height), 1)
-        # pygame.draw.line(surface, self.color, (self.x - scroll[0], self.y - scroll[1]), 
-        # (self.destination_pos[0] - scroll[0], self.destination_pos[1] - scroll[1]))
-        # for pixel in self.draw_pixels:
-        #     pygame.draw.rect(surface, (0, 255, 255), pygame.Rect(pixel[0] - scroll[0], pixel[1] - scroll[1], 1, 1))
-        # pygame.draw.line(surface, (0, 0, 255), (self.debug[0][0] - scroll[0], self.debug[0][1] - scroll[1]),
-        # (self.debug[1][0] - scroll[0], self.debug[1][1] - scroll[1]))
-
-    
-
-class Player(Entity):
-    def __init__(self, x, y, width, height, hp, type):
-        super().__init__(x, y, width, height, hp, type)
-        self.primary_weapon = Weapon(self.x, self.y, 0, "data_img/weapon_1.png", self)
-        self.ammo = 128
-
-    
-    def shoot(self, angle):
-        return self.primary_weapon.shoot(angle)
-        #  return super().shoot(angle)
-    
-    def update(self, mouse_angle):
-        self.primary_weapon.update()
-        self.primary_weapon.set_pos(self.x, self.y)
-        self.primary_weapon.set_angle(mouse_angle)
-        return super().update()
-
-    def draw(self, surface, scroll):
-        self.primary_weapon.draw(surface, scroll)
-        super().draw(surface, scroll)
-        
-    
-    def use(self):
-        pass
-
 class Weapon:
     def __init__(self, x, y, angle, path, entity):
         self.x = x
@@ -843,9 +846,9 @@ class Projectile(Entity):
         self.velocity = velocity
         self.type = 'projectile'
 
-    def move(self, platforms, enemies, dt):
+    def move(self, world, enemies, dt):
         movement = [math.cos(self.angle) * self.velocity * dt, math.sin(self.angle) * self.velocity * dt]
-        collisions = self.physical_object.move(movement,platforms,enemies)
+        collisions = self.physical_object.move(movement,world.get_rects(),enemies)
         self.x = self.physical_object.x
         self.y = self.physical_object.y
         if len(collisions['enemies']) > 0:
@@ -871,6 +874,7 @@ class Particle:
         self.time = time
         self.spent_time = 0
         self.scroll = scroll
+        self.dead = False
 
     def __init__(self, x, y, scroll):
         self.x = x
@@ -897,6 +901,25 @@ class Particle:
         pygame.draw.circle(display, (255, 255, 255), 
         [int(self.x - scroll[0] + self.scroll[0]), int(self.y - scroll[1] + self.scroll[1])], int(self.time))
 
+
+class BulletDeathParticle(Particle):
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.dead = False
+        self.time = random.randint(3, 4)
+        self.radius = 0.5
+    
+    def update(self):
+        self.time -= 0.5
+        self.radius += 2
+        if self.time <= 1.5:
+            self.dead = True
+    
+    def draw(self, display, scroll=[0, 0]):
+        pygame.draw.circle(display, (255, 255, 255), (self.x - scroll[0], self.y - scroll[1]), self.radius, int(self.time))
+
+
 class ExplodeParticle(Particle):
     def __init__(self, x, y, velocity, time):
         self.x = x
@@ -922,7 +945,6 @@ class ExplodeParticle(Particle):
         self.y += self.velocity * math.sin(self.angle)
         self.length -= 0.9
 
-
     def draw(self, display, scroll):
         #  display.set_colorkey((0,0,0))
         #  pygame.draw.circle(display, (241, 100, 31, 255), [int(self.x), int(self.y)], int(self.time * 2))
@@ -933,6 +955,7 @@ class Explosion:
     def __init__(self, x, y) -> None:
         self.x = x
         self.y = y
+        self.dead = False
         self.particles = []
         for i in range(random.randint(5, 8)):
             self.particles.append(ExplodeParticle(x, y))
@@ -944,8 +967,10 @@ class Explosion:
             if particle.length <= 0:
                 del particle
                 self.particles.pop(i)
+        
+        if len(self.particles) == 0:
+            self.dead = True
             
-
     def draw(self, display, scroll):
         for particle in self.particles:
             particle.draw(display, scroll)
