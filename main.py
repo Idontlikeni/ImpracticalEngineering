@@ -1062,8 +1062,6 @@ def towerdefence():
         clock.tick(fps)
 
 
-
-
 def fullscrn(display):
     global flscr
     if flscr:
@@ -1072,66 +1070,85 @@ def fullscrn(display):
         display = pygame.display.set_mode(WINDOW_SIZE, pygame.FULLSCREEN)
     flscr = not flscr
 
+
 def main_menu():
+    running = True
     pygame.mouse.set_visible(True)
     SCALE_MULTIPLIER = 5
     click = False
-    cveta1 = (0, 255, 0)
-    cveta2 = (255, 255, 255)
-    cveta3 = (0, 255, 0)
     font = pygame.font.Font('MaredivRegular.ttf', 15)
     display = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER), pygame.SRCALPHA)
-    stars = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER + 400, WINDOW_SIZE[1] / SCALE_MULTIPLIER + 400))
-    stars1 = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER + 400, WINDOW_SIZE[1] / SCALE_MULTIPLIER + 400), pygame.SRCALPHA)
-    stars2 = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER + 400, WINDOW_SIZE[1] / SCALE_MULTIPLIER + 400), pygame.SRCALPHA)
-    stars3 = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER + 400, WINDOW_SIZE[1] / SCALE_MULTIPLIER + 400),
+    stars = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER), pygame.SRCALPHA)
+    stars1 = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER), pygame.SRCALPHA)
+    stars2 = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER), pygame.SRCALPHA)
+    stars3 = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER),
                             pygame.SRCALPHA)
-    stars.fill((15, 11, 66))
-    for i in range(250):
+    stars0 = pygame.Surface((WINDOW_SIZE[0], WINDOW_SIZE[1]))
+    for i in range(150):
         stars.fill(pygame.Color('white'),
-                    (random.random() * width,
-                     random.random() * height, 1, 1))
-    for i in range(170):
+                    (random.random() * WINDOW_SIZE[0] / SCALE_MULTIPLIER,
+                     random.random() * WINDOW_SIZE[1] / SCALE_MULTIPLIER, 1, 1))
+    for i in range(80):
         stars1.fill(pygame.Color('white'),
-                   (random.random() * width,
-                    random.random() * height, 1, 1))
-    for i in range(120):
+                   (random.random() * WINDOW_SIZE[0] / SCALE_MULTIPLIER,
+                    random.random() * WINDOW_SIZE[1] / SCALE_MULTIPLIER, 1, 1))
+    for i in range(30):
         stars2.fill(pygame.Color('white'),
-                   (random.random() * width,
-                    random.random() * height, 1, 1))
-    for i in range(50):
+                   (random.random() * WINDOW_SIZE[0] / SCALE_MULTIPLIER,
+                    random.random() * WINDOW_SIZE[1] / SCALE_MULTIPLIER, 1, 1))
+    for i in range(10):
         stars3.fill(pygame.Color('white'),
-                   (random.random() * width,
-                    random.random() * height, 1, 1))
+                   (random.random() * WINDOW_SIZE[0] / SCALE_MULTIPLIER,
+                    random.random() * WINDOW_SIZE[1] / SCALE_MULTIPLIER, 1, 1))
     while running:
+        mpx, mpy, = pygame.mouse.get_pos()
+        stars0.fill((15, 11, 66))
+        stars0.blit(stars, ((mpx - WINDOW_SIZE[0] / 2) / 280, (mpy - WINDOW_SIZE[1] / 2) / 280))
+        stars0.blit(stars1, ((mpx - WINDOW_SIZE[0] / 2) / 200, (mpy - WINDOW_SIZE[1] / 2) / 200))
+        stars0.blit(stars2, ((mpx - WINDOW_SIZE[0] / 2) / 140, (mpy - WINDOW_SIZE[1] / 2) / 140))
+        stars0.blit(stars3, ((mpx - WINDOW_SIZE[0] / 2) / 80, (mpy - WINDOW_SIZE[1] / 2) / 80))
+        display.blit(stars0, (0, 0))
         mx, my = pygame.mouse.get_pos()
-        button_1 = pygame.Rect(WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 50, 50, 100, 25)
-        button_2 = pygame.Rect(WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 50, 100, 100, 25)
+        playbtn = pygame.Rect(132, 110, 120, 25)
+        optionsbtn = pygame.Rect(132, 145, 120, 25)
+        exitbtn = pygame.Rect(132, 180, 120, 25)
         mx = mx / SCALE_MULTIPLIER
         my = my / SCALE_MULTIPLIER
-        if button_1.collidepoint((mx, my)):
-            cveta = (200, 25, 23)
-            cveta1 = (255, 128, 0)
+        if playbtn.collidepoint((mx, my)):
+            cveta = (78, 29, 92)
+            cveta1 = (214, 136, 17)
             if click:
                 trade_area()
         else:
-            cveta = (255, 255, 255)
-            cveta1 = (0, 255, 0)
-        if button_2.collidepoint((mx, my)):
-            cveta2 = (200, 25, 23)
-            cveta3 = (255, 128, 0)
+            cveta = (109, 29, 112)
+            cveta1 = (255, 235, 214)
+        if optionsbtn.collidepoint((mx, my)):
+            cveta2 = (78, 29, 92)
+            cveta3 = (214, 136, 17)
             if click:
                 options()
         else:
-            cveta2 = (255, 255, 255)
-            cveta3 = (0, 255, 0)
-        pygame.draw.rect(display, cveta, button_1)
-        pygame.draw.rect(display, (cveta2), button_2)
-        text = font.render("play", True, (cveta1))
-        display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 15, 50))
+            cveta2 = (109, 29, 112)
+            cveta3 = (255, 235, 214)
+        if exitbtn.collidepoint((mx, my)):
+            cveta4 = (78, 29, 92)
+            cveta5 = (214, 136, 17)
+            if click:
+                running = False
+        else:
+            cveta4 = (109, 29, 112)
+            cveta5 = (255, 235, 214)
+        pygame.draw.rect(display, cveta, playbtn)
+        pygame.draw.rect(display, cveta2, optionsbtn)
+        pygame.draw.rect(display, cveta4, exitbtn)
+        text = font.render("play", True, cveta1)
+        display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 15, 110))
 
-        text = font.render("options", True, (cveta3))
-        display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 25, 100))
+        text = font.render("options", True, cveta3)
+        display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 25, 145))
+
+        text = font.render("exit", True, cveta5)
+        display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 15, 180))
         click = False
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -1152,21 +1169,9 @@ def main_menu():
             if event.type == MOUSEBUTTONUP:
                 if event.button == 1:
                     click = False
-        mpx, mpy, = pygame.mouse.get_pos()
-        screen.blit(pygame.transform.scale(stars, (WINDOW_SIZE[0] + 400, WINDOW_SIZE[1] + 400)),
-                    ((mpx - WINDOW_SIZE[0] / 2) / 10 - 200, (mpy - WINDOW_SIZE[1] / 2) / 10 - 200))
-        screen.blit(pygame.transform.scale(stars1, (WINDOW_SIZE[0] + 400, WINDOW_SIZE[1] + 400)),
-                    ((mpx - WINDOW_SIZE[0] / 2) / 20 - 200, (mpy - WINDOW_SIZE[1] / 2) / 20 - 200))
-        screen.blit(pygame.transform.scale(stars2, (WINDOW_SIZE[0] + 400, WINDOW_SIZE[1] + 400)),
-                    ((mpx - WINDOW_SIZE[0] / 2) / 30 - 200, (mpy - WINDOW_SIZE[1] / 2) / 30 - 200))
-        screen.blit(pygame.transform.scale(stars3, (WINDOW_SIZE[0] + 400, WINDOW_SIZE[1] + 400)),
-                    ((mpx - WINDOW_SIZE[0] / 2) / 40 - 200, (mpy - WINDOW_SIZE[1] / 2) / 40 - 200))
         screen.blit(pygame.transform.scale(display, WINDOW_SIZE), (0, 0))
         pygame.display.update()
         clock.tick(60)
-
-def towerDefense():
-    pass
 
 
 def trade_area():
@@ -1237,7 +1242,7 @@ def trade_area():
             if portal1.used():
                 game()
             if portal2.used():
-                towerDefense()
+                towerdefence()
 
         if player_movement[0] != 0 and player_movement[1] != 0:
             player_movement[0] *= math.sin(math.pi / 4)
