@@ -207,10 +207,10 @@ class Tower:
         self.firerate = 0
         self.price = price
         self.bullspeed = bullspeed
-        self.rect = pygame.Rect(self.x, self.y, cellsize, cellsize)
+        self.rect = pygame.Rect(self.x - cellsize / 2, self.y - cellsize / 2, cellsize, cellsize)
 
-    # def draw(self):
-    #     pygame.draw.circle(window, self.color, [self.x, self.y], self.size)
+    # def draw1(self):
+    #     pygame.draw.rect(window, 'green', self.rect)
 
     def cost(self):
         return self.price
@@ -1028,7 +1028,7 @@ def towerdefence():
             createrad()
             for i, explosion in sorted(enumerate(explosions), reverse=True):
                 explosion.update()
-                explosion.draw(window)
+                explosion.draw(window, [0, 0])
                 if len(explosion.particles) == 0:
                     del explosion
                     explosions.pop(i)
