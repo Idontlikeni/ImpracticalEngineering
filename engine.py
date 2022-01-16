@@ -7,24 +7,27 @@ e_colorkey = (255, 255, 255)
 
 TILE_SIZE = 20
 
+
 def set_global_colorkey(colorkey):
     global e_colorkey
     e_colorkey = colorkey
 
-def collision_test(object_1,object_list):
+
+def collision_test(object_1, object_list):
     collision_list = []
     for obj in object_list:
         if obj.colliderect(object_1):
-
             collision_list.append(obj)
     return collision_list
 
-def object_collision_test(object_1,object_list):
+
+def object_collision_test(object_1, object_list):
     collision_list = []
     for obj in object_list:
         if obj.physical_object.rect.colliderect(object_1):
             collision_list.append(obj)
     return collision_list
+
 
 def circle_surf(radius, color):
     surf = pygame.Surface((radius * 2, radius * 2))
@@ -32,43 +35,46 @@ def circle_surf(radius, color):
     surf.set_colorkey((0, 0, 0))
     return surf
 
+
 def blitRotate(surf, image, pos, originPos, angle):
-    image_rect = image.get_rect(topleft = (pos[0] - originPos[0], pos[1]-originPos[1]))
+    image_rect = image.get_rect(topleft=(pos[0] - originPos[0], pos[1] - originPos[1]))
     offset_center_to_pivot = pygame.math.Vector2(pos) - image_rect.center
     rotated_offset = offset_center_to_pivot.rotate(-angle)
     rotated_image_center = (pos[0] - rotated_offset.x, pos[1] - rotated_offset.y)
     rotated_image = pygame.transform.rotate(image, angle)
-    rotated_image_rect = rotated_image.get_rect(center = rotated_image_center)
+    rotated_image_rect = rotated_image.get_rect(center=rotated_image_center)
     surf.blit(rotated_image, rotated_image_rect)
+
 
 class spritesheet(object):
     def __init__(self, filename):
         self.sheet = pygame.image.load(filename).convert()
-    
+
     # Load a specific image from a specific rectangle
-    def image_at(self, rectangle, colorkey = None):
+    def image_at(self, rectangle, colorkey=None):
         rect = pygame.Rect(rectangle)
         image = pygame.Surface(rect.size).convert()
         image.blit(self.sheet, (0, 0), rect)
         if colorkey is not None:
             if colorkey is -1:
-                colorkey = image.get_at((0,0))
+                colorkey = image.get_at((0, 0))
             image.set_colorkey(colorkey, pygame.RLEACCEL)
         return image
-    
+
     # Load a whole bunch of images and return them as a list
-    def images_at(self, rects, colorkey = None):
-        "Loads multiple images, supply a list of coordinates" 
+    def images_at(self, rects, colorkey=None):
+        "Loads multiple images, supply a list of coordinates"
         return [self.image_at(rect, colorkey) for rect in rects]
-    
+
     # Load a whole strip of images
-    def load_strip(self, rect, image_count, colorkey = None):
+    def load_strip(self, rect, image_count, colorkey=None):
         "Loads a strip of images and returns them as a list"
-        tups = [(rect[0]+rect[2]*x, rect[1], rect[2], rect[3])
+        tups = [(rect[0] + rect[2] * x, rect[1], rect[2], rect[3])
                 for x in range(image_count)]
         return self.images_at(tups, colorkey)
 
-class World:  #  ZA WARUDOOOOOO
+
+class World:  # ZA WARUDOOOOOO
     def __init__(self, width, height, tile_size):
         self.width = width
         self.height = height
@@ -98,7 +104,6 @@ class World:  #  ZA WARUDOOOOOO
             self.images2.append(ss2.image_at((i * 20, 40, 20, 20), (0, 0, 0)))
         for i in range(5):
             self.images2.append(ss2.image_at((40, i * 20, 20, 20), (0, 0, 0)))
-        
 
     def generate_map(self):
         for i in range(self.height):
@@ -109,7 +114,7 @@ class World:  #  ZA WARUDOOOOOO
             self.field[0][i] = 'x'
         for i in range(self.width):
             self.field[self.height - 1][i] = 'x'
-        
+
         numer_of_cells = random.randint(self.width * self.height, self.width * self.height * 2)
         self.enemies_count = random.randint(10, 15)
         #  print(self.enemies_count, numer_of_cells)
@@ -120,7 +125,7 @@ class World:  #  ZA WARUDOOOOOO
         x, y = random.randint(1, self.width - 2), random.randint(1, self.height - 2)
         self.field[y][x] = '0'
         self.start_pos = [x, y]
-        directions = [(0, 1), (0, -1), (1, 0), (-1, 0)] 
+        directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
 
         for i in range(numer_of_cells):
             vec = directions[random.randint(0, 3)]
@@ -140,7 +145,7 @@ class World:  #  ZA WARUDOOOOOO
             if i in self.enemies_positions:
                 self.enemies_positions.append([x, y])
                 self.add_enemy(Enemy(*self.to_screen_coordinates(x, y), 16, 16, 5, 'enemy'))
-        
+
         #  print(*self.enemies_positions)
 
         y = 0
@@ -148,10 +153,11 @@ class World:  #  ZA WARUDOOOOOO
             x = 0
             for tile in row:
                 if tile != '0' and tile != '1':
-                    self.tile_rects.append(pygame.Rect(x * self.tile_size, y * self.tile_size, self.tile_size, self.tile_size))
+                    self.tile_rects.append(
+                        pygame.Rect(x * self.tile_size, y * self.tile_size, self.tile_size, self.tile_size))
                 x += 1
             y += 1
-    
+
     def check_use(self, player):
         for entity in self.usable_entities:
             entity.used()
@@ -187,7 +193,7 @@ class World:  #  ZA WARUDOOOOOO
                 enemy.move(enemy.movement, self.get_rects(), [])
                 enemy.check_player(self.field, player)
                 enemy.move_projectiles(self, [player], dt)
-        
+
         for i, drop in sorted(enumerate(self.drops), reverse=True):
             drop.update(player)
             if drop.dead:
@@ -202,50 +208,71 @@ class World:  #  ZA WARUDOOOOOO
             if effect.dead:
                 del effect
                 self.effects.pop(i)
-    
+
     def draw(self, display, scroll):
         for y in range(len(self.field)):
             for x in range(len(self.field[y])):
                 if self.field[y][x] == '1':
-                    pygame.draw.rect(display, (207, 117, 43), pygame.Rect((x * self.tile_size - scroll[0], y * self.tile_size - scroll[1]), (self.tile_size, self.tile_size)))
+                    pygame.draw.rect(display, (207, 117, 43),
+                                     pygame.Rect((x * self.tile_size - scroll[0], y * self.tile_size - scroll[1]),
+                                                 (self.tile_size, self.tile_size)))
                     #  display.blit(dirt_image, (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
                 if self.field[y][x] == '2':
                     # if self.field[y + 1][x] == '0':
                     #     pygame.draw.rect(display, (255, 255, 0), pygame.Rect((x * self.tile_size - scroll[0], y * self.tile_size - scroll[1]), (self.tile_size, self.tile_size)), 1)
-                    if self.field[y + 1][x] == '0' and self.field[y - 1][x] != '0' and self.field[y][x + 1] != '0' and self.field[y][x - 1] != '0':
+                    if self.field[y + 1][x] == '0' and self.field[y - 1][x] != '0' and self.field[y][x + 1] != '0' and \
+                            self.field[y][x - 1] != '0':
                         display.blit(self.images1[7], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
-                    elif self.field[y + 1][x] == '0' and self.field[y - 1][x] != '0' and self.field[y][x + 1] == '0' and self.field[y][x - 1] != '0':
+                    elif self.field[y + 1][x] == '0' and self.field[y - 1][x] != '0' and self.field[y][x + 1] == '0' and \
+                            self.field[y][x - 1] != '0':
                         display.blit(self.images1[8], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
-                    elif self.field[y + 1][x] == '0' and self.field[y - 1][x] != '0' and self.field[y][x + 1] != '0' and self.field[y][x - 1] == '0':
+                    elif self.field[y + 1][x] == '0' and self.field[y - 1][x] != '0' and self.field[y][x + 1] != '0' and \
+                            self.field[y][x - 1] == '0':
                         display.blit(self.images1[6], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
-                    elif self.field[y + 1][x] != '0' and self.field[y - 1][x] != '0' and self.field[y][x + 1] == '0' and self.field[y][x - 1] != '0':
+                    elif self.field[y + 1][x] != '0' and self.field[y - 1][x] != '0' and self.field[y][x + 1] == '0' and \
+                            self.field[y][x - 1] != '0':
                         display.blit(self.images1[5], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
-                    elif self.field[y + 1][x] != '0' and self.field[y - 1][x] != '0' and self.field[y][x + 1] != '0' and self.field[y][x - 1] == '0':
+                    elif self.field[y + 1][x] != '0' and self.field[y - 1][x] != '0' and self.field[y][x + 1] != '0' and \
+                            self.field[y][x - 1] == '0':
                         display.blit(self.images1[3], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
-                    elif self.field[y + 1][x] != '0' and self.field[y - 1][x] == '0' and self.field[y][x + 1] == '0' and self.field[y][x - 1] != '0':
+                    elif self.field[y + 1][x] != '0' and self.field[y - 1][x] == '0' and self.field[y][x + 1] == '0' and \
+                            self.field[y][x - 1] != '0':
                         display.blit(self.images1[2], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
-                    elif self.field[y + 1][x] != '0' and self.field[y - 1][x] == '0' and self.field[y][x + 1] != '0' and self.field[y][x - 1] != '0':
+                    elif self.field[y + 1][x] != '0' and self.field[y - 1][x] == '0' and self.field[y][x + 1] != '0' and \
+                            self.field[y][x - 1] != '0':
                         display.blit(self.images1[1], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
-                    elif self.field[y + 1][x] != '0' and self.field[y - 1][x] == '0' and self.field[y][x + 1] != '0' and self.field[y][x - 1] == '0':
+                    elif self.field[y + 1][x] != '0' and self.field[y - 1][x] == '0' and self.field[y][x + 1] != '0' and \
+                            self.field[y][x - 1] == '0':
                         display.blit(self.images1[0], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
-                    elif self.field[y + 1][x] == '0' and self.field[y - 1][x] == '0' and self.field[y][x + 1] != '0' and self.field[y][x - 1] == '0':
+                    elif self.field[y + 1][x] == '0' and self.field[y - 1][x] == '0' and self.field[y][x + 1] != '0' and \
+                            self.field[y][x - 1] == '0':
                         display.blit(self.images2[0], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
-                    elif self.field[y + 1][x] == '0' and self.field[y - 1][x] == '0' and self.field[y][x + 1] != '0' and self.field[y][x - 1] != '0':
+                    elif self.field[y + 1][x] == '0' and self.field[y - 1][x] == '0' and self.field[y][x + 1] != '0' and \
+                            self.field[y][x - 1] != '0':
                         display.blit(self.images2[1], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
-                    elif self.field[y + 1][x] == '0' and self.field[y - 1][x] == '0' and self.field[y][x + 1] == '0' and self.field[y][x - 1] != '0':
+                    elif self.field[y + 1][x] == '0' and self.field[y - 1][x] == '0' and self.field[y][x + 1] == '0' and \
+                            self.field[y][x - 1] != '0':
                         display.blit(self.images2[4], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
-                    elif self.field[y + 1][x] == '0' and self.field[y - 1][x] == '0' and self.field[y][x + 1] == '0' and self.field[y][x - 1] == '0':
+                    elif self.field[y + 1][x] == '0' and self.field[y - 1][x] == '0' and self.field[y][x + 1] == '0' and \
+                            self.field[y][x - 1] == '0':
                         display.blit(self.images2[5], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
-                    elif self.field[y + 1][x] != '0' and self.field[y - 1][x] == '0' and self.field[y][x + 1] == '0' and self.field[y][x - 1] == '0':
+                    elif self.field[y + 1][x] != '0' and self.field[y - 1][x] == '0' and self.field[y][x + 1] == '0' and \
+                            self.field[y][x - 1] == '0':
                         display.blit(self.images2[6], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
-                    elif self.field[y + 1][x] != '0' and self.field[y - 1][x] != '0' and self.field[y][x + 1] == '0' and self.field[y][x - 1] == '0':
+                    elif self.field[y + 1][x] != '0' and self.field[y - 1][x] != '0' and self.field[y][x + 1] == '0' and \
+                            self.field[y][x - 1] == '0':
                         display.blit(self.images2[7], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
-                    elif self.field[y + 1][x] == '0' and self.field[y - 1][x] != '0' and self.field[y][x + 1] == '0' and self.field[y][x - 1] == '0':
+                    elif self.field[y + 1][x] == '0' and self.field[y - 1][x] != '0' and self.field[y][x + 1] == '0' and \
+                            self.field[y][x - 1] == '0':
                         display.blit(self.images2[10], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
                     else:
-                        pygame.draw.rect(display, (207, 117, 43), pygame.Rect((x * self.tile_size - scroll[0], y * self.tile_size - scroll[1]), (self.tile_size, self.tile_size)))
+                        pygame.draw.rect(display, (207, 117, 43),
+                                         pygame.Rect((x * self.tile_size - scroll[0], y * self.tile_size - scroll[1]),
+                                                     (self.tile_size, self.tile_size)))
                 if self.field[y][x] == 'x':
-                    pygame.draw.rect(display, (255, 0, 0), pygame.Rect((x * self.tile_size - scroll[0], y * self.tile_size - scroll[1]), (self.tile_size, self.tile_size)), 1)
+                    pygame.draw.rect(display, (255, 0, 0),
+                                     pygame.Rect((x * self.tile_size - scroll[0], y * self.tile_size - scroll[1]),
+                                                 (self.tile_size, self.tile_size)), 1)
         # y = 0
         # for row in self.field:
         #     x = 0
@@ -261,7 +288,7 @@ class World:  #  ZA WARUDOOOOOO
         #             pygame.draw.rect(display, (255, 0, 0), pygame.Rect((x * self.tile_size - scroll[0], y * self.tile_size - scroll[1]), (self.tile_size, self.tile_size)), 1)
         #         x += 1
         #     y += 1
-        
+
         for enemy in self.enemies:
             enemy.draw(display, scroll)
             enemy.draw_projectiles(display, scroll)
@@ -287,6 +314,7 @@ class World:  #  ZA WARUDOOOOOO
     def get_enemies(self):
         return self.enemies
 
+
 class TradeWorld(World):
     def __init__(self, width, height, tile_size):
         super().__init__(width, height, tile_size)
@@ -300,15 +328,17 @@ class TradeWorld(World):
             self.field[0][i] = 'x'
         for i in range(self.width):
             self.field[self.height - 1][i] = 'x'
-    
+
         y = 0
         for row in self.field:
             x = 0
             for tile in row:
                 if tile != '0' and tile != '1':
-                    self.tile_rects.append(pygame.Rect(x * self.tile_size, y * self.tile_size, self.tile_size, self.tile_size))
+                    self.tile_rects.append(
+                        pygame.Rect(x * self.tile_size, y * self.tile_size, self.tile_size, self.tile_size))
                 x += 1
             y += 1
+
 
 class GameObject:
     def __init__(self, x, y, width, height):
@@ -317,31 +347,33 @@ class GameObject:
         self.width = width
         self.height = height
         self.rect = pygame.Rect(x, y, width, height)
-    
+
     def draw(self, display, scroll, is_debug=False):
         if is_debug:
             pygame.draw.rect(display, (255, 0, 0), self.rect, 1)
-    
+
     def set_position(self, x, y):
         self.x, self.y = x, y
+
 
 class PhysicalObject(GameObject):
     def __init__(self, x, y, width, height):
         super().__init__(x, y, width, height)
 
-    def move(self,movement,platforms,enemies=[]):
+    def move(self, movement, platforms, enemies=[]):
         enemies_rects = []
         for enemy in enemies:
             enemies_rects.append(enemy.physical_object.rect)
-        
+
         self.x += movement[0]
         self.rect.x = int(self.x)
         block_hit_list = collision_test(self.rect, platforms)
-        enemies_hit_list = object_collision_test(self.rect, enemies) #  Сода надо добавить возможность управлять id
-        collision_types = {'top':False,'bottom':False,'right':False,'left':False,'slant_bottom':False,'data':[],'enemies':[],'projectiles':[]}
+        enemies_hit_list = object_collision_test(self.rect, enemies)  # Сода надо добавить возможность управлять id
+        collision_types = {'top': False, 'bottom': False, 'right': False, 'left': False, 'slant_bottom': False,
+                           'data': [], 'enemies': [], 'projectiles': []}
         # added collision data to "collision_types". ignore the poorly chosen variable name
         for block in block_hit_list:
-            markers = [False,False,False,False]
+            markers = [False, False, False, False]
             if movement[0] > 0:
                 self.rect.right = block.left
                 collision_types['right'] = True
@@ -350,11 +382,11 @@ class PhysicalObject(GameObject):
                 self.rect.left = block.right
                 collision_types['left'] = True
                 markers[1] = True
-            collision_types['data'].append([block,markers])
+            collision_types['data'].append([block, markers])
             self.x = self.rect.x
-        
+
         for enemy in enemies_hit_list:
-            markers = [False,False,False,False]
+            markers = [False, False, False, False]
             if movement[0] > 0:
                 self.rect.right = enemy.physical_object.rect.left
                 collision_types['right'] = True
@@ -363,7 +395,7 @@ class PhysicalObject(GameObject):
                 self.rect.left = enemy.physical_object.rect.right
                 collision_types['left'] = True
                 markers[1] = True
-            collision_types['data'].append([enemy,markers])
+            collision_types['data'].append([enemy, markers])
             if enemy.type == 'projectile':
                 collision_types['projectiles'].append(enemy)
             else:
@@ -375,7 +407,7 @@ class PhysicalObject(GameObject):
         block_hit_list = collision_test(self.rect, platforms)
         enemies_hit_list = object_collision_test(self.rect, enemies)
         for block in block_hit_list:
-            markers = [False,False,False,False]
+            markers = [False, False, False, False]
             if movement[1] > 0:
                 self.rect.bottom = block.top
                 collision_types['bottom'] = True
@@ -384,12 +416,12 @@ class PhysicalObject(GameObject):
                 self.rect.top = block.bottom
                 collision_types['top'] = True
                 markers[3] = True
-            collision_types['data'].append([block,markers])
+            collision_types['data'].append([block, markers])
             self.change_y = 0
             self.y = self.rect.y
 
         for enemy in enemies_hit_list:
-            markers = [False,False,False,False]
+            markers = [False, False, False, False]
             if movement[1] > 0:
                 self.rect.bottom = enemy.physical_object.rect.top
                 collision_types['bottom'] = True
@@ -398,7 +430,7 @@ class PhysicalObject(GameObject):
                 self.rect.top = enemy.physical_object.rect.bottom
                 collision_types['top'] = True
                 markers[3] = True
-            collision_types['data'].append([enemy,markers])
+            collision_types['data'].append([enemy, markers])
             if enemy.type == 'projectile':
                 collision_types['projectiles'].append(enemy)
             else:
@@ -407,8 +439,10 @@ class PhysicalObject(GameObject):
             self.y = self.rect.y
         return collision_types
 
+
 class Entity(GameObject):
     id_iter = itertools.count()
+
     def __init__(self, x, y, width, height, hp, type):
         self.id = next(self.id_iter)
         self.x = x
@@ -429,8 +463,7 @@ class Entity(GameObject):
         self.is_flipped = False
         self.image = None
         self.dead = False
-        self.animation_database['idle'] = self.load_animations('data_img/animations/idle', [6, 6, 6, 6, 6,])
-
+        self.animation_database['idle'] = self.load_animations('data_img/animations/idle', [6, 6, 6, 6, 6, ])
 
     def load_animations(self, path, frame_durations):
         ss = spritesheet(path + '.png')
@@ -451,14 +484,15 @@ class Entity(GameObject):
             self.frame = 0
         self.action = new_value
 
-
     def draw(self, surface, scroll):
-        pygame.draw.rect(surface, (255, 0, 0), pygame.Rect(self.physical_object.x-scroll[0], self.physical_object.y-scroll[1],
-                                                           self.physical_object.width, self.physical_object.height), 1)
+        pygame.draw.rect(surface, (255, 0, 0),
+                         pygame.Rect(self.physical_object.x - scroll[0], self.physical_object.y - scroll[1],
+                                     self.physical_object.width, self.physical_object.height), 1)
         if self.image != None:
-            surface.blit(pygame.transform.flip(self.image, self.is_flipped, False), (self.physical_object.x-scroll[0], self.physical_object.y-scroll[1]))
-    
-    def set_pos(self,x,y):
+            surface.blit(pygame.transform.flip(self.image, self.is_flipped, False),
+                         (self.physical_object.x - scroll[0], self.physical_object.y - scroll[1]))
+
+    def set_pos(self, x, y):
         self.x = x
         self.y = y
         self.physical_object.x = x
@@ -477,24 +511,25 @@ class Entity(GameObject):
             self.image = self.animations_frames[image_id]
             if self.shootTimer < 50:
                 self.shootTimer += 1
-    
+
     def move(self, movement, platforms, enemies):
-        collisions = self.physical_object.move(movement,platforms, enemies)
+        collisions = self.physical_object.move(movement, platforms, enemies)
         self.x = self.physical_object.x
         self.y = self.physical_object.y
         return collisions
- 
+
     def rect(self):
-        return pygame.Rect(self.x,self.y,self.width,self.height)
+        return pygame.Rect(self.x, self.y, self.width, self.height)
 
     def shoot(self, angle):
         if self.shootTimer >= 50:
-            projectile = Projectile(self.x + self.width / 2 - 4, self.y + self.height / 2 - 4, 8, 8, angle, 5, "player_projectile")
+            projectile = Projectile(self.x + self.width / 2 - 4, self.y + self.height / 2 - 4, 8, 8, angle, 5,
+                                    "player_projectile")
             self.projectiles.append(projectile)
             self.shootTimer = 0
             return projectile
         return None
-    
+
     def draw_projectiles(self, surface, scroll):
         for projectile in self.projectiles:
             projectile.draw(surface, scroll)
@@ -503,12 +538,13 @@ class Entity(GameObject):
         for count, projectile in enumerate(self.projectiles):
             collisions = projectile.move(world, enemies, dt)
             #  print(collisions)
-            
+
             if len(collisions['data']) > 0:
                 #  print(self, collisions['data'][0])
                 self.projectiles.remove(projectile)
-                world.effects.append(BulletDeathParticle(projectile.x + projectile.width / 2, projectile.y + projectile.height / 2))
-    
+                world.effects.append(
+                    BulletDeathParticle(projectile.x + projectile.width / 2, projectile.y + projectile.height / 2))
+
     def die(self, world):
         num = random.randint(0, 100)
         if num <= 40:
@@ -517,7 +553,7 @@ class Entity(GameObject):
             num = random.randint(0, 100)
             if num <= 20:
                 world.drops.append(HealthDrop(self.x, self.y, 7, 7))
-        
+
 
 class Enemy(Entity):
     def __init__(self, x, y, width, height, hp, type):
@@ -539,14 +575,11 @@ class Enemy(Entity):
         self.player_dist = 0
         self.primary_weapon = RustyRifle(self.x, self.y, 0, "data_img/weapon_2.png", self)
 
-
     def wonder(self):
         pass
-    
 
     def shoot(self, angle):
         return self.primary_weapon.shoot(angle)
-
 
     def check_player(self, map, player):
         self.draw_pixels = []
@@ -555,7 +588,7 @@ class Enemy(Entity):
         x2 = self.x + self.width / 2
         y2 = self.y + self.height / 2
         dist = math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
-        if dist <= 150: # can see player
+        if dist <= 150:  # can see player
             self.player_dist = dist
             angle = math.atan2(y1 - y2, x1 - x2)
             sin_a = math.sin(angle)
@@ -574,11 +607,10 @@ class Enemy(Entity):
                 self.player_angle = angle
                 self.player_dist = dist
                 self.color = [0, 255, 0]
-        else: 
+        else:
             self.color = [255, 0, 0]
             return False
 
-                
     def update(self):
         super().update()
         self.primary_weapon.update()
@@ -597,7 +629,7 @@ class Enemy(Entity):
                 if self.can_see_player:
                     angle = random.uniform(self.player_angle - 0.7, self.player_angle + 0.7)
                     dist = random.randint(30, max(51, int(self.player_dist)))
-                else:    
+                else:
                     angle = random.uniform(0, math.pi * 2)
                     dist = random.randint(50, 170)
                 self.angle = angle
@@ -609,39 +641,38 @@ class Enemy(Entity):
                 self.wait_timer -= 1
             self.wonder_timer -= 1
             #  print("update: ", math.cos(self.angle) * 100)
-            if (abs(self.x - self.destination_pos[0]) < self.width and abs(self.y - self.destination_pos[1]) < self.height) or self.wonder_timer <= 0:
+            if (abs(self.x - self.destination_pos[0]) < self.width and abs(
+                    self.y - self.destination_pos[1]) < self.height) or self.wonder_timer <= 0:
                 self.is_waiting = True
                 self.wait_timer = random.randint(30, 160)
                 self.is_wondering = False
             self.primary_weapon.set_angle(self.angle)
 
-        
-    
     def draw(self, surface, scroll):
         self.primary_weapon.draw(surface, scroll)
-        pygame.draw.rect(surface, self.color, pygame.Rect(self.physical_object.x-scroll[0], self.physical_object.y-scroll[1],
-                                                           self.physical_object.width, self.physical_object.height), 1)
-        # pygame.draw.line(surface, self.color, (self.x - scroll[0], self.y - scroll[1]), 
+        pygame.draw.rect(surface, self.color,
+                         pygame.Rect(self.physical_object.x - scroll[0], self.physical_object.y - scroll[1],
+                                     self.physical_object.width, self.physical_object.height), 1)
+        # pygame.draw.line(surface, self.color, (self.x - scroll[0], self.y - scroll[1]),
         # (self.destination_pos[0] - scroll[0], self.destination_pos[1] - scroll[1]))
         # for pixel in self.draw_pixels:
         #     pygame.draw.rect(surface, (0, 255, 255), pygame.Rect(pixel[0] - scroll[0], pixel[1] - scroll[1], 1, 1))
         # pygame.draw.line(surface, (0, 0, 255), (self.debug[0][0] - scroll[0], self.debug[0][1] - scroll[1]),
         # (self.debug[1][0] - scroll[0], self.debug[1][1] - scroll[1]))
 
-    
 
 class Player(Entity):
     def __init__(self, x, y, width, height, hp, type):
         super().__init__(x, y, width, height, hp, type)
         self.primary_weapon = Weapon(self.x, self.y, 0, "data_img/weapon_1.png", self)
         self.ammo = 128
-        self.animation_database['idle'] = self.load_animations('data_img/animations/idle', [6, 6, 6, 6, 6,])
+        self.animation_database['idle'] = self.load_animations('data_img/animations/idle', [6, 6, 6, 6, 6, ])
         self.animation_database['running'] = self.load_animations('data_img/animations/running', [5, 5, 5, 5, 5, 5])
 
     def shoot(self, angle):
         return self.primary_weapon.shoot(angle)
         #  return super().shoot(angle)
-    
+
     def update(self, mouse_angle):
         self.primary_weapon.update()
         self.primary_weapon.set_pos(self.x, self.y)
@@ -651,11 +682,9 @@ class Player(Entity):
     def draw(self, surface, scroll):
         self.primary_weapon.draw(surface, scroll)
         super().draw(surface, scroll)
-        
-    
+
     def use(self):
         pass
-
 
 
 class Drop(GameObject):
@@ -665,8 +694,7 @@ class Drop(GameObject):
         self.following = False
         self.velocity = 2.5
         self.dead = False
-        
-    
+
     def update(self, player):
         x1 = player.x + player.width / 2
         y1 = player.y + player.height / 2
@@ -680,27 +708,24 @@ class Drop(GameObject):
 
         if dist <= 20:
             self.following = True
-        
+
         if self.following:
             self.x += (x1 - self.x) / math.sqrt((x1 - self.x) ** 2 + (y1 - self.y) ** 2) * self.velocity
             self.y += (y1 - self.y) / math.sqrt((x1 - self.x) ** 2 + (y1 - self.y) ** 2) * self.velocity
-        
 
     def picked_action(self, player):
         pass
 
-
     def draw(self, surface, scroll):
-        pygame.draw.rect(surface, (255, 0, 0), pygame.Rect(self.x-scroll[0], self.y-scroll[1],
+        pygame.draw.rect(surface, (255, 0, 0), pygame.Rect(self.x - scroll[0], self.y - scroll[1],
                                                            self.width, self.height), 1)
         if self.img != None:
-            surface.blit(self.img, (self.x-scroll[0], self.y-scroll[1]))
+            surface.blit(self.img, (self.x - scroll[0], self.y - scroll[1]))
 
 
 class AmmoDrop(Drop):
     def __init__(self, x, y, width, height):
         super().__init__(x, y, width, height, 'data_img/ammo1.png')
-    
 
     def picked_action(self, player):
         player.ammo += 32
@@ -708,8 +733,7 @@ class AmmoDrop(Drop):
 
 class HealthDrop(Drop):
     def __init__(self, x, y, width, height):
-        super().__init__(x, y, width, height, 'data_img/healt.png')\
-
+        super().__init__(x, y, width, height, 'data_img/healt.png')
 
     def picked_action(self, player):
         player.hp += 2
@@ -730,7 +754,7 @@ class Portal(Entity):
         self.angle3 = random.uniform(0, math.pi * 2)
         self.pos2 = [math.cos(self.angle2) * 2.5, math.sin(self.angle2) * 2.5]
         self.pos3 = [math.cos(self.angle3), math.sin(self.angle3)]
-        
+
     def update(self, player):
         self.angle2 += 0.2
         self.angle3 += 0.2
@@ -746,23 +770,25 @@ class Portal(Entity):
             return True
         self.can_be_used = False
         return False
-        
 
     def draw(self, surface, scroll):
         pygame.draw.circle(surface, (128, 0, 200), (self.x - scroll[0], self.y - scroll[1]), self.radius)
-        pygame.draw.circle(surface, (100, 0, 175), (self.x - scroll[0] + self.pos2[0], self.y - scroll[1] + self.pos2[1]), self.radius / 1.3)
+        pygame.draw.circle(surface, (100, 0, 175),
+                           (self.x - scroll[0] + self.pos2[0], self.y - scroll[1] + self.pos2[1]), self.radius / 1.3)
         pygame.draw.circle(surface, (100, 0, 175), (self.x - scroll[0], self.y - scroll[1]), self.radius * 0.8, 1)
         pygame.draw.circle(surface, (100, 0, 175), (self.x - scroll[0], self.y - scroll[1]), self.radius * 0.7, 1)
-        pygame.draw.circle(surface, (80, 0, 150), (self.x - scroll[0] + self.pos3[0], self.y - scroll[1] + self.pos3[1]), self.radius / 2)
+        pygame.draw.circle(surface, (80, 0, 150),
+                           (self.x - scroll[0] + self.pos3[0], self.y - scroll[1] + self.pos3[1]), self.radius / 2)
         pygame.draw.circle(surface, (100, 0, 175), (self.x - scroll[0], self.y - scroll[1]), self.radius * 1, 1)
         if self.can_be_used:
-            surface.blit(self.use_img, (self.x - scroll[0] - self.use_img.get_width() / 2, self.y - scroll[1] - self.radius - self.use_img.get_height()))
+            surface.blit(self.use_img, (self.x - scroll[0] - self.use_img.get_width() / 2,
+                                        self.y - scroll[1] - self.radius - self.use_img.get_height()))
 
     def used(self):
         if self.can_be_used:
             return True
         return False
-    
+
 
 class Weapon:
     def __init__(self, x, y, angle, path, entity):
@@ -779,7 +805,7 @@ class Weapon:
     def set_pos(self, x, y):
         self.x = x
         self.y = y
-    
+
     def set_angle(self, angle):
         self.angle = angle
 
@@ -787,15 +813,19 @@ class Weapon:
         if angle is None:
             angle = self.angle
         if self.shootTimer >= self.cooldown:
-            projectile = Projectile(self.entity.x + self.entity.width / 2 + math.cos(angle) * self.img_width, self.entity.y + self.entity.height / 2 + math.sin(angle) * self.img_width, 8, 8, angle, 8, self.entity.type + "_projectile")
+            projectile = Projectile(self.entity.x + self.entity.width / 2 + math.cos(angle) * self.img_width,
+                                    self.entity.y + self.entity.height / 2 + math.sin(angle) * self.img_width, 8, 8,
+                                    angle, 8, self.entity.type + "_projectile")
             self.entity.projectiles.append(projectile)
             self.shootTimer = 0
             return projectile
         return None
-    
+
     def draw(self, surface, scroll):
 
-        blitRotate(surface, self.img, (self.x - scroll[0] + self.entity.width / 2, self.y - scroll[1] + self.entity.height / 2), (0, 0), -math.degrees(self.angle))
+        blitRotate(surface, self.img,
+                   (self.x - scroll[0] + self.entity.width / 2, self.y - scroll[1] + self.entity.height / 2), (0, 0),
+                   -math.degrees(self.angle))
 
         # copy_img = pygame.transform.rotate(self.img, -math.degrees(self.angle))
         # print(math.degrees(self.angle))
@@ -804,25 +834,29 @@ class Weapon:
     def update(self):
         self.shootTimer += 1
 
+
 class RustyRifle(Weapon):
     def __init__(self, x, y, angle, path, entity):
         super().__init__(x, y, angle, path, entity)
         self.shootTimer = 0
         self.cooldown = 60
-    
+
     def shoot(self, angle=None):
-        
+
         if self.shootTimer >= self.cooldown:
             if angle is None:
                 angle = self.angle
             else:
                 self.angle = angle
-            projectile = Projectile(self.entity.x + self.entity.width / 2 + math.cos(angle) * self.img_width, self.entity.y + self.entity.height / 2 + math.sin(angle) * self.img_width, 8, 8, angle, 2, self.entity.type + "_projectile")
+            projectile = Projectile(self.entity.x + self.entity.width / 2 + math.cos(angle) * self.img_width,
+                                    self.entity.y + self.entity.height / 2 + math.sin(angle) * self.img_width, 8, 8,
+                                    angle, 2, self.entity.type + "_projectile")
             self.entity.projectiles.append(projectile)
             self.shootTimer = 0
             self.cooldown = random.randint(60, 180)
             return projectile
         return None
+
 
 class Cursor(GameObject):
     def __init__(self, x, y, path):
@@ -839,6 +873,7 @@ class Cursor(GameObject):
     def draw(self, display):
         display.blit(self.img, (self.x - self.width // 2, self.y - self.height // 2))
 
+
 class Projectile(Entity):
     def __init__(self, x, y, width, height, angle, velocity, type):
         super().__init__(x, y, width, height, 1, type)
@@ -848,7 +883,7 @@ class Projectile(Entity):
 
     def move(self, world, enemies, dt):
         movement = [math.cos(self.angle) * self.velocity * dt, math.sin(self.angle) * self.velocity * dt]
-        collisions = self.physical_object.move(movement,world.get_rects(),enemies)
+        collisions = self.physical_object.move(movement, world.get_rects(), enemies)
         self.x = self.physical_object.x
         self.y = self.physical_object.y
         if len(collisions['enemies']) > 0:
@@ -862,9 +897,11 @@ class Projectile(Entity):
     def set_move_angle(self, angle):
         self.angle = angle
 
+
 class EnemyProjectiles(Projectile):
     def __init__(self):
         pass
+
 
 class Particle:
     def __init__(self, x, y, velocity, time, scroll):
@@ -884,7 +921,7 @@ class Particle:
         self.time = random.randint(1, 3)
         self.spent_time = 0
         self.color = (random.randint(1, 255), random.randint(1, 255), random.randint(1, 255))
-        
+
     def update(self):
         self.x += self.velocity[0]
         self.y += self.velocity[1]
@@ -895,11 +932,13 @@ class Particle:
         #  display.set_colorkey((0,0,0))
         #  pygame.draw.circle(display, (241, 100, 31, 255), [int(self.x), int(self.y)], int(self.time * 2))
         radius = self.time * 2
-        display.blit(circle_surf(radius, (31, 100, 241)), 
-        [int(self.x - radius - scroll[0] + self.scroll[0]), int(self.y - radius - scroll[1] + self.scroll[1])], special_flags=BLEND_RGB_ADD)
-        
-        pygame.draw.circle(display, (255, 255, 255), 
-        [int(self.x - scroll[0] + self.scroll[0]), int(self.y - scroll[1] + self.scroll[1])], int(self.time))
+        display.blit(circle_surf(radius, (31, 100, 241)),
+                     [int(self.x - radius - scroll[0] + self.scroll[0]),
+                      int(self.y - radius - scroll[1] + self.scroll[1])], special_flags=BLEND_RGB_ADD)
+
+        pygame.draw.circle(display, (255, 255, 255),
+                           [int(self.x - scroll[0] + self.scroll[0]), int(self.y - scroll[1] + self.scroll[1])],
+                           int(self.time))
 
 
 class BulletDeathParticle(Particle):
@@ -909,15 +948,16 @@ class BulletDeathParticle(Particle):
         self.dead = False
         self.time = random.randint(3, 4)
         self.radius = 0.5
-    
+
     def update(self):
         self.time -= 0.5
         self.radius += 2
         if self.time <= 1.5:
             self.dead = True
-    
+
     def draw(self, display, scroll=[0, 0]):
-        pygame.draw.circle(display, (255, 255, 255), (self.x - scroll[0], self.y - scroll[1]), self.radius, int(self.time))
+        pygame.draw.circle(display, (255, 255, 255), (self.x - scroll[0], self.y - scroll[1]), self.radius,
+                           int(self.time))
 
 
 class ExplodeParticle(Particle):
@@ -948,8 +988,10 @@ class ExplodeParticle(Particle):
     def draw(self, display, scroll):
         #  display.set_colorkey((0,0,0))
         #  pygame.draw.circle(display, (241, 100, 31, 255), [int(self.x), int(self.y)], int(self.time * 2))
-        pygame.draw.line(display, (255, 255, 255), (self.x - scroll[0], self.y - scroll[1]), 
-        (self.length * math.cos(self.angle) + self.x - scroll[0], self.length * math.sin(self.angle) + self.y - scroll[1]) , self.width)
+        pygame.draw.line(display, (255, 255, 255), (self.x - scroll[0], self.y - scroll[1]),
+                         (self.length * math.cos(self.angle) + self.x - scroll[0],
+                          self.length * math.sin(self.angle) + self.y - scroll[1]), self.width)
+
 
 class Explosion:
     def __init__(self, x, y) -> None:
@@ -967,10 +1009,10 @@ class Explosion:
             if particle.length <= 0:
                 del particle
                 self.particles.pop(i)
-        
+
         if len(self.particles) == 0:
             self.dead = True
-            
-    def draw(self, display, scroll):
+
+    def draw(self, display, scroll=[0, 0]):
         for particle in self.particles:
             particle.draw(display, scroll)
