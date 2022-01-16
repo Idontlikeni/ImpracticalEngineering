@@ -971,6 +971,6 @@ class Explosion:
         if len(self.particles) == 0:
             self.dead = True
             
-    def draw(self, display, scroll):
+    def draw(self, display, scroll=[0,0]):
         for particle in self.particles:
             particle.draw(display, scroll)

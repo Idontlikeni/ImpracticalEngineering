@@ -1237,7 +1237,7 @@ def trade_area():
             if portal1.used():
                 game()
             if portal2.used():
-                towerDefense()
+                towerdefence()
 
         if player_movement[0] != 0 and player_movement[1] != 0:
             player_movement[0] *= math.sin(math.pi / 4)
