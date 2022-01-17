@@ -200,10 +200,10 @@ class Tower:
         self.firerate = 0
         self.price = price
         self.bullspeed = bullspeed
-        self.rect = pygame.Rect(self.x, self.y, cellsize, cellsize)
+        self.rect = pygame.Rect(self.x - cellsize / 2, self.y - cellsize / 2, cellsize, cellsize)
 
-    # def draw(self):
-    #     pygame.draw.circle(window, self.color, [self.x, self.y], self.size)
+    # def draw1(self):
+    #     pygame.draw.rect(window, 'green', self.rect)
 
     def cost(self):
         return self.price
@@ -569,6 +569,13 @@ def ui():
         pygame.draw.rect(monitor, 'white', [70.1 * cellsize, 25.5 * cellsize, 8 * cellsize, 8.5 * cellsize], 4)
     if towernum == 4:
         pygame.draw.rect(monitor, 'white', [70.1 * cellsize, 34 * cellsize, 8 * cellsize, 8.5 * cellsize], 4)
+    pygame.draw.rect(monitor, 'white', [0.5 * width - 5 * cellsize, 0.045 * height, 10 * cellsize, 2.2 * cellsize], 4)
+    if spawntime == 0:
+        hp = myfont.render(str(f'Wave: {wawe1}/3'), False, 'white')
+        monitor.blit(hp, (17.2 * cellsize, 0.9 * cellsize))
+    else:
+        hp = myfont.render(str(f'Next wave: {300 - spawntime}'), False, 'white')
+        monitor.blit(hp, (16.5 * cellsize, 0.9 * cellsize))
 
 
 def showfps():
@@ -750,78 +757,158 @@ def createrad():
 
 
 def run():
+    global spawntime, inviztime, wawe, playerv, meatend, wawe1
     overwidth()
     if alive:
-        global spawntime, inviztime, wawe, playerv, meatend
-        for drop in drops:
-            drop.fly()
-            drop.take()
-            drop.draw()
-            if drop.taked():
-                drops.remove(drop)
-                plr.money += 1
-        for bullet in bullets:
-            bullet.move()
-            bullet.draw()
-            pygame.draw.rect(window, 'red', bullet.rect, 1)
-            if player.rect().colliderect(bullet.rect):
-                player.hp -= 1
-                bullets.remove(bullet)
-                break
-            for wall in walls:
-                if wall.colliderect(bullet.rect):
-                    bullets.remove(bullet)
-                    break
-            for tower in towers:
-                if tower.rect.colliderect(bullet.rect) and bullet.tower != tower:
-                    tile_rects.remove(pygame.Rect(tower.x - cellsize / 2, tower.y - cellsize / 2, cellsize, cellsize))
-                    towerrects.remove(pygame.Rect(tower.x - cellsize / 2, tower.y - cellsize / 2, cellsize, cellsize))
-                    tile_rects_coord.remove([(tower.x - cellsize / 2) // cellsize, (tower.y - cellsize / 2) // cellsize])
-                    towers.remove(tower)
-                    bullets.remove(bullet)
-                    explosions.append(e.Explosion(tower.x, tower.y))
-                    break
-        for meats in meat:
-            meats.draw()
-            meats.go()
+        if not meatend:
+            for drop in drops:
+                drop.fly()
+                drop.take()
+                drop.draw()
+                if drop.taked():
+                    drops.remove(drop)
+                    plr.money += 1
             for bullet in bullets:
-                if Bullet.rng(bullet) > width or bullet.x < 0:
+                bullet.move()
+                bullet.draw()
+                # pygame.draw.rect(window, 'red', bullet.rect, 1)
+                if player.rect().colliderect(bullet.rect):
+                    player.hp -= 1
                     bullets.remove(bullet)
-                elif meats.rect.colliderect(bullet.rect):
-                    meats.damage(bullet.damage)
-                    bullets.remove(bullet)
-            if not meats.check():
-                if meats in meat:
-                    for i in range(random.randint(3, 5)):
-                        adddrop(meats.x, meats.y, meats.x, meats.y)
-                    ch = random.randint(1, 10)
-                    if ch == 5 or ch == 2:
-                        adddrop(meats.x, meats.y, meats.x, meats.y, True)
-                    explosions.append(e.Explosion(meats.x, meats.y))
-                    meat.remove(meats)
-            if inviztime > 500 and player.rect().colliderect(meats.rect):
-                player.hp -= 1
-                inviztime = 0
+                    break
+                for wall in walls:
+                    if wall.colliderect(bullet.rect):
+                        bullets.remove(bullet)
+                        break
+                for tower in towers:
+                    if tower.rect.colliderect(bullet.rect) and bullet.tower != tower:
+                        tile_rects.remove(pygame.Rect(tower.x - cellsize / 2, tower.y - cellsize / 2, cellsize, cellsize))
+                        towerrects.remove(pygame.Rect(tower.x - cellsize / 2, tower.y - cellsize / 2, cellsize, cellsize))
+                        tile_rects_coord.remove([(tower.x - cellsize / 2) // cellsize, (tower.y - cellsize / 2) // cellsize])
+                        towers.remove(tower)
+                        bullets.remove(bullet)
+                        explosions.append(e.Explosion(tower.x, tower.y))
+                        break
+            for meats in meat:
+                meats.draw()
+                meats.go()
+                for bullet in bullets:
+                    if Bullet.rng(bullet) > width or bullet.x < 0:
+                        bullets.remove(bullet)
+                    elif meats.rect.colliderect(bullet.rect):
+                        meats.damage(bullet.damage)
+                        bullets.remove(bullet)
+                if not meats.check():
+                    if meats in meat:
+                        for i in range(random.randint(3, 5)):
+                            adddrop(meats.x, meats.y, meats.x, meats.y)
+                        ch = random.randint(1, 10)
+                        if ch == 5 or ch == 2:
+                            adddrop(meats.x, meats.y, meats.x, meats.y, True)
+                        explosions.append(e.Explosion(meats.x, meats.y))
+                        meat.remove(meats)
+                if inviztime > 500 and player.rect().colliderect(meats.rect):
+                    player.hp -= 1
+                    inviztime = 0
+                else:
+                    inviztime += 1
+            if len(meat) == 0 and wawe < 3:
+                if spawntime > 300:
+                    for i in range(10 + wawe * 5):
+                        if wawe == 0:
+                            meatcreate(meatstrt[0] - 2 * i * cellsize, meatstrt[1], 50, 0.5, wawe + 10, 'red', False)
+                        else:
+                            meatcreate(meatstrt[0] - 2 * i * cellsize, meatstrt[1], wawe * 50 + wawe1 * 20, 0.5 + wawe1 * 0.1, wawe + 10, 'red', False)
+                    wawe += 1
+                    if wawe == 3 and wawe1 != 3:
+                        wawe1 += 1
+                        wawe = 0
+                    if wawe == 3 and wawe1 < 3:
+                        wawe1 += 1
+                    spawntime = 0
+                else:
+                    spawntime += 1
+            if len(meat) == 0 and (wawe1 >= 3 or wawe1 == 0):
+                meatend = True
             else:
-                inviztime += 1
-        if len(meat) == 0 and wawe < 3:
-            if spawntime > 300:
-                for i in range(10 + wawe * 2):
-                    if wawe == 0:
-                        meatcreate(meatstrt[0] - 2 * i * cellsize, meatstrt[1], 50, 0.5, wawe + 10, 'red', False)
-                    else:
-                        meatcreate(meatstrt[0] - 2 * i * cellsize, meatstrt[1], wawe * 50, 0.6, wawe + 10, 'red', False)
-                wawe += 1
-                spawntime = 0
-            else:
-                spawntime += 1
-        if len(meat) == 0 and (wawe >= 3 or wawe == 0):
-            meatend = True
+                meatend = False
+            for tower in towers:
+                tower.draw()
+                tower.fire(tower)
         else:
-            meatend = False
-        for tower in towers:
-            tower.draw()
-            tower.fire(tower)
+            for drop in drops:
+                drop.fly()
+                drop.take()
+                drop.draw()
+                if drop.taked():
+                    drops.remove(drop)
+                    plr.money += 1
+            for bullet in bullets:
+                bullet.move()
+                bullet.draw()
+                # pygame.draw.rect(window, 'red', bullet.rect, 1)
+                if player.rect().colliderect(bullet.rect):
+                    player.hp -= 1
+                    bullets.remove(bullet)
+                    break
+                for wall in walls:
+                    if wall.colliderect(bullet.rect):
+                        bullets.remove(bullet)
+                        break
+                for tower in towers:
+                    if tower.rect.colliderect(bullet.rect) and bullet.tower != tower:
+                        tile_rects.remove(pygame.Rect(tower.x - cellsize / 2, tower.y - cellsize / 2, cellsize, cellsize))
+                        towerrects.remove(pygame.Rect(tower.x - cellsize / 2, tower.y - cellsize / 2, cellsize, cellsize))
+                        tile_rects_coord.remove([(tower.x - cellsize / 2) // cellsize, (tower.y - cellsize / 2) // cellsize])
+                        towers.remove(tower)
+                        bullets.remove(bullet)
+                        explosions.append(e.Explosion(tower.x, tower.y))
+                        break
+            for meats in meat:
+                meats.draw()
+                meats.go()
+                for bullet in bullets:
+                    if Bullet.rng(bullet) > width or bullet.x < 0:
+                        bullets.remove(bullet)
+                    elif meats.rect.colliderect(bullet.rect):
+                        meats.damage(bullet.damage)
+                        bullets.remove(bullet)
+                if not meats.check():
+                    if meats in meat:
+                        for i in range(random.randint(3, 5)):
+                            adddrop(meats.x, meats.y, meats.x, meats.y)
+                        ch = random.randint(1, 10)
+                        if ch == 5 or ch == 2:
+                            adddrop(meats.x, meats.y, meats.x, meats.y, True)
+                        explosions.append(e.Explosion(meats.x, meats.y))
+                        meat.remove(meats)
+                if inviztime > 500 and player.rect().colliderect(meats.rect):
+                    player.hp -= 1
+                    inviztime = 0
+                else:
+                    inviztime += 1
+            if len(meat) == 0 and wawe < 3:
+                if spawntime > 300:
+                    for i in range(10 + wawe * 5):
+                        if wawe == 0:
+                            meatcreate(meatstrt[0] - 2 * i * cellsize, meatstrt[1], 50, 0.5, wawe + 10, 'red', False)
+                        else:
+                            meatcreate(meatstrt[0] - 2 * i * cellsize, meatstrt[1], wawe * 50 + wawe1 * 20, 0.5 + wawe1 * 0.1, wawe + 10, 'red', False)
+                    wawe += 1
+                    if wawe == 3 and wawe1 != 3:
+                        wawe1 += 1
+                        wawe = 0
+                    if wawe == 3 and wawe1 < 3:
+                        wawe1 += 1
+                    spawntime = 0
+                else:
+                    spawntime += 1
+            if len(meat) == 0 and (wawe1 >= 3 or wawe1 == 0):
+                meatend = True
+            else:
+                meatend = False
+            for tower in towers:
+                tower.draw()
     else:
         for drop in drops:
             drop.fly()
@@ -851,8 +938,9 @@ def run():
 
 plr = Player(35)
 wawe = 0
+wawe1 = 1
 crosshair = Crosshair()
-player = e.Entity(*[cellsize * countx - 0.8 * cellsize, cellsize * 11], 0.8 * cellsize, 0.8 * cellsize, 10, 'player')
+player = e.Player(*[cellsize * countx - 0.8 * cellsize, cellsize * 11], 0.8 * cellsize, 0.8 * cellsize, 10, 'player')
 fullhp = player.hp
 playerhp = Healthpoints(fullhp, player.hp)
 running = True
@@ -907,9 +995,6 @@ redtow1 = pygame.transform.scale(redtow, (cellsize * 6, cellsize * 6))
 bluetow1 = pygame.transform.scale(bluetow, (cellsize * 6, cellsize * 6))
 
 
-# player.hp = 0
-
-
 def towerdefence():
     global countx, county, sclsz, sclsz1, width1, height1, width, height, cellsize, cellsize1, countx1, county1, fps
     global flscr, show, inviztime, inhub, meatend, bullets, towers, meat, drops, heals, walls, way, allmetal, tile_rects
@@ -932,10 +1017,14 @@ def towerdefence():
     player.hp = 10
     plr.money = 35
     playerv = 2
+    t = 0
     moving_right = False
     while running:
-        pygame.mouse.set_visible(False)
+        #  pygame.mouse.set_visible(False)
         if alive:
+            # if meatend and t == 0:
+            #     winwin(monitor)
+            #     t = 1
             for meats in meat:
                 if math.sqrt((meats.x - (player.x + 8)) ** 2 + (meats.y - (player.y + 8)) ** 2) < cellsize * 2 and \
                         meats.slowed:
@@ -955,8 +1044,20 @@ def towerdefence():
                 player_movement[1] -= playerv * dt * speedcoef
             if moving_down:
                 player_movement[1] += playerv * dt * speedcoef
+            if player_movement[0] != 0 and player_movement[1] != 0:
+                player_movement[0] *= math.sin(math.pi / 4)
+                player_movement[1] *= math.sin(math.pi / 4)
+
+            if player_movement[0] != 0 or player_movement[1] != 0:
+                if player_movement[0] > 0:
+                    player.is_flipped = False
+                if player_movement[0] < 0:
+                    player.is_flipped = True
+                player.change_action('running')
+            elif player_movement[0] == 0 and player_movement[1] == 0:
+                player.change_action('idle')
             player.move(player_movement, tile_rects, [])
-            player.update()
+            player.update(0)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
@@ -968,6 +1069,8 @@ def towerdefence():
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_F5:
                         show = not show
+                    if event.key == pygame.K_F9:
+                        plr.money += 100
                     if event.key == pygame.K_F11:
                         fullscrn(screen)
                     if event.key == pygame.K_F1:
@@ -995,7 +1098,8 @@ def towerdefence():
                         if towernum != 0:
                             towernum = 0
                         else:
-                            running = False
+                            if ingamemenu(monitor):
+                                running = False
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_d:
                         moving_right = False
@@ -1021,7 +1125,7 @@ def towerdefence():
             createrad()
             for i, explosion in sorted(enumerate(explosions), reverse=True):
                 explosion.update()
-                explosion.draw(window)
+                explosion.draw(window, [0, 0])
                 if len(explosion.particles) == 0:
                     del explosion
                     explosions.pop(i)
@@ -1062,8 +1166,6 @@ def towerdefence():
         clock.tick(fps)
 
 
-
-
 def fullscrn(display):
     global flscr
     if flscr:
@@ -1072,66 +1174,218 @@ def fullscrn(display):
         display = pygame.display.set_mode(WINDOW_SIZE, pygame.FULLSCREEN)
     flscr = not flscr
 
-def main_menu():
+
+def ingamemenu(surface):
+    running = True
     pygame.mouse.set_visible(True)
     SCALE_MULTIPLIER = 5
     click = False
-    cveta1 = (0, 255, 0)
-    cveta2 = (255, 255, 255)
-    cveta3 = (0, 255, 0)
-    font = pygame.font.Font('MaredivRegular.ttf', 15)
+    font = pygame.font.Font('MaredivRegular.ttf', 20)
     display = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER), pygame.SRCALPHA)
-    stars = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER + 400, WINDOW_SIZE[1] / SCALE_MULTIPLIER + 400))
-    stars1 = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER + 400, WINDOW_SIZE[1] / SCALE_MULTIPLIER + 400), pygame.SRCALPHA)
-    stars2 = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER + 400, WINDOW_SIZE[1] / SCALE_MULTIPLIER + 400), pygame.SRCALPHA)
-    stars3 = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER + 400, WINDOW_SIZE[1] / SCALE_MULTIPLIER + 400),
-                            pygame.SRCALPHA)
-    stars.fill((15, 11, 66))
-    for i in range(250):
-        stars.fill(pygame.Color('white'),
-                    (random.random() * width,
-                     random.random() * height, 1, 1))
-    for i in range(170):
-        stars1.fill(pygame.Color('white'),
-                   (random.random() * width,
-                    random.random() * height, 1, 1))
-    for i in range(120):
-        stars2.fill(pygame.Color('white'),
-                   (random.random() * width,
-                    random.random() * height, 1, 1))
-    for i in range(50):
-        stars3.fill(pygame.Color('white'),
-                   (random.random() * width,
-                    random.random() * height, 1, 1))
+    background = pygame.Surface(WINDOW_SIZE, pygame.SRCALPHA)
+    background.blit(pygame.transform.scale(surface, WINDOW_SIZE), (0, 0))
     while running:
+        display.fill((0, 0, 0, 200))
+        screen.blit(background, (0, 0))
         mx, my = pygame.mouse.get_pos()
-        button_1 = pygame.Rect(WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 50, 50, 100, 25)
-        button_2 = pygame.Rect(WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 50, 100, 100, 25)
+        playbtn = pygame.Rect(WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 20, 106, 36, 23)
+        optionsbtn = pygame.Rect(WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 35, 141, 69, 23)
+        exitbtn = pygame.Rect(WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 20, 176, 36, 19)
         mx = mx / SCALE_MULTIPLIER
         my = my / SCALE_MULTIPLIER
-        if button_1.collidepoint((mx, my)):
-            cveta = (200, 25, 23)
-            cveta1 = (255, 128, 0)
+        if playbtn.collidepoint((mx, my)):
+            cveta1 = (214, 136, 17)
             if click:
-                trade_area()
+                break
         else:
-            cveta = (255, 255, 255)
-            cveta1 = (0, 255, 0)
-        if button_2.collidepoint((mx, my)):
-            cveta2 = (200, 25, 23)
-            cveta3 = (255, 128, 0)
+            cveta1 = (255, 235, 214)
+        if optionsbtn.collidepoint((mx, my)):
+            cveta3 = (214, 136, 17)
             if click:
                 options()
         else:
-            cveta2 = (255, 255, 255)
-            cveta3 = (0, 255, 0)
-        pygame.draw.rect(display, cveta, button_1)
-        pygame.draw.rect(display, (cveta2), button_2)
-        text = font.render("play", True, (cveta1))
-        display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 15, 50))
+            cveta3 = (255, 235, 214)
+        if exitbtn.collidepoint((mx, my)):
+            cveta5 = (214, 136, 17)
+            if click:
+                return True
+        else:
+            cveta5 = (255, 235, 214)
+        text = font.render("play", True, cveta1)
+        display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 20, 100))
 
-        text = font.render("options", True, (cveta3))
-        display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 25, 100))
+        text = font.render("options", True, cveta3)
+        display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 35, 135))
+
+        text = font.render("exit", True, cveta5)
+        display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 20, 170))
+        click = False
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == KEYDOWN:
+                if event.key == K_ESCAPE:
+                    running = False
+            if event.type == MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    click = True
+
+            if event.type == MOUSEBUTTONUP:
+                if event.button == 1:
+                    click = False
+
+            if event.type == MOUSEBUTTONUP:
+                if event.button == 1:
+                    click = False
+        screen.blit(pygame.transform.scale(display, WINDOW_SIZE), (0, 0))
+        pygame.display.update()
+        clock.tick(60)
+    pygame.mouse.set_visible(False)
+
+
+def winwin(surface):
+    running = True
+    pygame.mouse.set_visible(True)
+    SCALE_MULTIPLIER = 5
+    click = False
+    font = pygame.font.Font('MaredivRegular.ttf', 20)
+    display = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER), pygame.SRCALPHA)
+    background = pygame.Surface(WINDOW_SIZE, pygame.SRCALPHA)
+    background.blit(pygame.transform.scale(surface, WINDOW_SIZE), (0, 0))
+    while running:
+        display.fill((0, 0, 0, 200))
+        screen.blit(background, (0, 0))
+        mx, my = pygame.mouse.get_pos()
+        playbtn = pygame.Rect(WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 20, 106, 36, 23)
+        optionsbtn = pygame.Rect(WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 35, 141, 69, 23)
+        exitbtn = pygame.Rect(WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 20, 176, 36, 19)
+        mx = mx / SCALE_MULTIPLIER
+        my = my / SCALE_MULTIPLIER
+        if playbtn.collidepoint((mx, my)):
+            cveta1 = (214, 136, 17)
+            if click:
+                break
+        else:
+            cveta1 = (255, 235, 214)
+        if optionsbtn.collidepoint((mx, my)):
+            cveta3 = (214, 136, 17)
+            if click:
+                running = False
+        else:
+            cveta3 = (255, 235, 214)
+        if exitbtn.collidepoint((mx, my)):
+            cveta5 = (214, 136, 17)
+            if click:
+                return True
+        else:
+            cveta5 = (255, 235, 214)
+        text1 = font.render("YOU WIN!", True, cveta3)
+        display.blit(text1, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 5, 135))
+        text = font.render("OK", True, cveta3)
+        display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 5, 135))
+        click = False
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == KEYDOWN:
+                if event.key == K_ESCAPE:
+                    running = False
+            if event.type == MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    click = True
+
+            if event.type == MOUSEBUTTONUP:
+                if event.button == 1:
+                    click = False
+
+            if event.type == MOUSEBUTTONUP:
+                if event.button == 1:
+                    click = False
+        screen.blit(pygame.transform.scale(display, WINDOW_SIZE), (0, 0))
+        pygame.display.update()
+        clock.tick(60)
+
+
+def main_menu():
+    running = True
+    pygame.mouse.set_visible(True)
+    SCALE_MULTIPLIER = 5
+    click = False
+    font = pygame.font.Font('MaredivRegular.ttf', 15)
+    display = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER), pygame.SRCALPHA)
+    stars = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER), pygame.SRCALPHA)
+    stars1 = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER), pygame.SRCALPHA)
+    stars2 = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER), pygame.SRCALPHA)
+    stars3 = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER),
+                            pygame.SRCALPHA)
+    stars0 = pygame.Surface((WINDOW_SIZE[0], WINDOW_SIZE[1]))
+    for i in range(100):
+        stars.fill(pygame.Color('white'),
+                    (random.random() * WINDOW_SIZE[0] / SCALE_MULTIPLIER,
+                     random.random() * WINDOW_SIZE[1] / SCALE_MULTIPLIER, 1, 1))
+    for i in range(40):
+        stars1.fill(pygame.Color('white'),
+                   (random.random() * WINDOW_SIZE[0] / SCALE_MULTIPLIER,
+                    random.random() * WINDOW_SIZE[1] / SCALE_MULTIPLIER, 1, 1))
+    for i in range(20):
+        stars2.fill(pygame.Color('white'),
+                   (random.random() * WINDOW_SIZE[0] / SCALE_MULTIPLIER,
+                    random.random() * WINDOW_SIZE[1] / SCALE_MULTIPLIER, 1, 1))
+    for i in range(10):
+        stars3.fill(pygame.Color('white'),
+                   (random.random() * WINDOW_SIZE[0] / SCALE_MULTIPLIER,
+                    random.random() * WINDOW_SIZE[1] / SCALE_MULTIPLIER, 1, 1))
+    while running:
+        mpx, mpy, = pygame.mouse.get_pos()
+        stars0.fill((15, 11, 66))
+        stars0.blit(stars, ((mpx - WINDOW_SIZE[0] / 2) / 280, (mpy - WINDOW_SIZE[1] / 2) / 280))
+        stars0.blit(stars1, ((mpx - WINDOW_SIZE[0] / 2) / 200, (mpy - WINDOW_SIZE[1] / 2) / 200))
+        stars0.blit(stars2, ((mpx - WINDOW_SIZE[0] / 2) / 140, (mpy - WINDOW_SIZE[1] / 2) / 140))
+        stars0.blit(stars3, ((mpx - WINDOW_SIZE[0] / 2) / 80, (mpy - WINDOW_SIZE[1] / 2) / 80))
+        display.blit(stars0, (0, 0))
+        mx, my = pygame.mouse.get_pos()
+        playbtn = pygame.Rect(132, 110, 120, 25)
+        optionsbtn = pygame.Rect(132, 145, 120, 25)
+        exitbtn = pygame.Rect(132, 180, 120, 25)
+        mx = mx / SCALE_MULTIPLIER
+        my = my / SCALE_MULTIPLIER
+        if playbtn.collidepoint((mx, my)):
+            cveta = (78, 29, 92)
+            cveta1 = (214, 136, 17)
+            if click:
+                trade_area()
+        else:
+            cveta = (109, 29, 112)
+            cveta1 = (255, 235, 214)
+        if optionsbtn.collidepoint((mx, my)):
+            cveta2 = (78, 29, 92)
+            cveta3 = (214, 136, 17)
+            if click:
+                options()
+        else:
+            cveta2 = (109, 29, 112)
+            cveta3 = (255, 235, 214)
+        if exitbtn.collidepoint((mx, my)):
+            cveta4 = (78, 29, 92)
+            cveta5 = (214, 136, 17)
+            if click:
+                running = False
+        else:
+            cveta4 = (109, 29, 112)
+            cveta5 = (255, 235, 214)
+        pygame.draw.rect(display, cveta, playbtn)
+        pygame.draw.rect(display, cveta2, optionsbtn)
+        pygame.draw.rect(display, cveta4, exitbtn)
+        text = font.render("play", True, cveta1)
+        display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 15, 110))
+
+        text = font.render("options", True, cveta3)
+        display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 25, 145))
+
+        text = font.render("exit", True, cveta5)
+        display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 15, 180))
         click = False
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -1152,21 +1406,9 @@ def main_menu():
             if event.type == MOUSEBUTTONUP:
                 if event.button == 1:
                     click = False
-        mpx, mpy, = pygame.mouse.get_pos()
-        screen.blit(pygame.transform.scale(stars, (WINDOW_SIZE[0] + 400, WINDOW_SIZE[1] + 400)),
-                    ((mpx - WINDOW_SIZE[0] / 2) / 10 - 200, (mpy - WINDOW_SIZE[1] / 2) / 10 - 200))
-        screen.blit(pygame.transform.scale(stars1, (WINDOW_SIZE[0] + 400, WINDOW_SIZE[1] + 400)),
-                    ((mpx - WINDOW_SIZE[0] / 2) / 20 - 200, (mpy - WINDOW_SIZE[1] / 2) / 20 - 200))
-        screen.blit(pygame.transform.scale(stars2, (WINDOW_SIZE[0] + 400, WINDOW_SIZE[1] + 400)),
-                    ((mpx - WINDOW_SIZE[0] / 2) / 30 - 200, (mpy - WINDOW_SIZE[1] / 2) / 30 - 200))
-        screen.blit(pygame.transform.scale(stars3, (WINDOW_SIZE[0] + 400, WINDOW_SIZE[1] + 400)),
-                    ((mpx - WINDOW_SIZE[0] / 2) / 40 - 200, (mpy - WINDOW_SIZE[1] / 2) / 40 - 200))
         screen.blit(pygame.transform.scale(display, WINDOW_SIZE), (0, 0))
         pygame.display.update()
         clock.tick(60)
-
-def towerDefense():
-    pass
 
 
 def trade_area():
@@ -1197,6 +1439,7 @@ def trade_area():
     world.add_usable_entity(portal1)
     world.add_usable_entity(portal2)
     particles = []
+    spaceship = e.SpaceShip(300, 140, 20, 20, 1, "spaceship")
 
     while running:
         dt = time.time() - last_time
@@ -1234,8 +1477,9 @@ def trade_area():
             player.shoot(mouse_angle)
         if use:
             use = False
+            spaceship.use(player)
             if portal1.used():
-                game()
+                player.metal = game()
             if portal2.used():
                 towerdefence()
 
@@ -1252,15 +1496,17 @@ def trade_area():
         elif player_movement[0] == 0 and player_movement[1] == 0:
             player.change_action('idle')
 
-        collision_types = player.move(player_movement, tile_rects, [])
+        collision_types = player.move(player_movement, tile_rects, [spaceship])
 
         player.move_projectiles(world, world.get_enemies(), dt)
         player.update(mouse_angle)
         world.update(player, dt)
+        spaceship.update(player)
         world.draw(display, scroll)
         player.draw(display, scroll)
         player.draw_projectiles(display, scroll)
-        #  print(player.hp)
+        spaceship.draw(display, scroll)
+        print(player.hp, player.metal)
         #  player.move(player_movement)
         #  pygame.draw.line(display, (0, 255, 0), (player.x + player.width / 2 - scroll[0], player.y + player.height / 2 - scroll[1]), ((pygame.mouse.get_pos()[0] // SCALE_MULTIPLIER), (pygame.mouse.get_pos()[1] // SCALE_MULTIPLIER)))
 
@@ -1289,7 +1535,9 @@ def trade_area():
                 if event.key == K_s:
                     moving_down = True
                 if event.key == K_ESCAPE:
-                    running = False
+                    if event.key == K_ESCAPE:
+                        if ingamemenu(screen):
+                            running = False
                 if event.key == pygame.K_F11:
                     fullscrn(display)
                 if event.key == pygame.K_f:
@@ -1344,7 +1592,7 @@ def game():
     portal = e.Portal(*world.get_start_pos(), 10, 'portal')
     world.add_usable_entity(portal)
     particles = []
-
+    defense_timer = e.Timer(45, WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2, 10)
     while running:
         dt = time.time() - last_time
         dt *= 60
@@ -1405,6 +1653,9 @@ def game():
         world.draw(display, scroll)
         player.draw(display, scroll)
         player.draw_projectiles(display, scroll)
+        defense_timer.update()
+        if defense_timer.get_time() <= 0 or player.hp <= 0:
+            running = False
         #  print(player.hp)
         #  player.move(player_movement)
         #  pygame.draw.line(display, (0, 255, 0), (player.x + player.width / 2 - scroll[0], player.y + player.height / 2 - scroll[1]), ((pygame.mouse.get_pos()[0] // SCALE_MULTIPLIER), (pygame.mouse.get_pos()[1] // SCALE_MULTIPLIER)))
@@ -1418,6 +1669,8 @@ def game():
                 del particle
                 particles.pop(i)
 
+        defense_timer.draw(display)
+        player.healthbar.draw(display)
         cursor.draw(display)
 
         for event in pygame.event.get():
@@ -1434,7 +1687,7 @@ def game():
                 if event.key == K_s:
                     moving_down = True
                 if event.key == K_ESCAPE:
-                    running = False
+                    options()
                 if event.key == pygame.K_F11:
                     fullscrn(display)
                 if event.key == pygame.K_f:
@@ -1462,45 +1715,118 @@ def game():
         pygame.display.update()
         clock.tick(60)
     pygame.mouse.set_visible(True)
+    return player.metal
+
 
 
 def options():
-    running = True
-    n = 0
-    m = 0
-    font = pygame.font.Font('MaredivRegular.ttf', 15)
-    font1 = pygame.font.Font('MaredivRegular.ttf', 25)
-    usl1 = 0
-    usl2 = 0
-    uslza = 0
+    pygame.mouse.set_visible(True)
     SCALE_MULTIPLIER = 5
     cveta1 = (200, 200, 200)
+    font = pygame.font.Font('MaredivRegular.ttf', 15)
     display = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER))
+    n = 0
+    running = True
+    bomb_image = load_image("data_img/esc.png")
     while running:
+        m = 0
         display.fill((0, 0, 0))
         mx, my = pygame.mouse.get_pos()
-        pygame.draw.rect(display, (255, 255, 255), (240, 20, 20, 20))
-        pygame.draw.rect(display, (255, 255, 255), (210, 20, 20, 20))
-        text3 = font1.render('+', True, (0, 0, 0))
-        display.blit(text3, (243, 11))
-        text3 = font1.render('-', True, (0, 0, 0))
-        display.blit(text3, (213, 11))
-        text1 = font.render(f"Crosshair-{n + 1}/3", True, (cveta1))
-        display.blit(text1, (100, 0))
-        text2 = font.render(f"sound-{m}/100", True, (cveta1))
-        display.blit(text2, (100, 20))
+        all_sprites = pygame.sprite.Group()
+        sprite = pygame.sprite.Sprite()
+        bomb = pygame.sprite.Sprite(all_sprites)
+        bomb.image = bomb_image
+        bomb.rect = bomb.image.get_rect()
+        bomb.rect.x = 0
+        bomb.rect.y = 0
+        button_4 = pygame.Rect(0, 0, 20, 20)
         mx = mx / SCALE_MULTIPLIER
         my = my / SCALE_MULTIPLIER
-        button_1 = pygame.Rect(100, 0, 100, 20)
-        button_2 = pygame.Rect(240, 20, 20, 20)
-        button_3 = pygame.Rect(210, 20, 20, 20)
+        all_sprites.draw(display)
+        text1 = font.render("Audio", True, (cveta1))
+        display.blit(text1, (WINDOW_SIZE[0] // 12, 0))
+        text2 = font.render("Video", True, (cveta1))
+        display.blit(text2, (WINDOW_SIZE[0] // 12, 20))
+        text2 = font.render("Game", True, (cveta1))
+        display.blit(text2, (WINDOW_SIZE[0] // 12, 40))
+        text2 = font.render("Cotrols", True, (cveta1))
+        display.blit(text2, (WINDOW_SIZE[0] // 12, 60))
+        button_1 = pygame.Rect(WINDOW_SIZE[0] // 8 - 400 / SCALE_MULTIPLIER, 0, 250 / SCALE_MULTIPLIER, 100 / SCALE_MULTIPLIER)
+        button_2 = pygame.Rect(WINDOW_SIZE[0] // 8 - 400 / SCALE_MULTIPLIER, 100 / SCALE_MULTIPLIER, 250 / SCALE_MULTIPLIER, 100 / SCALE_MULTIPLIER)
+        # pygame.draw.circle(display, (0, 255, 0), (mx, my), 2)
+        # pygame.draw.rect(display, (0, 255, 0), button_1, 1)
+        # pygame.draw.rect(display, (0, 255, 0), button_2, 1)
         for event in pygame.event.get():
             if event.type == QUIT:
                 pygame.quit()
                 sys.exit()
-            if event.type == KEYDOWN:
-                if event.key == K_ESCAPE:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if button_1.collidepoint((mx, my)):
+                    n = 1
+                if button_4.collidepoint((mx, my)):
                     running = False
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if button_2.collidepoint((mx, my)):
+                    m = 1
+        if n == 1:
+            Audio()
+            n = 0
+        if m == 1:
+            Video()
+            m = 0
+        screen.blit(pygame.transform.scale(display, WINDOW_SIZE), (0, 0))
+        pygame.display.update()
+        clock.tick(60)
+
+
+def Audio():
+    WINDOW_SIZE = (1920, 1080)
+    TILE_SIZE = 16
+    screen = pygame.display.set_mode(WINDOW_SIZE, 0, 32)
+    n = 0
+    m = 0
+    pygame.mouse.set_visible(True)
+    SCALE_MULTIPLIER = 5
+    cveta1 = (200, 200, 200)
+    usl1 = 0
+    usl2 = 0
+    uslza = 0
+    font = pygame.font.Font('MaredivRegular.ttf', 15)
+    font1 = pygame.font.Font('MaredivRegular.ttf', 18)
+    bomb_image = load_image("data_img/esc.png")
+    display = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER))
+    running = True
+    while running:
+        display.fill((0, 0, 0))
+        mx, my = pygame.mouse.get_pos()
+        all_sprites = pygame.sprite.Group()
+        sprite = pygame.sprite.Sprite()
+        bomb = pygame.sprite.Sprite(all_sprites)
+        bomb.image = bomb_image
+        bomb.rect = bomb.image.get_rect()
+        bomb.rect.x = 0
+        bomb.rect.y = 0
+        all_sprites.draw(display)
+        pygame.draw.rect(display, (255, 255, 255), (240, 2, 20, 20))
+        pygame.draw.rect(display, (255, 255, 255), (210, 2, 20, 20))
+        text3 = font1.render('+', True, (0, 0, 0))
+        display.blit(text3, (244, -2))
+        text3 = font1.render('-', True, (0, 0, 0))
+        display.blit(text3, (214, -2))
+
+        text2 = font.render(f"sound-{m}/100", True, (cveta1))
+        display.blit(text2, (100, 2))
+        mx = mx / SCALE_MULTIPLIER
+        my = my / SCALE_MULTIPLIER
+        button_1 = pygame.Rect(100, 2, 100, 20)
+        button_2 = pygame.Rect(240, 2, 20, 20)
+        button_3 = pygame.Rect(210, 2, 20, 20)
+        button_4 = pygame.Rect(0, 0, 20, 20)
+        for event in pygame.event.get():
+
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
             if event.type == pygame.MOUSEBUTTONUP:
                 if button_1.collidepoint((mx, my)):
                     if n + 2 > 3:
@@ -1517,6 +1843,9 @@ def options():
                     usl2 = 1
             if event.type == pygame.MOUSEBUTTONUP:
                 usl2 = 0
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if button_4.collidepoint((mx, my)):
+                    running = False
         uslza += 0.5
         if usl2 == 1 and uslza % 3 == 0:
             if m - 1 >= 0:
@@ -1524,6 +1853,93 @@ def options():
         if usl1 == 1 and uslza % 3 == 0:
             if m + 1 <= 100:
                 m += 1
+
+        screen.blit(pygame.transform.scale(display, WINDOW_SIZE), (0, 0))
+        pygame.display.update()
+        clock.tick(60)
+
+
+def load_image(name, colorkey=None):
+    fullname = os.path.join(name)
+    image = pygame.image.load(fullname)
+    if colorkey is not None:
+        image = image.convert()
+        if colorkey == -1:
+            colorkey = image.get_at((0, 0))
+        image.set_colorkey(colorkey)
+    else:
+        image = image.convert_alpha()
+    return image
+
+
+def Video():
+    WINDOW_SIZE = (1920, 1080)
+    screen = pygame.display.set_mode(WINDOW_SIZE, 0, 32)
+    n = 0
+    m = 0
+    pygame.mouse.set_visible(True)
+    SCALE_MULTIPLIER = 5
+    cveta1 = (200, 200, 200)
+    cveta2 = (200, 200, 200)
+    cveta3 = (200, 0, 0)
+    uslza = 0
+    font = pygame.font.Font('MaredivRegular.ttf', 15)
+    font1 = pygame.font.Font('MaredivRegular.ttf', 25)
+    display = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER))
+    bomb_image = load_image("data_img/esc.png")
+    running = True
+    while running:
+        display.fill((0, 0, 0))
+        mx, my = pygame.mouse.get_pos()
+        all_sprites = pygame.sprite.Group()
+        sprite = pygame.sprite.Sprite()
+        bomb = pygame.sprite.Sprite(all_sprites)
+        bomb.image = bomb_image
+        bomb.rect = bomb.image.get_rect()
+        bomb.rect.x = 0
+        bomb.rect.y = 0
+        all_sprites.draw(display)
+        text1 = font.render(f"Crosshair-{n + 1}/3", True, (cveta1))
+        display.blit(text1, (100, 0))
+        text1 = font.render("Fullscreen      /", True, (cveta1))
+        display.blit(text1, (100, 20))
+        text1 = font.render("                on", True, (cveta2))
+        display.blit(text1, (100, 20))
+        text1 = font.render("                       off", True, (cveta3))
+        display.blit(text1, (100, 20))
+        mx = mx / SCALE_MULTIPLIER
+        my = my / SCALE_MULTIPLIER
+        button_1 = pygame.Rect(100, 0, 100, 20)
+        button_2 = pygame.Rect(180, 20, 15, 20)
+        button_3 = pygame.Rect(215, 20, 25, 20)
+        button_4 = pygame.Rect(0, 0, 20, 20)
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONUP:
+                if button_1.collidepoint((mx, my)):
+                    if n + 2 > 3:
+                        n = 0
+                    else:
+                        n += 1
+            if event.type == pygame.MOUSEBUTTONUP:
+                if button_2.collidepoint((mx, my)):
+                    m = 1
+
+            if event.type == pygame.MOUSEBUTTONUP:
+                if button_3.collidepoint((mx, my)):
+                    m = 0
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if button_4.collidepoint((mx, my)):
+                    running = False
+        if m == 1:
+            cveta2 = (200, 0, 0)
+            cveta3 = (200, 200, 200)
+
+        if m == 0:
+            cveta2 = (200, 200, 200)
+            cveta3 = (200, 0, 0)
 
         screen.blit(pygame.transform.scale(display, WINDOW_SIZE), (0, 0))
         pygame.display.update()

@@ -637,12 +637,16 @@ class Player(Entity):
         self.ammo = 128
         self.animation_database['idle'] = self.load_animations('data_img/animations/idle', [6, 6, 6, 6, 6,])
         self.animation_database['running'] = self.load_animations('data_img/animations/running', [5, 5, 5, 5, 5, 5])
+        self.healthbar = Healthbar(10, 10)
+        self.maxhp = 10
+        self.metal = 0
 
     def shoot(self, angle):
         return self.primary_weapon.shoot(angle)
         #  return super().shoot(angle)
     
     def update(self, mouse_angle):
+        self.healthbar.set_hp(self.hp)
         self.primary_weapon.update()
         self.primary_weapon.set_pos(self.x, self.y)
         self.primary_weapon.set_angle(mouse_angle)
@@ -704,6 +708,7 @@ class AmmoDrop(Drop):
 
     def picked_action(self, player):
         player.ammo += 32
+        player.metal += 5
 
 
 class HealthDrop(Drop):
@@ -712,12 +717,51 @@ class HealthDrop(Drop):
 
 
     def picked_action(self, player):
-        player.hp += 2
+        player.hp = max(0, min(player.maxhp, player.hp + 2))
 
 
 class UsableEntity(Entity):
     def __init__(self, x, y, width, height, hp, type):
         super().__init__(x, y, width, height, hp, type)
+        self.use_img = pygame.image.load("data_img/use_item_pic.png")
+
+
+class SpaceShip(UsableEntity):
+    def __init__(self, x, y, width, height, hp, type):
+        super().__init__(x, y, width, height, hp, type)
+        self.metal = 0
+        self.can_be_used = False
+    
+    def use(self, player):
+        x1 = player.x + player.width / 2
+        y1 = player.y + player.height / 2
+        x2 = self.x
+        y2 = self.y
+        dist = math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+        if dist <= player.width / 2 + 15:
+            if player.metal > 0:
+                player.metal -= 1
+                self.metal += 1
+    
+    def update(self, player):
+        if self.metal > 150:
+            print('win')
+        x1 = player.x + player.width / 2
+        y1 = player.y + player.height / 2
+        x2 = self.x
+        y2 = self.y
+        dist = math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+        if dist <= player.width / 2 + 15:
+            self.can_be_used = True
+        else:
+            self.can_be_used = False
+    
+    def draw(self, surface, scroll):
+        pygame.draw.rect(surface, (255, 0, 255), pygame.Rect(self.physical_object.x-scroll[0], self.physical_object.y-scroll[1],
+                                                           self.physical_object.width, self.physical_object.height), 1)
+        if self.can_be_used:
+            surface.blit(self.use_img, (self.x - scroll[0] - self.use_img.get_width() / 2 + self.width / 2, self.y - scroll[1] - self.use_img.get_height()))
+
 
 
 class Portal(Entity):
@@ -725,11 +769,11 @@ class Portal(Entity):
         super().__init__(x, y, radius * 2, radius * 2, 1, type)
         self.radius = radius
         self.can_be_used = False
-        self.use_img = pygame.image.load("data_img/use_item_pic.png")
         self.angle2 = random.uniform(0, math.pi * 2)
         self.angle3 = random.uniform(0, math.pi * 2)
         self.pos2 = [math.cos(self.angle2) * 2.5, math.sin(self.angle2) * 2.5]
         self.pos3 = [math.cos(self.angle3), math.sin(self.angle3)]
+        self.use_img = pygame.image.load("data_img/use_item_pic.png")
         
     def update(self, player):
         self.angle2 += 0.2
@@ -817,7 +861,7 @@ class RustyRifle(Weapon):
                 angle = self.angle
             else:
                 self.angle = angle
-            projectile = Projectile(self.entity.x + self.entity.width / 2 + math.cos(angle) * self.img_width, self.entity.y + self.entity.height / 2 + math.sin(angle) * self.img_width, 8, 8, angle, 2, self.entity.type + "_projectile")
+            projectile = Projectile(self.entity.x + self.entity.width / 2 + math.cos(angle) * self.img_width, self.entity.y + self.entity.height / 2 + math.sin(angle) * self.img_width, 8, 8, angle, 2.5, self.entity.type + "_projectile")
             self.entity.projectiles.append(projectile)
             self.shootTimer = 0
             self.cooldown = random.randint(60, 180)
@@ -838,6 +882,31 @@ class Cursor(GameObject):
 
     def draw(self, display):
         display.blit(self.img, (self.x - self.width // 2, self.y - self.height // 2))
+
+class Healthbar:
+    def __init__(self, fullhp, nowhp):
+        self.fullhp = fullhp
+        self.nowhp = nowhp
+        self.font = pygame.font.Font('MaredivRegular.ttf', 10)
+
+    def draw(self, display):
+        #  pygame.draw.rect(display, 'black', (0.03 * display.get_width(), 0.05 * display.get_height(), 6.25 * TILE_SIZE, TILE_SIZE))
+        x1, y1 = 0.03 * display.get_width() - 0.2 * TILE_SIZE, 0.05 * display.get_height() - 0.2 * TILE_SIZE
+        x2, y2 = 6 * TILE_SIZE, TILE_SIZE * 0.8
+        pygame.draw.rect(display, 'white', (x1, y1, x2, y2))
+        pygame.draw.rect(display, 'black', (x1 + 2, y1 + 2, x2 - 4, y2 - 4))
+        pygame.draw.rect(display, 'red', (x1 + 2, y1 + 2, x2 * self.nowhp/self.fullhp - 4, y2 - 4))
+        hp = self.font.render(str(f'{self.nowhp}/{self.fullhp}'), False, 'white')
+        display.blit(hp, (51, 9))
+    
+    def set_hp(self, hp):
+        self.nowhp = hp
+    
+    def add_hp(self, hp):
+        self.nowhp = max(0, min(self.fullhp, self.nowhp + hp))
+    
+    def get_hp(self):
+        return self.nowhp
 
 class Projectile(Entity):
     def __init__(self, x, y, width, height, angle, velocity, type):
@@ -974,3 +1043,21 @@ class Explosion:
     def draw(self, display, scroll=[0,0]):
         for particle in self.particles:
             particle.draw(display, scroll)
+
+
+class Timer:
+    def __init__(self, time, x, y):
+        self.time = time
+        self.font = pygame.font.Font('MaredivRegular.ttf', 10)
+        self.x = x
+        self.y = y
+    
+    def update(self):
+        self.time -= 1 / 60
+    
+    def draw(self, display, scroll=[0, 0]):
+        time_text = self.font.render(f"{round(self.time, 1)}", True, (255, 255, 255))
+        display.blit(time_text, (self.x, self.y))
+    
+    def get_time(self):
+        return self.time
