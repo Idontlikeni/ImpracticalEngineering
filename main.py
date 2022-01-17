@@ -1687,7 +1687,8 @@ def game():
                 if event.key == K_s:
                     moving_down = True
                 if event.key == K_ESCAPE:
-                    options()
+                    if ingamemenu(screen):
+                        running = False
                 if event.key == pygame.K_F11:
                     fullscrn(display)
                 if event.key == pygame.K_f:
