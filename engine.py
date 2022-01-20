@@ -3,9 +3,6 @@ from pygame import display
 from pygame.locals import *
 from pygame.mixer import set_num_channels
 
-pygame.mixer.pre_init(44100, -16, 2, 512)
-pygame.mixer.set_num_channels(64)
-
 global e_colorkey
 e_colorkey = (255, 255, 255)
 
