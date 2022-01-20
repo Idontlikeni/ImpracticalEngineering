@@ -1,6 +1,10 @@
 import pygame, math, os, random, itertools
 from pygame import display
 from pygame.locals import *
+from pygame.mixer import set_num_channels
+
+pygame.mixer.pre_init(44100, -16, 2, 512)
+pygame.mixer.set_num_channels(64)
 
 global e_colorkey
 e_colorkey = (255, 255, 255)
@@ -538,6 +542,10 @@ class Enemy(Entity):
         self.player_angle = 0
         self.player_dist = 0
         self.primary_weapon = RustyRifle(self.x, self.y, 0, "data_img/weapon_2.png", self)
+        #  self.animation_database['idle'] = self.load_animations('data_img/animations/enemy/idle', [6, 6, 6, 6, 6,])
+        self.animation_database['running'] = self.load_animations('data_img/animations/enemy/running', [8, 8, 8, 8])
+        self.change_action('running')
+        #  self.is_flipped = False
 
 
     def wonder(self):
@@ -583,6 +591,10 @@ class Enemy(Entity):
         super().update()
         self.primary_weapon.update()
         self.primary_weapon.set_pos(self.x, self.y)
+        if self.movement[0] > 0:
+            self.is_flipped = False
+        else:
+            self.is_flipped = True
         #  print(self.wait_timer)
         if self.can_see_player:
             self.shoot(random.uniform(self.player_angle - 0.7, self.player_angle + 0.7))
@@ -619,8 +631,10 @@ class Enemy(Entity):
     
     def draw(self, surface, scroll):
         self.primary_weapon.draw(surface, scroll)
-        pygame.draw.rect(surface, self.color, pygame.Rect(self.physical_object.x-scroll[0], self.physical_object.y-scroll[1],
-                                                           self.physical_object.width, self.physical_object.height), 1)
+        super().draw(surface, scroll)
+        
+        # pygame.draw.rect(surface, self.color, pygame.Rect(self.physical_object.x-scroll[0], self.physical_object.y-scroll[1],
+        #                                                    self.physical_object.width, self.physical_object.height), 1)
         # pygame.draw.line(surface, self.color, (self.x - scroll[0], self.y - scroll[1]), 
         # (self.destination_pos[0] - scroll[0], self.destination_pos[1] - scroll[1]))
         # for pixel in self.draw_pixels:
@@ -646,6 +660,11 @@ class Player(Entity):
         #  return super().shoot(angle)
     
     def update(self, mouse_angle):
+        print(mouse_angle)
+        if abs(mouse_angle) < math.pi / 2:
+            self.is_flipped = False
+        else:
+            self.is_flipped = True
         self.healthbar.set_hp(self.hp)
         self.primary_weapon.update()
         self.primary_weapon.set_pos(self.x, self.y)
@@ -653,8 +672,9 @@ class Player(Entity):
         return super().update()
 
     def draw(self, surface, scroll):
-        self.primary_weapon.draw(surface, scroll)
+        
         super().draw(surface, scroll)
+        self.primary_weapon.draw(surface, scroll)
         
     
     def use(self):
@@ -665,7 +685,8 @@ class Player(Entity):
 class Drop(GameObject):
     def __init__(self, x, y, width, height, path):
         super().__init__(x, y, width, height)
-        self.img = pygame.image.load(path)
+        self.img = pygame.image.load(path).convert()
+        self.img.set_colorkey((0, 0, 0))
         self.following = False
         self.velocity = 2.5
         self.dead = False
@@ -723,7 +744,8 @@ class HealthDrop(Drop):
 class UsableEntity(Entity):
     def __init__(self, x, y, width, height, hp, type):
         super().__init__(x, y, width, height, hp, type)
-        self.use_img = pygame.image.load("data_img/use_item_pic.png")
+        self.use_img = pygame.image.load("data_img/use_item_pic.png").convert()
+        self.use_img.set_colorkey((0, 0, 0))
 
 
 class SpaceShip(UsableEntity):
@@ -773,7 +795,8 @@ class Portal(Entity):
         self.angle3 = random.uniform(0, math.pi * 2)
         self.pos2 = [math.cos(self.angle2) * 2.5, math.sin(self.angle2) * 2.5]
         self.pos3 = [math.cos(self.angle3), math.sin(self.angle3)]
-        self.use_img = pygame.image.load("data_img/use_item_pic.png")
+        self.use_img = pygame.image.load("data_img/use_item_pic.png").convert()
+        self.use_img.set_colorkey((0, 0, 0))
         
     def update(self, player):
         self.angle2 += 0.2
@@ -819,6 +842,7 @@ class Weapon:
         self.shootTimer = 10
         self.cooldown = 10
         self.img_width = self.img.get_width()
+        self.is_flipped = False
 
     def set_pos(self, x, y):
         self.x = x
@@ -831,7 +855,7 @@ class Weapon:
         if angle is None:
             angle = self.angle
         if self.shootTimer >= self.cooldown:
-            projectile = Projectile(self.entity.x + self.entity.width / 2 + math.cos(angle) * self.img_width, self.entity.y + self.entity.height / 2 + math.sin(angle) * self.img_width, 8, 8, angle, 8, self.entity.type + "_projectile")
+            projectile = AutoProjectile(self.entity.x + self.entity.width / 2 + math.cos(angle) * self.img_width, self.entity.y + self.entity.height / 2 + math.sin(angle) * self.img_width, 8, 8, angle, 8, self.entity.type + "_projectile")
             self.entity.projectiles.append(projectile)
             self.shootTimer = 0
             return projectile
@@ -839,13 +863,17 @@ class Weapon:
     
     def draw(self, surface, scroll):
 
-        blitRotate(surface, self.img, (self.x - scroll[0] + self.entity.width / 2, self.y - scroll[1] + self.entity.height / 2), (0, 0), -math.degrees(self.angle))
+        blitRotate(surface, pygame.transform.flip(self.img, False, self.is_flipped), (self.x - scroll[0] + self.entity.width / 2, self.y - scroll[1] + self.entity.height / 2 + int(self.is_flipped) * 5), (0, 0), -math.degrees(self.angle))
 
         # copy_img = pygame.transform.rotate(self.img, -math.degrees(self.angle))
         # print(math.degrees(self.angle))
         # surface.blit(copy_img, (self.x - scroll[0], self.y - scroll[1]))
 
     def update(self):
+        if abs(self.angle) < math.pi / 2:
+            self.is_flipped = False
+        else:
+            self.is_flipped = True
         self.shootTimer += 1
 
 class RustyRifle(Weapon):
@@ -861,7 +889,7 @@ class RustyRifle(Weapon):
                 angle = self.angle
             else:
                 self.angle = angle
-            projectile = Projectile(self.entity.x + self.entity.width / 2 + math.cos(angle) * self.img_width, self.entity.y + self.entity.height / 2 + math.sin(angle) * self.img_width, 8, 8, angle, 2.5, self.entity.type + "_projectile")
+            projectile = EnemyProjectile(self.entity.x + self.entity.width / 2 + math.cos(angle) * self.img_width, self.entity.y + self.entity.height / 2 + math.sin(angle) * self.img_width, 8, 8, angle, 2.5, self.entity.type + "_projectile")
             self.entity.projectiles.append(projectile)
             self.shootTimer = 0
             self.cooldown = random.randint(60, 180)
@@ -872,7 +900,8 @@ class Cursor(GameObject):
     def __init__(self, x, y, path):
         self.x = x
         self.y = y
-        self.img = pygame.image.load(path)
+        self.img = pygame.image.load(path).convert()
+        self.img.set_colorkey((0, 0, 0))
         self.width = self.img.get_width()
         self.height = self.img.get_height()
 
@@ -930,10 +959,35 @@ class Projectile(Entity):
 
     def set_move_angle(self, angle):
         self.angle = angle
+    
+    def draw(self, surface, scroll):
 
-class EnemyProjectiles(Projectile):
-    def __init__(self):
-        pass
+        return super().draw(surface, scroll)
+
+class EnemyProjectile(Projectile):
+    def __init__(self, x, y, width, height, angle, velocity, type):
+        super().__init__(x, y, width, height, angle, velocity, type)
+        self.img = pygame.image.load('data_img/enemy_bullet.png').convert()
+        self.img.set_colorkey((0, 0, 0))
+
+
+    def draw(self, surface, scroll):
+        surface.blit(circle_surf(5, (230, 69, 57)), [int(self.x - scroll[0] - 2.5), int(self.y - scroll[1] - 2.5)], special_flags=BLEND_ALPHA_SDL2 )
+        surface.blit(self.img, (self.x - scroll[0], self.y - scroll[1]))
+
+
+class AutoProjectile(Projectile):
+    def __init__(self, x, y, width, height, angle, velocity, type):
+        super().__init__(x, y, width, height, angle, velocity, type)
+        self.img = pygame.image.load('data_img/standart_bullet.png').convert()
+        self.img.set_colorkey((0, 0, 0))
+    
+
+    def draw(self, surface, scroll):
+        surface.blit(circle_surf(4, (240, 181, 65)), [int(self.x - scroll[0] - 1), int(self.y - scroll[1]) - 1], special_flags=BLEND_RGBA_ADD)
+        surface.blit(self.img, (self.x - scroll[0], self.y - scroll[1]))
+        #  return super().draw(surface, scroll)
+
 
 class Particle:
     def __init__(self, x, y, velocity, time, scroll):

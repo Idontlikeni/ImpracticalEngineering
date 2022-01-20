@@ -101,6 +101,7 @@ mousy = 0
 dieuiclicked = False
 alive = True
 if 'fullscreen.txt' in os.listdir(os.getcwd()):
+    print('aaa')
     stats = open('fullscreen.txt', 'r')
     x = stats.readlines()
     if x:
@@ -326,8 +327,9 @@ class Bullet:
         return self.damage
 
 
-class FreshMeat:
+class FreshMeat(e.Enemy):
     def __init__(self, x, y, hp, speed, size, color, slowed=False):
+        super().__init__(x, y, 10, 16, 16, "meat")
         self.x = x
         self.y = y
         self.size = size / sclsz1 * cellsize / 20
@@ -339,9 +341,21 @@ class FreshMeat:
         self.napx = 1
         self.napy = 0
         self.rect = pygame.Rect(self.x - self.size, self.y - self.size, self.size * 2, self.size * 2)
+        # self.animations_frames = {}
+        # self.animation_database = {}
+        # self.action = 'idle'
+        # self.frame = 0
+        # self.is_flipped = False
+        # self.image = None
+        # self.dead = False
 
+    def update(self):
+        super().update()
+    
     def draw(self):
-        pygame.draw.circle(window, self.color, [self.x, self.y], self.size)
+        
+        #  pygame.draw.circle(window, self.color, [self.x, self.y], self.size)
+        window.blit(pygame.transform.flip(self.image, self.is_flipped, False), (self.x - self.size + 2, self.y - self.size + 2))
         # pygame.draw.rect(window, (255, 0, 0), self.rect, 1)
 
     def go(self):
@@ -790,6 +804,7 @@ def run():
                         explosions.append(e.Explosion(tower.x, tower.y))
                         break
             for meats in meat:
+                meats.update()
                 meats.draw()
                 meats.go()
                 for bullet in bullets:
@@ -1049,10 +1064,6 @@ def towerdefence():
                 player_movement[1] *= math.sin(math.pi / 4)
 
             if player_movement[0] != 0 or player_movement[1] != 0:
-                if player_movement[0] > 0:
-                    player.is_flipped = False
-                if player_movement[0] < 0:
-                    player.is_flipped = True
                 player.change_action('running')
             elif player_movement[0] == 0 and player_movement[1] == 0:
                 player.change_action('idle')
@@ -1061,6 +1072,8 @@ def towerdefence():
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
+                    pygame.quit()
+                    sys.exit()
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
                         maketower(towernum)
@@ -1321,6 +1334,10 @@ def main_menu():
     stars3 = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER),
                             pygame.SRCALPHA)
     stars0 = pygame.Surface((WINDOW_SIZE[0], WINDOW_SIZE[1]))
+
+    pygame.mixer.music.load("music/Space Lion.mp3")
+    pygame.mixer.music.play(-1)
+
     for i in range(100):
         stars.fill(pygame.Color('white'),
                     (random.random() * WINDOW_SIZE[0] / SCALE_MULTIPLIER,
@@ -1409,6 +1426,7 @@ def main_menu():
         screen.blit(pygame.transform.scale(display, WINDOW_SIZE), (0, 0))
         pygame.display.update()
         clock.tick(60)
+    pygame.mixer.music.fadeout(1000)
 
 
 def trade_area():
@@ -1427,6 +1445,9 @@ def trade_area():
     true_scroll = [0, 0]
     scroll = [0, 0]
 
+    
+    pygame.mixer.music.load("music/Don't Bother none.mp3")
+    pygame.mixer.music.play(-1)
     last_time = time.time()
 
     pygame.mouse.set_visible(False)
@@ -1584,6 +1605,8 @@ def game():
 
     last_time = time.time()
 
+
+
     pygame.mouse.set_visible(False)
     world = e.World(48, 48, 20)
     world.generate_map()
@@ -1637,10 +1660,10 @@ def game():
             player_movement[1] *= math.sin(math.pi / 4)
         
         if player_movement[0] != 0 or player_movement[1] != 0:
-            if player_movement[0] > 0:
-                player.is_flipped = False
-            if player_movement[0] < 0:
-                player.is_flipped = True
+            # if player_movement[0] > 0:
+            #     player.is_flipped = False
+            # if player_movement[0] < 0:
+            #     player.is_flipped = True
             player.change_action('running')
         elif player_movement[0] == 0 and player_movement[1] == 0:
             player.change_action('idle')
@@ -1783,7 +1806,7 @@ def options():
 def Audio():
     WINDOW_SIZE = (1920, 1080)
     TILE_SIZE = 16
-    screen = pygame.display.set_mode(WINDOW_SIZE, 0, 32)
+    #  screen = pygame.display.set_mode(WINDOW_SIZE, 0, 32)
     n = 0
     m = 0
     pygame.mouse.set_visible(True)
@@ -1875,7 +1898,7 @@ def load_image(name, colorkey=None):
 
 def Video():
     WINDOW_SIZE = (1920, 1080)
-    screen = pygame.display.set_mode(WINDOW_SIZE, 0, 32)
+    #  screen = pygame.display.set_mode(WINDOW_SIZE, 0, 32)
     n = 0
     m = 0
     pygame.mouse.set_visible(True)
