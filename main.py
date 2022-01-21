@@ -985,6 +985,7 @@ def towerdefence():
     drops = []
     heals = []
     tile_rects = tile_rects[:lenwalls]
+    tile_rects_coord = tile_rects_coord[:lenwalls]
     wawe = 0
     wawe1 = 1
     player.set_pos(cellsize * countx - player.width, cellsize * 11.1)
