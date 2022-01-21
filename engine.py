@@ -691,7 +691,6 @@ class Player(Entity):
         #  return super().shoot(angle)
 
     def update(self, mouse_angle):
-        print(mouse_angle)
         if abs(mouse_angle) < math.pi / 2:
             self.is_flipped = False
         else:

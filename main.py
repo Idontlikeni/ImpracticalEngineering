@@ -100,7 +100,6 @@ mousy = 0
 dieuiclicked = False
 alive = True
 if 'fullscreen.txt' in os.listdir(os.getcwd()):
-    print('aaa')
     stats = open('fullscreen.txt', 'r')
     x = stats.readlines()
     if x:
@@ -1531,7 +1530,6 @@ def trade_area():
         player.draw_projectiles(display, scroll)
         spaceship.draw(display, scroll)
         metalcount.set_metal(player.metal)
-        print(player.hp, player.metal)
         #  player.move(player_movement)
         #  pygame.draw.line(display, (0, 255, 0), (player.x + player.width / 2 - scroll[0], player.y + player.height / 2 - scroll[1]), ((pygame.mouse.get_pos()[0] // SCALE_MULTIPLIER), (pygame.mouse.get_pos()[1] // SCALE_MULTIPLIER)))
 
@@ -1565,6 +1563,8 @@ def trade_area():
                         running = False
                 if event.key == pygame.K_F11:
                     fullscrn(display)
+                if event.key == pygame.K_F10:
+                    winscreen(display, player.x - spaceship.x, player.y - spaceship.y)
                 if event.key == pygame.K_f:
                     use = True
             if event.type == KEYUP:
@@ -1580,7 +1580,6 @@ def trade_area():
                     use = False
             if event.type == MOUSEBUTTONDOWN:
                 if event.button == 1:
-                    #  print(math.atan2(mouse_pos[1] / SCALE_MULTIPLIER - player.y, mouse_pos[0] / SCALE_MULTIPLIER - player.x))
                     clicked = True
             if event.type == MOUSEBUTTONUP:
                 if event.button == 1:
@@ -1686,7 +1685,6 @@ def game(metal=0):
         defense_timer.update()
         if defense_timer.get_time() <= 0 or player.hp <= 0:
             running = False
-        #  print(player.hp)
         #  player.move(player_movement)
         #  pygame.draw.line(display, (0, 255, 0), (player.x + player.width / 2 - scroll[0], player.y + player.height / 2 - scroll[1]), ((pygame.mouse.get_pos()[0] // SCALE_MULTIPLIER), (pygame.mouse.get_pos()[1] // SCALE_MULTIPLIER)))
 
@@ -1737,7 +1735,6 @@ def game(metal=0):
                     use = False
             if event.type == MOUSEBUTTONDOWN:
                 if event.button == 1:
-                    #  print(math.atan2(mouse_pos[1] / SCALE_MULTIPLIER - player.y, mouse_pos[0] / SCALE_MULTIPLIER - player.x))
                     clicked = True
             if event.type == MOUSEBUTTONUP:
                 if event.button == 1:
@@ -1890,6 +1887,122 @@ def Audio():
         screen.blit(pygame.transform.scale(display, WINDOW_SIZE), (0, 0))
         pygame.display.update()
         clock.tick(60)
+
+
+def winscreen(surface, x, y):
+    running = True
+    pygame.mouse.set_visible(True)
+    SCALE_MULTIPLIER = 4
+    click = False
+    font = pygame.font.Font('MaredivRegular.ttf', 20)
+    display = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER), pygame.SRCALPHA)
+    background = pygame.Surface(WINDOW_SIZE, pygame.SRCALPHA)
+    background.blit(pygame.transform.scale(surface, WINDOW_SIZE), (0, 0))
+    center = [(WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - player.width / 2) - x + 10, (WINDOW_SIZE[1] / SCALE_MULTIPLIER / 2 - player.width / 2) - y + 10]
+    layer = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER), pygame.SRCALPHA)
+    stars = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER),
+                           pygame.SRCALPHA)
+    stars.fill((15, 11, 66))
+    for i in range(200):
+        stars.fill(pygame.Color('white'),
+                   (random.random() * WINDOW_SIZE[0] / SCALE_MULTIPLIER,
+                    random.random() * WINDOW_SIZE[1] / SCALE_MULTIPLIER, 1, 1))
+    stars = pygame.transform.scale(stars, (WINDOW_SIZE[0] + 10, WINDOW_SIZE[1] + 10))
+    v = 250
+    r = 0
+    r1 = 0
+    t = 0
+    prz = 0
+    prz1 = 0
+    timer = 0
+    explosion = True
+    flying = True
+    up = False
+    x1 = 0
+    y1 = 0
+    myfont2 = pygame.font.Font('MaredivRegular.ttf', round(cellsize))
+    explosion = False
+    while running:
+        while explosion:
+            display.fill((0, 0, 0, 150))
+            screen.blit(background, (0, 0))
+            mx, my = pygame.mouse.get_pos()
+            pygame.draw.circle(display, 'white', center, r)
+            r += v / 60
+            while timer < 90 and r > 25:
+                if t == 0:
+                    r1 = r
+                    t = 1
+                display.fill((0, 0, 0, 150))
+                screen.blit(background, (0, 0))
+                pygame.draw.circle(display, 'white', center, r1)
+                if timer % 10 == 0:
+                    if up:
+                        r1 += 1
+                    else:
+                        r1 -= 1
+                    up = not up
+                timer += 1
+                if timer == 90:
+                    v = 700
+                    r = r1
+                screen.blit(pygame.transform.scale(display, WINDOW_SIZE), (0, 0))
+                pygame.display.update()
+                clock.tick(60)
+            if WINDOW_SIZE[0] / SCALE_MULTIPLIER < r:
+                explosion = False
+                timer = 0
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    pygame.quit()
+                    sys.exit()
+                if event.type == KEYDOWN:
+                    if event.key == K_ESCAPE:
+                        running = False
+            screen.blit(pygame.transform.scale(display, WINDOW_SIZE), (0, 0))
+            pygame.display.update()
+            clock.tick(60)
+        while flying:
+            if timer % 2 == 0:
+                x1 = random.randint(-10, 0)
+                y1 -= random.randint(-10, 0)
+                if y1 >= WINDOW_SIZE[1]:
+                    y1 = 0
+            screen.blit(stars, (x1, y1))
+            screen.blit(stars, (x1, y1 - WINDOW_SIZE[1]))
+            display.fill((255, 255, 255, 255 - prz))
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    pygame.quit()
+                    sys.exit()
+                if event.type == KEYDOWN:
+                    if event.key == K_ESCAPE:
+                        flying = False
+                        running = False
+            if timer > 300:
+                layer.fill((0, 0, 0, prz1))
+                hp = myfont2.render(str('You have left the planet!'), False, 'white')
+                layer.blit(hp, (4 * cellsize, 1.5 * cellsize))
+                if prz1 < 180:
+                    prz1 += 1
+            screen.blit(pygame.transform.scale(display, WINDOW_SIZE), (0, 0))
+            screen.blit(pygame.transform.scale(layer, WINDOW_SIZE), (0, 0))
+            pygame.display.update()
+            clock.tick(60)
+            timer += 1
+            if prz != 255:
+                prz += 1
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == KEYDOWN:
+                if event.key == K_ESCAPE:
+                    running = False
+        screen.blit(pygame.transform.scale(display, WINDOW_SIZE), (0, 0))
+        pygame.display.update()
+        clock.tick(60)
+    pygame.mouse.set_visible(False)
 
 
 def load_image(name, colorkey=None):
