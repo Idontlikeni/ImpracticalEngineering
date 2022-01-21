@@ -1,6 +1,5 @@
 from dis import dis
 import pygame, sys, os, random, math, time
-
 from pygame import mouse
 import engine as e
 from pygame.locals import *
@@ -101,6 +100,7 @@ mousy = 0
 dieuiclicked = False
 alive = True
 if 'fullscreen.txt' in os.listdir(os.getcwd()):
+    print('aaa')
     stats = open('fullscreen.txt', 'r')
     x = stats.readlines()
     if x:
@@ -326,8 +326,9 @@ class Bullet:
         return self.damage
 
 
-class FreshMeat:
+class FreshMeat(e.Enemy):
     def __init__(self, x, y, hp, speed, size, color, slowed=False):
+        super().__init__(x, y, 10, 16, 16, "meat")
         self.x = x
         self.y = y
         self.size = size / sclsz1 * cellsize / 20
@@ -339,9 +340,21 @@ class FreshMeat:
         self.napx = 1
         self.napy = 0
         self.rect = pygame.Rect(self.x - self.size, self.y - self.size, self.size * 2, self.size * 2)
+        # self.animations_frames = {}
+        # self.animation_database = {}
+        # self.action = 'idle'
+        # self.frame = 0
+        # self.is_flipped = False
+        # self.image = None
+        # self.dead = False
 
+    def update(self):
+        super().update()
+    
     def draw(self):
-        pygame.draw.circle(window, self.color, [self.x, self.y], self.size)
+        
+        #  pygame.draw.circle(window, self.color, [self.x, self.y], self.size)
+        window.blit(pygame.transform.flip(self.image, self.is_flipped, False), (self.x - self.size + 2, self.y - self.size + 2))
         # pygame.draw.rect(window, (255, 0, 0), self.rect, 1)
 
     def go(self):
@@ -796,6 +809,7 @@ def run():
                         explosions.append(e.Explosion(tower.x, tower.y))
                         break
             for meats in meat:
+                meats.update()
                 meats.draw()
                 meats.go()
                 for bullet in bullets:
@@ -968,7 +982,7 @@ redtow1 = pygame.transform.scale(redtow, (cellsize * 6, cellsize * 6))
 bluetow1 = pygame.transform.scale(bluetow, (cellsize * 6, cellsize * 6))
 
 
-def towerdefence():
+def towerdefence(metalmoney=0):
     global countx, county, sclsz, sclsz1, width1, height1, width, height, cellsize, cellsize1, countx1, county1, fps
     global flscr, show, inviztime, inhub, meatend, bullets, towers, meat, drops, heals, walls, way, allmetal, tile_rects
     global tile_rects1, tile_rects_coord, explosions, towernum, spawntime, playerv, speedcoef, uirect, Map, down
@@ -990,13 +1004,13 @@ def towerdefence():
     wawe1 = 1
     player.set_pos(cellsize * countx - player.width, cellsize * 11.1)
     player.hp = 10
-    plr.money = 35
+    plr.money = metalmoney
     playerv = 2
     t = 0
     meatend = False
     moving_right = False
     while running:
-        pygame.mouse.set_visible(False)
+        #  pygame.mouse.set_visible(False)
         if alive:
             # if meatend and t == 0:
             #     winwin(monitor)
@@ -1037,6 +1051,8 @@ def towerdefence():
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
+                    pygame.quit()
+                    sys.exit()
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
                         maketower(towernum)
@@ -1138,6 +1154,7 @@ def towerdefence():
         showfps()
         pygame.display.update()
         clock.tick(fps)
+    return plr.money
 
 
 def fullscrn(display):
@@ -1215,6 +1232,7 @@ def ingamemenu(surface):
         screen.blit(pygame.transform.scale(display, WINDOW_SIZE), (0, 0))
         pygame.display.update()
         clock.tick(60)
+    pygame.mouse.set_visible(False)
 
 
 def winwin(surface):
@@ -1280,6 +1298,10 @@ def main_menu():
     stars3 = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER),
                             pygame.SRCALPHA)
     stars0 = pygame.Surface((WINDOW_SIZE[0], WINDOW_SIZE[1]))
+
+    pygame.mixer.music.load("music/Space Lion.mp3")
+    pygame.mixer.music.play(-1)
+
     for i in range(100):
         stars.fill(pygame.Color('white'),
                     (random.random() * WINDOW_SIZE[0] / SCALE_MULTIPLIER,
@@ -1368,6 +1390,7 @@ def main_menu():
         screen.blit(pygame.transform.scale(display, WINDOW_SIZE), (0, 0))
         pygame.display.update()
         clock.tick(60)
+    pygame.mixer.music.fadeout(1000)
 
 
 def trade_area():
@@ -1386,6 +1409,9 @@ def trade_area():
     true_scroll = [0, 0]
     scroll = [0, 0]
 
+    
+    pygame.mixer.music.load("music/Don't Bother none.mp3")
+    pygame.mixer.music.play(-1)
     last_time = time.time()
 
     pygame.mouse.set_visible(False)
@@ -1395,9 +1421,11 @@ def trade_area():
     cursor = e.Cursor(0, 0, 'data_img/curs3.png')
     portal1 = e.Portal(240, 30, 10, 'portal')
     portal2 = e.Portal(30, 140, 10, 'portal')
+    metalcount = e.MetalCount(10, 25, 0)
     world.add_usable_entity(portal1)
     world.add_usable_entity(portal2)
     particles = []
+    spaceship = e.SpaceShip(300, 140, 21, 20, 1, "spaceship")
 
     while running:
         pygame.mouse.set_visible(False)
@@ -1436,10 +1464,11 @@ def trade_area():
             player.shoot(mouse_angle)
         if use:
             use = False
+            spaceship.use(player)
             if portal1.used():
-                game()
+                player.metal = game(player.metal)
             if portal2.used():
-                towerdefence()
+                player.metal = towerdefence(player.metal)
 
         if player_movement[0] != 0 and player_movement[1] != 0:
             player_movement[0] *= math.sin(math.pi / 4)
@@ -1454,15 +1483,18 @@ def trade_area():
         elif player_movement[0] == 0 and player_movement[1] == 0:
             player.change_action('idle')
 
-        collision_types = player.move(player_movement, tile_rects, [])
+        collision_types = player.move(player_movement, tile_rects, [spaceship])
 
         player.move_projectiles(world, world.get_enemies(), dt)
         player.update(mouse_angle)
         world.update(player, dt)
+        spaceship.update(player)
         world.draw(display, scroll)
         player.draw(display, scroll)
         player.draw_projectiles(display, scroll)
-        #  print(player.hp)
+        spaceship.draw(display, scroll)
+        metalcount.set_metal(player.metal)
+        print(player.hp, player.metal)
         #  player.move(player_movement)
         #  pygame.draw.line(display, (0, 255, 0), (player.x + player.width / 2 - scroll[0], player.y + player.height / 2 - scroll[1]), ((pygame.mouse.get_pos()[0] // SCALE_MULTIPLIER), (pygame.mouse.get_pos()[1] // SCALE_MULTIPLIER)))
 
@@ -1475,6 +1507,7 @@ def trade_area():
                 del particle
                 particles.pop(i)
 
+        metalcount.draw(display)
         cursor.draw(display)
 
         for event in pygame.event.get():
@@ -1522,7 +1555,7 @@ def trade_area():
     pygame.mouse.set_visible(True)
 
 
-def game():
+def game(metal=0):
     SCALE_MULTIPLIER = 4
     display = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER))
 
@@ -1540,14 +1573,18 @@ def game():
 
     last_time = time.time()
 
+
+    pygame.mouse.set_visible(False)
     world = e.World(48, 48, 20)
     world.generate_map()
     player = e.Player(*world.get_start_pos(), 16, 16, 10, 'player')
     cursor = e.Cursor(0, 0, 'data_img/curs3.png')
     portal = e.Portal(*world.get_start_pos(), 10, 'portal')
+    metalcount = e.MetalCount(10, 25, 0)
+    defense_timer = e.Timer(45, WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2, 10)
     world.add_usable_entity(portal)
     particles = []
-
+    player.metal = metal
     while running:
         pygame.mouse.set_visible(False)
         dt = time.time() - last_time
@@ -1593,10 +1630,10 @@ def game():
             player_movement[1] *= math.sin(math.pi / 4)
         
         if player_movement[0] != 0 or player_movement[1] != 0:
-            if player_movement[0] > 0:
-                player.is_flipped = False
-            if player_movement[0] < 0:
-                player.is_flipped = True
+            # if player_movement[0] > 0:
+            #     player.is_flipped = False
+            # if player_movement[0] < 0:
+            #     player.is_flipped = True
             player.change_action('running')
         elif player_movement[0] == 0 and player_movement[1] == 0:
             player.change_action('idle')
@@ -1609,6 +1646,10 @@ def game():
         world.draw(display, scroll)
         player.draw(display, scroll)
         player.draw_projectiles(display, scroll)
+        metalcount.set_metal(player.metal)
+        defense_timer.update()
+        if defense_timer.get_time() <= 0 or player.hp <= 0:
+            running = False
         #  print(player.hp)
         #  player.move(player_movement)
         #  pygame.draw.line(display, (0, 255, 0), (player.x + player.width / 2 - scroll[0], player.y + player.height / 2 - scroll[1]), ((pygame.mouse.get_pos()[0] // SCALE_MULTIPLIER), (pygame.mouse.get_pos()[1] // SCALE_MULTIPLIER)))
@@ -1622,6 +1663,9 @@ def game():
                 del particle
                 particles.pop(i)
 
+        defense_timer.draw(display)
+        player.healthbar.draw(display)
+        metalcount.draw(display)
         cursor.draw(display)
 
         for event in pygame.event.get():
@@ -1638,7 +1682,8 @@ def game():
                 if event.key == K_s:
                     moving_down = True
                 if event.key == K_ESCAPE:
-                    running = False
+                    if ingamemenu(screen):
+                        running = False
                 if event.key == pygame.K_F11:
                     fullscrn(display)
                 if event.key == pygame.K_f:
@@ -1666,6 +1711,8 @@ def game():
         pygame.display.update()
         clock.tick(60)
     pygame.mouse.set_visible(True)
+    return player.metal
+
 
 
 def options():
@@ -1731,7 +1778,7 @@ def options():
 def Audio():
     WINDOW_SIZE = (1920, 1080)
     TILE_SIZE = 16
-    screen = pygame.display.set_mode(WINDOW_SIZE, 0, 32)
+    #  screen = pygame.display.set_mode(WINDOW_SIZE, 0, 32)
     n = 0
     m = 0
     pygame.mouse.set_visible(True)
@@ -1823,7 +1870,7 @@ def load_image(name, colorkey=None):
 
 def Video():
     WINDOW_SIZE = (1920, 1080)
-    screen = pygame.display.set_mode(WINDOW_SIZE, 0, 32)
+    #  screen = pygame.display.set_mode(WINDOW_SIZE, 0, 32)
     n = 0
     m = 0
     pygame.mouse.set_visible(True)
