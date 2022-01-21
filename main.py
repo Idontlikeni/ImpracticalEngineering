@@ -998,9 +998,9 @@ def towerdefence():
     while running:
         pygame.mouse.set_visible(False)
         if alive:
-            if meatend and t == 0:
-                winwin(monitor)
-                t = 1
+            # if meatend and t == 0:
+            #     winwin(monitor)
+            #     t = 1
             for meats in meat:
                 if math.sqrt((meats.x - (player.x + 8)) ** 2 + (meats.y - (player.y + 8)) ** 2) < cellsize * 2 and \
                         meats.slowed:
