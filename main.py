@@ -1087,10 +1087,8 @@ def towerdefence():
                         moving_down = False
             if player.x > cellsize * countx and meatend:
                 break
-            if not meatend and pygame.Rect(cellsize * countx, 11 * cellsize, cellsize, cellsize) not in tile_rects:
+            if pygame.Rect(cellsize * countx, 11 * cellsize, cellsize, cellsize) not in tile_rects:
                 tile_rects.append(pygame.Rect(cellsize * countx, 11 * cellsize, cellsize, cellsize))
-            if meatend and pygame.Rect(cellsize * countx, 11 * cellsize, cellsize, cellsize) in tile_rects:
-                tile_rects.remove(pygame.Rect(cellsize * countx, 11 * cellsize, cellsize, cellsize))
             if pygame.Rect(-cellsize, 11 * cellsize, cellsize, cellsize) not in tile_rects:
                 tile_rects.append(pygame.Rect(-cellsize, 11 * cellsize, cellsize, cellsize))
             createfloor()
@@ -1238,7 +1236,7 @@ def winwin(surface):
         if playbtn.collidepoint((mx, my)):
             cveta3 = (214, 136, 17)
             if click:
-                break
+                running = False
         else:
             cveta3 = (255, 235, 214)
         text1 = font.render("YOU WIN!", True, (255, 235, 214))
