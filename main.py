@@ -138,6 +138,8 @@ for y in range(len(Map)):
     if Map[y][0] == 3:
         meatstrt = cellsize / 2, y * cellsize + (cellsize / 2)
     for x in range(len(Map[y])):
+        if Map[y][x] == 6:
+            portalcoord = x * cellsize + (cellsize / 2), y * cellsize + (cellsize / 2)
         if Map[y][x] == 2:
             down.append([x * cellsize + cellsize / 2, y * cellsize + cellsize / 2])
         if Map[y][x] == 3:
@@ -611,7 +613,7 @@ def uiswtch():
 
 
 def dieui():
-    global running, alive, bullets, towers, meat, drops, heals, wawe, playerv, player_movement, tile_rects
+    global running, alive, bullets, towers, meat, drops, heals, wawe, playerv, player_movement, tile_rects, tile_rects_coord, wawe1, meatend, moving_right, use, metalmoneypast
     mx, my = pygame.mouse.get_pos()
     retry = pygame.Rect(width - 20 * cellsize, height + 2.5 * cellsize, 15 * cellsize, 3.5 * cellsize)
     exit = pygame.Rect(width, height + 2.5 * cellsize, 15 * cellsize, 3.5 * cellsize)
@@ -626,13 +628,27 @@ def dieui():
             drops = []
             heals = []
             tile_rects = tile_rects[:lenwalls]
-            wawe = 0
             alive = True
+            bullets = []
+            towers = []
+            meat = []
+            drops = []
+            heals = []
+            tile_rects = tile_rects[:lenwalls]
+            tile_rects_coord = tile_rects_coord[:lenwalls]
+            wawe = 0
+            wawe1 = 1
             player.set_pos(cellsize * countx - player.width, cellsize * 11.1)
             player.hp = 10
-            plr.money = 35
+            plr.money = metalmoneypast
             playerv = 2
-            player_movement = [0, 0]
+            t = 0
+            meatend = False
+            moving_right = False
+            portal = e.Portal(*portalcoord, 10, 'portal')
+            portal.is_active = False
+            use = False
+            player.show_weapon = False
             running = False
     if exit.collidepoint(mx, my):
         pygame.draw.rect(monitor, (112, 112, 112), exit)
@@ -990,7 +1006,8 @@ def towerdefence(metalmoney=0):
     global deadscreen, crosshairsurf, ss, sand, ssand, ssway, cross, clock, lenwalls, meatstrt, plr, wawe, crosshair
     global player, fullhp, playerhp, running, moving_right, moving_left, moving_up, moving_down, last_time, greentower
     global greentow, yellowtower, yellowtow, redtower, redtow, bluetower, bluetow, metim, metal, metim1, metal1, metim2
-    global metal2, metim3, metal3, allmetal, helim, healim, greentow1, yellowtow1, redtow1, bluetow1, wawe1
+    global metal2, metim3, metal3, allmetal, helim, healim, greentow1, yellowtow1, redtow1, bluetow1, wawe1, portalcoord
+    global metalmoneypast
     running = True
     alive = True
     bullets = []
@@ -1005,16 +1022,22 @@ def towerdefence(metalmoney=0):
     player.set_pos(cellsize * countx - player.width, cellsize * 11.1)
     player.hp = 10
     plr.money = metalmoney
+    metalmoneypast = metalmoney
     playerv = 2
     t = 0
     meatend = False
     moving_right = False
+    portal = e.Portal(*portalcoord, 10, 'portal')
+    portal.is_active = False
+    use = False
+    player.show_weapon = False
     while running:
         #  pygame.mouse.set_visible(False)
         if alive:
-            # if meatend and t == 0:
-            #     winwin(monitor)
-            #     t = 1
+            if meatend and t == 0:
+                portal.is_active = True
+                winwin(monitor)
+                t = 1
             for meats in meat:
                 if math.sqrt((meats.x - (player.x + 8)) ** 2 + (meats.y - (player.y + 8)) ** 2) < cellsize * 2 and \
                         meats.slowed:
@@ -1037,6 +1060,10 @@ def towerdefence(metalmoney=0):
             if player_movement[0] != 0 and player_movement[1] != 0:
                 player_movement[0] *= math.sin(math.pi / 4)
                 player_movement[1] *= math.sin(math.pi / 4)
+            if use:
+                use = False
+                if portal.used():
+                    running = False
 
             if player_movement[0] != 0 or player_movement[1] != 0:
                 if player_movement[0] > 0:
@@ -1070,6 +1097,8 @@ def towerdefence(metalmoney=0):
                             fps = 60
                         else:
                             fps = 120
+                    if event.key == pygame.K_f:
+                        use = True
                     if event.key == pygame.K_d:
                         moving_right = True
                     if event.key == pygame.K_a:
@@ -1111,6 +1140,8 @@ def towerdefence(metalmoney=0):
             createwall()
             createway()
             run()
+            portal.update(player)
+            portal.draw(window, [0, 0])
             player.draw(window, [0, 0])
             createrad()
             for i, explosion in sorted(enumerate(explosions), reverse=True):
@@ -1712,7 +1743,6 @@ def game(metal=0):
         clock.tick(60)
     pygame.mouse.set_visible(True)
     return player.metal
-
 
 
 def options():
