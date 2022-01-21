@@ -164,6 +164,8 @@ tile_rects1.remove(pygame.Rect(0, county1 // 2 * cellsize, cellsize, cellsize))
 tile_rects1.remove(pygame.Rect(countx1 // 2 * cellsize, 0, cellsize, cellsize))
 lenwalls = len(tile_rects)
 
+spaceship = e.SpaceShip(300, 140, 21, 20, 1, "spaceship")
+
 
 class Player:
     def __init__(self, money):
@@ -1453,11 +1455,12 @@ def trade_area():
     portal1 = e.Portal(240, 30, 10, 'portal')
     portal2 = e.Portal(30, 140, 10, 'portal')
     metalcount = e.MetalCount(10, 25, 0)
+    ammocount = e.AmmoCount(10, 35, 0)
     world.add_usable_entity(portal1)
     world.add_usable_entity(portal2)
     particles = []
-    spaceship = e.SpaceShip(300, 140, 21, 20, 1, "spaceship")
-
+    global spaceship
+    player.metal = 100
     while running:
         pygame.mouse.set_visible(False)
         dt = time.time() - last_time
@@ -1525,6 +1528,7 @@ def trade_area():
         player.draw_projectiles(display, scroll)
         spaceship.draw(display, scroll)
         metalcount.set_metal(player.metal)
+        ammocount.set_ammo(player.ammo)
         print(player.hp, player.metal)
         #  player.move(player_movement)
         #  pygame.draw.line(display, (0, 255, 0), (player.x + player.width / 2 - scroll[0], player.y + player.height / 2 - scroll[1]), ((pygame.mouse.get_pos()[0] // SCALE_MULTIPLIER), (pygame.mouse.get_pos()[1] // SCALE_MULTIPLIER)))
@@ -1539,6 +1543,7 @@ def trade_area():
                 particles.pop(i)
 
         metalcount.draw(display)
+        ammocount.draw(display)
         cursor.draw(display)
 
         for event in pygame.event.get():
@@ -1612,6 +1617,7 @@ def game(metal=0):
     cursor = e.Cursor(0, 0, 'data_img/curs3.png')
     portal = e.Portal(*world.get_start_pos(), 10, 'portal')
     metalcount = e.MetalCount(10, 25, 0)
+    ammocount = e.AmmoCount(10, 35, 10)
     defense_timer = e.Timer(45, WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2, 10)
     world.add_usable_entity(portal)
     particles = []
@@ -1678,6 +1684,7 @@ def game(metal=0):
         player.draw(display, scroll)
         player.draw_projectiles(display, scroll)
         metalcount.set_metal(player.metal)
+        ammocount.set_ammo(player.ammo)
         defense_timer.update()
         if defense_timer.get_time() <= 0 or player.hp <= 0:
             running = False
@@ -1697,6 +1704,7 @@ def game(metal=0):
         defense_timer.draw(display)
         player.healthbar.draw(display)
         metalcount.draw(display)
+        ammocount.draw(display)
         cursor.draw(display)
 
         for event in pygame.event.get():
