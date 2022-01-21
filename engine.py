@@ -663,10 +663,10 @@ class Enemy(Entity):
     def draw(self, surface, scroll):
         self.primary_weapon.draw(surface, scroll)
         super().draw(surface, scroll)
-        
+
         # pygame.draw.rect(surface, self.color, pygame.Rect(self.physical_object.x-scroll[0], self.physical_object.y-scroll[1],
         #                                                    self.physical_object.width, self.physical_object.height), 1)
-        # pygame.draw.line(surface, self.color, (self.x - scroll[0], self.y - scroll[1]), 
+        # pygame.draw.line(surface, self.color, (self.x - scroll[0], self.y - scroll[1]),
         # (self.destination_pos[0] - scroll[0], self.destination_pos[1] - scroll[1]))
         # for pixel in self.draw_pixels:
         #     pygame.draw.rect(surface, (0, 255, 255), pygame.Rect(pixel[0] - scroll[0], pixel[1] - scroll[1], 1, 1))
@@ -684,6 +684,7 @@ class Player(Entity):
         self.healthbar = Healthbar(10, 10)
         self.maxhp = 10
         self.metal = 0
+        self.show_weapon = True
 
     def shoot(self, angle):
         return self.primary_weapon.shoot(angle)
@@ -702,10 +703,10 @@ class Player(Entity):
         return super().update()
 
     def draw(self, surface, scroll):
-        
+
         super().draw(surface, scroll)
-        self.primary_weapon.draw(surface, scroll)
-        
+        if self.show_weapon:
+            self.primary_weapon.draw(surface, scroll)
 
     def use(self):
         pass
@@ -779,7 +780,7 @@ class SpaceShip(UsableEntity):
         self.can_be_used = False
         ss = spritesheet("data_img/animations/machine/machine.png")
         self.image = ss.image_at((0, 0, 26, 29), (0, 0, 0))
-    
+
     def use(self, player):
         x1 = player.x + player.width / 2
         y1 = player.y + player.height / 2
@@ -790,7 +791,7 @@ class SpaceShip(UsableEntity):
             if player.metal > 0:
                 player.metal -= 1
                 self.metal += 1
-    
+
     def update(self, player):
         if self.metal > 150:
             print('win')
@@ -803,16 +804,16 @@ class SpaceShip(UsableEntity):
             self.can_be_used = True
         else:
             self.can_be_used = False
-    
+
     def draw(self, surface, scroll):
-        
+
         if self.can_be_used:
-            surface.blit(self.use_img, (self.x - scroll[0] - self.use_img.get_width() / 2 + self.width / 2, self.y - scroll[1] - self.use_img.get_height() - 5))
+            surface.blit(self.use_img, (self.x - scroll[0] - self.use_img.get_width() / 2 + self.width / 2,
+                                        self.y - scroll[1] - self.use_img.get_height() - 5))
 
         surface.blit(self.image, (self.x - scroll[0] - 5, self.y - scroll[1] - 9))
         # pygame.draw.rect(surface, (255, 0, 255), pygame.Rect(self.physical_object.x-scroll[0], self.physical_object.y-scroll[1],
         #                                                    self.physical_object.width, self.physical_object.height), 1)
-
 
 
 class Portal(Entity):
@@ -826,7 +827,8 @@ class Portal(Entity):
         self.pos3 = [math.cos(self.angle3), math.sin(self.angle3)]
         self.use_img = pygame.image.load("data_img/use_item_pic.png").convert()
         self.use_img.set_colorkey((0, 0, 0))
-        
+        self.is_active = True
+
     def update(self, player):
         self.angle2 += 0.2
         self.angle3 += 0.2
@@ -844,20 +846,33 @@ class Portal(Entity):
         return False
 
     def draw(self, surface, scroll):
-        pygame.draw.circle(surface, (128, 0, 200), (self.x - scroll[0], self.y - scroll[1]), self.radius)
-        pygame.draw.circle(surface, (100, 0, 175),
-                           (self.x - scroll[0] + self.pos2[0], self.y - scroll[1] + self.pos2[1]), self.radius / 1.3)
-        pygame.draw.circle(surface, (100, 0, 175), (self.x - scroll[0], self.y - scroll[1]), self.radius * 0.8, 1)
-        pygame.draw.circle(surface, (100, 0, 175), (self.x - scroll[0], self.y - scroll[1]), self.radius * 0.7, 1)
-        pygame.draw.circle(surface, (80, 0, 150),
-                           (self.x - scroll[0] + self.pos3[0], self.y - scroll[1] + self.pos3[1]), self.radius / 2)
-        pygame.draw.circle(surface, (100, 0, 175), (self.x - scroll[0], self.y - scroll[1]), self.radius * 1, 1)
+        if self.is_active:
+            pygame.draw.circle(surface, (128, 0, 200), (self.x - scroll[0], self.y - scroll[1]), self.radius)
+            pygame.draw.circle(surface, (100, 0, 175),
+                               (self.x - scroll[0] + self.pos2[0], self.y - scroll[1] + self.pos2[1]),
+                               self.radius / 1.3)
+            pygame.draw.circle(surface, (100, 0, 175), (self.x - scroll[0], self.y - scroll[1]), self.radius * 0.8, 1)
+            pygame.draw.circle(surface, (100, 0, 175), (self.x - scroll[0], self.y - scroll[1]), self.radius * 0.7, 1)
+            pygame.draw.circle(surface, (80, 0, 150),
+                               (self.x - scroll[0] + self.pos3[0], self.y - scroll[1] + self.pos3[1]), self.radius / 2)
+            pygame.draw.circle(surface, (100, 0, 175), (self.x - scroll[0], self.y - scroll[1]), self.radius * 1, 1)
+        else:
+            pygame.draw.circle(surface, (128, 128, 200), (self.x - scroll[0], self.y - scroll[1]), self.radius)
+            pygame.draw.circle(surface, (100, 100, 175),
+                               (self.x - scroll[0] + self.pos2[0], self.y - scroll[1] + self.pos2[1]),
+                               self.radius / 1.3)
+            pygame.draw.circle(surface, (100, 100, 175), (self.x - scroll[0], self.y - scroll[1]), self.radius * 0.8, 1)
+            pygame.draw.circle(surface, (100, 100, 175), (self.x - scroll[0], self.y - scroll[1]), self.radius * 0.7, 1)
+            pygame.draw.circle(surface, (80, 80, 150),
+                               (self.x - scroll[0] + self.pos3[0], self.y - scroll[1] + self.pos3[1]), self.radius / 2)
+            pygame.draw.circle(surface, (100, 100, 175), (self.x - scroll[0], self.y - scroll[1]), self.radius * 1, 1)
+
         if self.can_be_used:
             surface.blit(self.use_img, (self.x - scroll[0] - self.use_img.get_width() / 2,
                                         self.y - scroll[1] - self.radius - self.use_img.get_height()))
 
     def used(self):
-        if self.can_be_used:
+        if self.can_be_used and self.is_active:
             return True
         return False
 
@@ -886,14 +901,18 @@ class Weapon:
         if angle is None:
             angle = self.angle
         if self.shootTimer >= self.cooldown:
-            projectile = AutoProjectile(self.entity.x + self.entity.width / 2 + math.cos(angle) * self.img_width, self.entity.y + self.entity.height / 2 + math.sin(angle) * self.img_width, 8, 8, angle, 8, self.entity.type + "_projectile")
+            projectile = AutoProjectile(self.entity.x + self.entity.width / 2 + math.cos(angle) * self.img_width,
+                                        self.entity.y + self.entity.height / 2 + math.sin(angle) * self.img_width, 8, 8,
+                                        angle, 8, self.entity.type + "_projectile")
             self.entity.projectiles.append(projectile)
             self.shootTimer = 0
             return projectile
         return None
 
     def draw(self, surface, scroll):
-        blitRotate(surface, pygame.transform.flip(self.img, False, self.is_flipped), (self.x - scroll[0] + self.entity.width / 2, self.y - scroll[1] + self.entity.height / 2 + int(self.is_flipped) * 5), (0, 0), -math.degrees(self.angle))
+        blitRotate(surface, pygame.transform.flip(self.img, False, self.is_flipped), (
+        self.x - scroll[0] + self.entity.width / 2,
+        self.y - scroll[1] + self.entity.height / 2 + int(self.is_flipped) * 5), (0, 0), -math.degrees(self.angle))
 
         # copy_img = pygame.transform.rotate(self.img, -math.degrees(self.angle))
         # print(math.degrees(self.angle))
@@ -920,7 +939,9 @@ class RustyRifle(Weapon):
                 angle = self.angle
             else:
                 self.angle = angle
-            projectile = EnemyProjectile(self.entity.x + self.entity.width / 2 + math.cos(angle) * self.img_width, self.entity.y + self.entity.height / 2 + math.sin(angle) * self.img_width, 8, 8, angle, 2.5, self.entity.type + "_projectile")
+            projectile = EnemyProjectile(self.entity.x + self.entity.width / 2 + math.cos(angle) * self.img_width,
+                                         self.entity.y + self.entity.height / 2 + math.sin(angle) * self.img_width, 8,
+                                         8, angle, 2.5, self.entity.type + "_projectile")
             self.entity.projectiles.append(projectile)
             self.shootTimer = 0
             self.cooldown = random.randint(60, 180)
@@ -944,6 +965,7 @@ class Cursor(GameObject):
     def draw(self, display):
         display.blit(self.img, (self.x - self.width // 2, self.y - self.height // 2))
 
+
 class Healthbar:
     def __init__(self, fullhp, nowhp):
         self.fullhp = fullhp
@@ -956,18 +978,19 @@ class Healthbar:
         x2, y2 = 6 * TILE_SIZE, TILE_SIZE * 0.8
         pygame.draw.rect(display, 'white', (x1, y1, x2, y2))
         pygame.draw.rect(display, 'black', (x1 + 2, y1 + 2, x2 - 4, y2 - 4))
-        pygame.draw.rect(display, 'red', (x1 + 2, y1 + 2, x2 * self.nowhp/self.fullhp - 4, y2 - 4))
+        pygame.draw.rect(display, 'red', (x1 + 2, y1 + 2, x2 * self.nowhp / self.fullhp - 4, y2 - 4))
         hp = self.font.render(str(f'{self.nowhp}/{self.fullhp}'), False, 'white')
         display.blit(hp, (51, 9))
-    
+
     def set_hp(self, hp):
         self.nowhp = hp
-    
+
     def add_hp(self, hp):
         self.nowhp = max(0, min(self.fullhp, self.nowhp + hp))
-    
+
     def get_hp(self):
         return self.nowhp
+
 
 class Projectile(Entity):
     def __init__(self, x, y, width, height, angle, velocity, type):
@@ -991,10 +1014,11 @@ class Projectile(Entity):
 
     def set_move_angle(self, angle):
         self.angle = angle
-    
+
     def draw(self, surface, scroll):
 
         return super().draw(surface, scroll)
+
 
 class EnemyProjectile(Projectile):
     def __init__(self, x, y, width, height, angle, velocity, type):
@@ -1002,9 +1026,9 @@ class EnemyProjectile(Projectile):
         self.img = pygame.image.load('data_img/enemy_bullet.png').convert()
         self.img.set_colorkey((0, 0, 0))
 
-
     def draw(self, surface, scroll):
-        surface.blit(circle_surf(5, (230, 69, 57)), [int(self.x - scroll[0] - 2.5), int(self.y - scroll[1] - 2.5)], special_flags=BLEND_ALPHA_SDL2 )
+        surface.blit(circle_surf(5, (230, 69, 57)), [int(self.x - scroll[0] - 2.5), int(self.y - scroll[1] - 2.5)],
+                     special_flags=BLEND_ALPHA_SDL2)
         surface.blit(self.img, (self.x - scroll[0], self.y - scroll[1]))
 
 
@@ -1013,13 +1037,12 @@ class AutoProjectile(Projectile):
         super().__init__(x, y, width, height, angle, velocity, type)
         self.img = pygame.image.load('data_img/standart_bullet.png').convert()
         self.img.set_colorkey((0, 0, 0))
-    
 
     def draw(self, surface, scroll):
-        surface.blit(circle_surf(4, (240, 181, 65)), [int(self.x - scroll[0] - 1), int(self.y - scroll[1]) - 1], special_flags=BLEND_RGBA_ADD)
+        surface.blit(circle_surf(4, (240, 181, 65)), [int(self.x - scroll[0] - 1), int(self.y - scroll[1]) - 1],
+                     special_flags=BLEND_RGBA_ADD)
         surface.blit(self.img, (self.x - scroll[0], self.y - scroll[1]))
         #  return super().draw(surface, scroll)
-
 
 
 class Particle:
@@ -1131,8 +1154,8 @@ class Explosion:
 
         if len(self.particles) == 0:
             self.dead = True
-            
-    def draw(self, display, scroll=[0,0]):
+
+    def draw(self, display, scroll=[0, 0]):
         for particle in self.particles:
             particle.draw(display, scroll)
 
@@ -1143,14 +1166,14 @@ class Timer:
         self.font = pygame.font.Font('MaredivRegular.ttf', 10)
         self.x = x
         self.y = y
-    
+
     def update(self):
         self.time -= 1 / 60
-    
+
     def draw(self, display, scroll=[0, 0]):
         time_text = self.font.render(f"{round(self.time, 1)}", True, (255, 255, 255))
         display.blit(time_text, (self.x, self.y))
-    
+
     def get_time(self):
         return self.time
 
@@ -1162,18 +1185,14 @@ class MetalCount:
         self.x = x
         self.y = y
 
-    
     def add_metal(self, metal):
         self.metal += metal
 
-    
     def set_metal(self, metal):
         self.metal = metal
 
-
     def get_metal(self):
         return self.metal
-
 
     def draw(self, display, scroll=[0, 0]):
         time_text = self.font.render(f"Metal: {self.metal}", True, (255, 255, 255))
