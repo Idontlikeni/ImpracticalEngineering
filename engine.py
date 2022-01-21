@@ -684,6 +684,7 @@ class Player(Entity):
         self.healthbar = Healthbar(10, 10)
         self.maxhp = 10
         self.metal = 0
+        self.show_weapon = True
 
     def shoot(self, angle):
         return self.primary_weapon.shoot(angle)
@@ -704,7 +705,8 @@ class Player(Entity):
     def draw(self, surface, scroll):
         
         super().draw(surface, scroll)
-        self.primary_weapon.draw(surface, scroll)
+        if self.show_weapon:
+            self.primary_weapon.draw(surface, scroll)
         
 
     def use(self):
