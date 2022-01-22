@@ -56,6 +56,13 @@ explosions = []
 towernum = 0
 spawntime = 0
 playerv = 2
+stats = open('stats\\stats.txt', 'r')
+x = stats.readlines()
+plrkills = int(str(x[0]))
+plrdamage = int(str(x[1]))
+plrtowers = int(str(x[2]))
+plrmetal = int(str(x[3]))
+stats.close()
 volume = 50
 curstype = 'data_img/curs1.png'
 stats = open(f'{os.getcwd()}\\options\\audio.txt', 'r')
@@ -791,7 +798,7 @@ def createrad():
 
 
 def run():
-    global spawntime, inviztime, wawe, playerv, meatend, wawe1
+    global spawntime, inviztime, wawe, playerv, meatend, wawe1, plrkills, plrdamage, plrtowers, plrmetal
     overwidth()
     if alive:
         if not meatend:
@@ -802,12 +809,14 @@ def run():
                 if drop.taked():
                     drops.remove(drop)
                     plr.money += 1
+                    plrmetal += 1
             for bullet in bullets:
                 bullet.move()
                 bullet.draw()
                 # pygame.draw.rect(window, 'red', bullet.rect, 1)
                 if player.rect().colliderect(bullet.rect):
                     player.hp -= 1
+                    plrdamage += 1
                     bullets.remove(bullet)
                     break
                 for wall in walls:
@@ -824,6 +833,7 @@ def run():
                             [(tower.x - cellsize / 2) // cellsize, (tower.y - cellsize / 2) // cellsize])
                         towers.remove(tower)
                         bullets.remove(bullet)
+                        plrtowers += 1
                         explosions.append(e.Explosion(tower.x, tower.y))
                         break
             for meats in meat:
@@ -845,8 +855,10 @@ def run():
                             adddrop(meats.x, meats.y, meats.x, meats.y, True)
                         explosions.append(e.Explosion(meats.x, meats.y))
                         meat.remove(meats)
+                        plrkills += 1
                 if inviztime > 500 and player.rect().colliderect(meats.rect):
                     player.hp -= 1
+                    plrdamage += 1
                     inviztime = 0
                 else:
                     inviztime += 1
@@ -882,12 +894,14 @@ def run():
                 if drop.taked():
                     drops.remove(drop)
                     plr.money += 1
+                    plrmetal += 1
             for bullet in bullets:
                 bullet.move()
                 bullet.draw()
                 # pygame.draw.rect(window, 'red', bullet.rect, 1)
                 if player.rect().colliderect(bullet.rect):
                     player.hp -= 1
+                    plrdamage += 1
                     bullets.remove(bullet)
                     break
                 for wall in walls:
@@ -904,6 +918,7 @@ def run():
                             [(tower.x - cellsize / 2) // cellsize, (tower.y - cellsize / 2) // cellsize])
                         towers.remove(tower)
                         bullets.remove(bullet)
+                        plrtowers += 1
                         explosions.append(e.Explosion(tower.x, tower.y))
                         break
             for meats in meat:
@@ -1012,7 +1027,7 @@ def towerdefence(metalmoney=0, hpn=10):
     global player, fullhp, playerhp, running, moving_right, moving_left, moving_up, moving_down, last_time, greentower
     global greentow, yellowtower, yellowtow, redtower, redtow, bluetower, bluetow, metim, metal, metim1, metal1, metim2
     global metal2, metim3, metal3, allmetal, helim, healim, greentow1, yellowtow1, redtow1, bluetow1, wawe1, portalcoord
-    global metalmoneypast
+    global metalmoneypast, plrkills, plrdamage, plrtowers, plrmetal
     running = True
     alive = True
     bullets = []
@@ -1040,7 +1055,8 @@ def towerdefence(metalmoney=0, hpn=10):
     runningar = True
     mosang = 0
     while running:
-        #  pygame.mouse.set_visible(False)
+        # print(f"{plrkills}\t{plrdamage}\t{plrtowers}\t{plrmetal}")
+        pygame.mouse.set_visible(False)
         if alive:
             if meatend and t == 0:
                 portal.is_active = True
@@ -1167,6 +1183,10 @@ def towerdefence(metalmoney=0, hpn=10):
             crosshair.render()
             checklife()
         else:
+            plrtowers = 0
+            plrdamage = 0
+            plrmetal = 0
+            plrkills = 0
             dieuiclicked = False
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
@@ -1481,6 +1501,7 @@ def trade_area(hpn=10):
         stats.close()
 
     while running:
+        # print(f"{plrkills}\t{plrdamage}\t{plrtowers}\t{plrmetal}")
         pygame.mouse.set_visible(False)
         dt = time.time() - last_time
         dt *= 60
@@ -1956,10 +1977,14 @@ def winscreen(surface, x, y):
     click = False
     x1 = 0
     y1 = 0
+    x2 = 0
+    y2 = 0
     myfont2 = pygame.font.Font('MaredivRegular.ttf', round(cellsize))
     font3 = pygame.font.Font('MaredivRegular.ttf', 15)
+    font4 = pygame.font.Font('MaredivRegular.ttf', 18)
     # explosion = False
     # timer = 700
+    rocket = pygame.image.load('data_img/rocket7.png').convert_alpha()
     while running:
         while explosion:
             display.fill((0, 0, 0, 150))
@@ -2004,10 +2029,13 @@ def winscreen(surface, x, y):
             if timer % 2 == 0:
                 x1 = random.randint(-10, 0)
                 y1 -= random.randint(-10, 0)
+                x2 = random.randint(-2, 2)
+                y2 = random.randint(-2, 2)
                 if y1 >= WINDOW_SIZE[1]:
                     y1 = 0
             screen.blit(stars, (x1, y1))
             screen.blit(stars, (x1, y1 - WINDOW_SIZE[1]))
+            screen.blit(rocket, (WINDOW_SIZE[0] / 2 - 112 + x2, WINDOW_SIZE[1] / 2 - 250 + y2))
             display.fill((255, 255, 255, 255 - prz))
             for event in pygame.event.get():
                 if event.type == QUIT:
@@ -2030,6 +2058,14 @@ def winscreen(surface, x, y):
                 layer.fill((0, 0, 0, prz1))
                 hp = myfont2.render(str('You have left the planet!'), False, (255, 235, 214))
                 layer.blit(hp, (4 * cellsize, 1.5 * cellsize))
+                hp = font4.render(str(f'Mobs killed: {plrkills}'), False, (255, 235, 214))
+                layer.blit(hp, (5 * cellsize, 3.5 * cellsize))
+                hp = font4.render(str(f'Metal received: {plrmetal}'), False, (255, 235, 214))
+                layer.blit(hp, (5 * cellsize, 4.5 * cellsize))
+                hp = font4.render(str(f'Damage received: {plrdamage}'), False, (255, 235, 214))
+                layer.blit(hp, (5 * cellsize, 5.5 * cellsize))
+                hp = font4.render(str(f'Towers destroyed: {plrtowers}'), False, (255, 235, 214))
+                layer.blit(hp, (5 * cellsize, 6.5 * cellsize))
                 if prz1 < 180:
                     prz1 += 1
                 playbtn = pygame.Rect(WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 45, 223, 95, 29)
@@ -2181,3 +2217,7 @@ stats.close()
 
 
 main_menu()
+
+stats = open(f'{os.getcwd()}\\stats\\stats.txt', 'w')
+stats.write(str(f"{plrkills}\n{plrdamage}\n{plrtowers}\n{plrmetal}"))
+stats.close()
