@@ -1,5 +1,6 @@
 from cmath import pi
 from dis import dis
+from platform import machine
 import pygame, sys, os, random, math, time
 from pygame import mouse
 import engine as e
@@ -648,6 +649,7 @@ def dieui():
             wawe1 = 1
             player.set_pos(cellsize * countx - player.width, cellsize * 11.1)
             player.hp = 10
+            player.ammo = 128
             plr.money = 0
             playerv = 2
             t = 0
@@ -671,6 +673,7 @@ def dieui():
             alive = True
             player.set_pos(cellsize * countx - player.width, cellsize * 11.1)
             player.hp = 10
+            player.ammo = 128
             plr.money = 0
             playerv = 2
             player_movement = [0, 0]
@@ -680,6 +683,94 @@ def dieui():
     monitor.blit(f1, (width - 15 * cellsize, height + 3 * cellsize))
     f2 = myfont.render('Exit', False, 'white')
     monitor.blit(f2, (width + 6 * cellsize, height + 3 * cellsize))
+
+
+def deathui(surface, player):
+    player.hp = 10
+    player.metal = 0
+    player.ammo = 128
+    running = True
+    pygame.mouse.set_visible(True)
+    SCALE_MULTIPLIER = 5
+    click = False
+    font = pygame.font.Font('MaredivRegular.ttf', 20)
+    display = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER), pygame.SRCALPHA)
+    background = pygame.Surface(WINDOW_SIZE, pygame.SRCALPHA)
+    background.blit(pygame.transform.scale(surface, WINDOW_SIZE), (0, 0))
+    while running:
+        display.fill((0, 0, 0, 200))
+        screen.blit(background, (0, 0))
+        mx, my = pygame.mouse.get_pos()
+        retry = pygame.Rect(WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 100, 106, 50, 23)
+        exit = pygame.Rect(WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 + 50, 106, 38, 23)
+
+        # retry = pygame.Rect(width - 20 * cellsize, height + 2.5 * cellsize, 15 * cellsize, 3.5 * cellsize)
+        # exit = pygame.Rect(width, height + 2.5 * cellsize, 15 * cellsize, 3.5 * cellsize)
+
+        # if exitnal:
+        #     exitbtn = pygame.Rect(WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 20, 176, 36, 19)
+        mx = mx / SCALE_MULTIPLIER
+        my = my / SCALE_MULTIPLIER
+        if retry.collidepoint((mx, my)):
+            cveta1 = (214, 136, 17)
+            if click:
+                running = False
+        else:
+            cveta1 = (255, 235, 214)
+        
+        if exit.collidepoint((mx, my)):
+            cveta3 = (214, 136, 17)
+            if click:
+                running = False
+                return True
+        else:
+            cveta3 = (255, 235, 214)
+
+
+        # if exitnal:
+        #     if exitbtn.collidepoint((mx, my)):
+        #         cveta5 = (214, 136, 17)
+        #         if click:
+        #             return True
+        #     else:
+        #         cveta5 = (255, 235, 214)
+
+        # pygame.draw.rect(display, (255, 255, 255), retry, 1)
+        # pygame.draw.rect(display, (255, 255, 255), exit, 1)
+
+        text = font.render("retry", True, cveta1)
+        display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 100, 100))
+
+        text = font.render("exit", True, cveta3)
+        display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 + 50, 100))
+
+        # if exitnal:
+        #     text = font.render("exit", True, cveta5)
+        #     display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 20, 170))
+        click = False
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == KEYDOWN:
+                if event.key == K_ESCAPE:
+                    running = False
+            if event.type == MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    click = True
+
+            if event.type == MOUSEBUTTONUP:
+                if event.button == 1:
+                    click = False
+
+            if event.type == MOUSEBUTTONUP:
+                if event.button == 1:
+                    click = False
+        screen.blit(pygame.transform.scale(display, WINDOW_SIZE), (0, 0))
+        pygame.display.update()
+        clock.tick(60)
+    pygame.mouse.set_visible(False)
+    return False
 
 
 def outline_mask(img, loc):
@@ -1021,7 +1112,7 @@ redtow1 = pygame.transform.scale(redtow, (cellsize * 6, cellsize * 6))
 bluetow1 = pygame.transform.scale(bluetow, (cellsize * 6, cellsize * 6))
 
 
-def towerdefence(metalmoney=0, hpn=10):
+def towerdefence(metalmoney=0, ammo = 128, hpn=10):
     global countx, county, sclsz, sclsz1, width1, height1, width, height, cellsize, cellsize1, countx1, county1, fps
     global flscr, show, inviztime, inhub, meatend, bullets, towers, meat, drops, heals, walls, way, allmetal, tile_rects
     global tile_rects1, tile_rects_coord, explosions, towernum, spawntime, playerv, speedcoef, uirect, Map, down
@@ -1045,6 +1136,7 @@ def towerdefence(metalmoney=0, hpn=10):
     wawe1 = 1
     player.set_pos(cellsize * countx - player.width, cellsize * 11.1)
     player.hp = 10
+    player.ammo = ammo
     plr.money = metalmoney
     metalmoneypast = metalmoney
     playerv = 2
@@ -1152,6 +1244,7 @@ def towerdefence(metalmoney=0, hpn=10):
                                 runningar = False
                                 plr.money = 0
                                 player.hp = 10
+                                player.ammo = 128
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_d:
                         moving_right = False
@@ -1221,7 +1314,7 @@ def towerdefence(metalmoney=0, hpn=10):
         showfps()
         pygame.display.update()
         clock.tick(fps)
-    return plr.money, runningar, player.hp
+    return plr.money, player.ammo, runningar, player.hp
 
 
 def fullscrn(display):
@@ -1501,14 +1594,16 @@ def trade_area(hpn=10):
     particles = []
     #  spaceship = e.SpaceShip(300, 140, 21, 20, 1, "spaceship")
     player.hp = hpn
+    
     if 'autosave.txt' in os.listdir(f'{os.getcwd()}\\save'):
         stats = open(f'{os.getcwd()}\\save\\autosave.txt', 'r')
         x = stats.readlines()
         if x:
             player.hp = int(str(x[0]))
             player.metal = int(str(x[1]))
+            player.ammo = int(str(x[2]))
         stats.close()
-
+    player.metal = 100
     pick = e.pickableWeapon(300, 100, e.AltMachineGun(300, 100, 0, player))
     world.add_usable_entity(pick)
     while running:
@@ -1553,13 +1648,22 @@ def trade_area(hpn=10):
             use = False
             world.check_use(player)
             spaceship.use(player)
+            if spaceship.metal >= 60:
+                winscreen(display, player.x - spaceship.x, player.y - spaceship.y)
+                spaceship.metal = 0
+                running = False
             if portal1.used(player):
-                player.metal, player.ammo, player.hp = game(player.metal, player.hp)
+                player.metal, player.ammo, player.hp, is_exit = game(player.metal, player.ammo, player.hp)
+                if is_exit:
+                    stats = open(f'{os.getcwd()}\\save\\autosave.txt', 'w')
+                    stats.write(str(f"{10}\n{0}\n{128}"))
+                    stats.close()
+                    running = False
             if portal2.used(player):
-                player.metal, running, player.hp = towerdefence(player.metal, player.hp)
+                player.metal, player.ammo, running, player.hp = towerdefence(player.metal, player.ammo, player.hp)
                 if running == False:
                     stats = open(f'{os.getcwd()}\\save\\autosave.txt', 'w')
-                    stats.write(str(f"{10}\n{0}"))
+                    stats.write(str(f"{10}\n{0}\n{128}"))
                     stats.close()
 
         if swap_weapons:
@@ -1629,7 +1733,7 @@ def trade_area(hpn=10):
                     if ingamemenu(screen):
                         running = False
                         stats = open(f'{os.getcwd()}\\save\\autosave.txt', 'w')
-                        stats.write(str(f"{player.hp}\n{player.metal}"))
+                        stats.write(str(f"{player.hp}\n{player.metal}\n{player.ammo}"))
                         stats.close()
                     cursor = e.Cursor(0, 0, curstype)
                 if event.key == pygame.K_F11:
@@ -1668,10 +1772,10 @@ def trade_area(hpn=10):
     pygame.mouse.set_visible(True)
 
 
-def game(metal=0, hpn=10):
+def game(metal=0, ammo=128, hpn=10):
     SCALE_MULTIPLIER = 4
     display = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER))
-
+    global curstype
     one_click = False
     clicked = False
     running = True
@@ -1681,6 +1785,7 @@ def game(metal=0, hpn=10):
     moving_left = False
     moving_up = False
     moving_down = False
+    dead = False
 
     true_scroll = [0, 0]
     scroll = [0, 0]
@@ -1700,6 +1805,7 @@ def game(metal=0, hpn=10):
     particles = []
     player.metal = metal
     player.hp = hpn
+    player.ammo = ammo
     while running:
         pygame.mouse.set_visible(False)
         dt = time.time() - last_time
@@ -1769,7 +1875,7 @@ def game(metal=0, hpn=10):
         ammocount.set_ammo(player.ammo)
         defense_timer.update()
         if defense_timer.get_time() <= 0 or player.hp <= 0:
-            running = False
+            dead = True
         #  player.move(player_movement)
         #  pygame.draw.line(display, (0, 255, 0), (player.x + player.width / 2 - scroll[0], player.y + player.height / 2 - scroll[1]), ((pygame.mouse.get_pos()[0] // SCALE_MULTIPLIER), (pygame.mouse.get_pos()[1] // SCALE_MULTIPLIER)))
 
@@ -1787,6 +1893,12 @@ def game(metal=0, hpn=10):
         metalcount.draw(display)
         ammocount.draw(display)
         cursor.draw(display)
+
+        if dead:
+            if deathui(display, player):
+                spaceship.metal = 0
+                return player.metal, player.ammo, player.hp, True
+            running = False
 
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -1834,10 +1946,11 @@ def game(metal=0, hpn=10):
                     one_click = False
 
         screen.blit(pygame.transform.scale(display, WINDOW_SIZE), (0, 0))
+        
         pygame.display.update()
         clock.tick(60)
     pygame.mouse.set_visible(True)
-    return player.metal, player.ammo, player.hp
+    return player.metal, player.ammo, player.hp, False
 
 
 
