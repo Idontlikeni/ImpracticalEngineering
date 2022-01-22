@@ -56,6 +56,14 @@ explosions = []
 towernum = 0
 spawntime = 0
 playerv = 2
+volume = 50
+curstype = 'data_img/curs1.png'
+stats = open(f'{os.getcwd()}\\options\\audio.txt', 'r')
+x = stats.readlines()
+if x:
+    volume = int(str(x[0]))
+stats.close()
+pygame.mixer.music.set_volume(volume / 100)
 speedcoef = cellsize / 20
 uirect = [pygame.Rect(68.05 * cellsize, 8 * cellsize, 12 * cellsize, 8.5 * cellsize),
           pygame.Rect(68.05 * cellsize, 17 * cellsize, 12 * cellsize, 8.5 * cellsize),
@@ -100,17 +108,6 @@ mousx = 0
 mousy = 0
 dieuiclicked = False
 alive = True
-if 'fullscreen.txt' in os.listdir(os.getcwd()):
-    stats = open('fullscreen.txt', 'r')
-    x = stats.readlines()
-    if x:
-        if x[0] == "1":
-            flscr = True
-        else:
-            flscr = False
-    else:
-        flscr = False
-    stats.close()
 pygame.init()
 pygame.font.init()
 myfont = pygame.font.Font('MaredivRegular.ttf', round(1.5 * cellsize))
@@ -1465,7 +1462,7 @@ def trade_area(hpn=10):
     world = e.TradeWorld(24, 14, 20)
     world.generate_map()
     player = e.Player(200, 100, 16, 16, 10, 'player')
-    cursor = e.Cursor(0, 0, 'data_img/curs3.png')
+    cursor = e.Cursor(0, 0, curstype)
     portal1 = e.Portal(240, 30, 10, 'portal')
     portal2 = e.Portal(30, 140, 10, 'portal')
     metalcount = e.MetalCount(10, 25, 0)
@@ -1474,7 +1471,6 @@ def trade_area(hpn=10):
     particles = []
     spaceship = e.SpaceShip(300, 140, 21, 20, 1, "spaceship")
     player.hp = hpn
-    print(os.getcwd())
     if 'autosave.txt' in os.listdir(f'{os.getcwd()}\\save'):
         stats = open(f'{os.getcwd()}\\save\\autosave.txt', 'r')
         x = stats.readlines()
@@ -1589,6 +1585,7 @@ def trade_area(hpn=10):
                         stats = open(f'{os.getcwd()}\\save\\autosave.txt', 'w')
                         stats.write(str(f"{player.hp}\n{player.metal}"))
                         stats.close()
+                    cursor = e.Cursor(0, 0, curstype)
                 if event.key == pygame.K_F11:
                     fullscrn(display)
                 if event.key == pygame.K_F10:
@@ -1641,7 +1638,7 @@ def game(metal=0, hpn=10):
     world = e.World(48, 48, 20)
     world.generate_map()
     player = e.Player(*world.get_start_pos(), 16, 16, 10, 'player')
-    cursor = e.Cursor(0, 0, 'data_img/curs3.png')
+    cursor = e.Cursor(0, 0, curstype)
     portal = e.Portal(*world.get_start_pos(), 10, 'portal')
     metalcount = e.MetalCount(10, 25, 0)
     defense_timer = e.Timer(45, WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2, 10)
@@ -1747,6 +1744,7 @@ def game(metal=0, hpn=10):
                 if event.key == K_ESCAPE:
                     if ingamemenu(screen, False):
                         running = False
+                    cursor = e.Cursor(0, 0, curstype)
                 if event.key == pygame.K_F11:
                     fullscrn(display)
                 if event.key == pygame.K_f:
@@ -1839,11 +1837,10 @@ def options():
 
 
 def Audio():
-    WINDOW_SIZE = (1920, 1080)
+    global volume
     TILE_SIZE = 16
     #  screen = pygame.display.set_mode(WINDOW_SIZE, 0, 32)
     n = 0
-    m = 0
     pygame.mouse.set_visible(True)
     SCALE_MULTIPLIER = 5
     cveta1 = (200, 200, 200)
@@ -1855,6 +1852,11 @@ def Audio():
     bomb_image = load_image("data_img/esc.png")
     display = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER))
     running = True
+    stats = open(f'{os.getcwd()}\\options\\audio.txt', 'r')
+    x = stats.readlines()
+    if x:
+        volume = int(str(x[0]))
+    stats.close()
     while running:
         display.fill((0, 0, 0))
         mx, my = pygame.mouse.get_pos()
@@ -1873,7 +1875,7 @@ def Audio():
         text3 = font1.render('-', True, (0, 0, 0))
         display.blit(text3, (214, -2))
 
-        text2 = font.render(f"sound-{m}/100", True, (cveta1))
+        text2 = font.render(f"sound-{volume}/100", True, (cveta1))
         display.blit(text2, (100, 2))
         mx = mx / SCALE_MULTIPLIER
         my = my / SCALE_MULTIPLIER
@@ -1907,15 +1909,18 @@ def Audio():
                     running = False
         uslza += 0.5
         if usl2 == 1 and uslza % 3 == 0:
-            if m - 1 >= 0:
-                m -= 1
+            if volume - 1 >= 0:
+                volume -= 1
         if usl1 == 1 and uslza % 3 == 0:
-            if m + 1 <= 100:
-                m += 1
-
+            if volume + 1 <= 100:
+                volume += 1
+        pygame.mixer.music.set_volume(volume / 100)
         screen.blit(pygame.transform.scale(display, WINDOW_SIZE), (0, 0))
         pygame.display.update()
         clock.tick(60)
+    stats = open('options\\audio.txt', 'w')
+    stats.write(str(volume))
+    stats.close()
 
 
 def winscreen(surface, x, y):
@@ -2076,7 +2081,7 @@ def load_image(name, colorkey=None):
 
 
 def Video():
-    WINDOW_SIZE = (1920, 1080)
+    global curstype, flscr
     #  screen = pygame.display.set_mode(WINDOW_SIZE, 0, 32)
     n = 0
     m = 0
@@ -2091,6 +2096,12 @@ def Video():
     display = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER))
     bomb_image = load_image("data_img/esc.png")
     running = True
+    stats = open(f'{os.getcwd()}\\options\\video.txt', 'r')
+    x = stats.readlines()
+    if x:
+        m = int(str(x[0]))
+        n = int(str(x[1]))
+    stats.close()
     while running:
         display.fill((0, 0, 0))
         mx, my = pygame.mouse.get_pos()
@@ -2129,10 +2140,12 @@ def Video():
             if event.type == pygame.MOUSEBUTTONUP:
                 if button_2.collidepoint((mx, my)):
                     m = 1
+                    pygame.display.set_mode(WINDOW_SIZE, pygame.FULLSCREEN)
 
             if event.type == pygame.MOUSEBUTTONUP:
                 if button_3.collidepoint((mx, my)):
                     m = 0
+                    pygame.display.set_mode(WINDOW_SIZE)
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if button_4.collidepoint((mx, my)):
                     running = False
@@ -2143,10 +2156,27 @@ def Video():
         if m == 0:
             cveta2 = (200, 200, 200)
             cveta3 = (200, 0, 0)
-
+        curstype = f'data_img/curs{n + 1}.png'
+        stats = open('options\\video.txt', 'w')
+        stats.write(str(f'{m}\n{n}'))
+        stats.close()
         screen.blit(pygame.transform.scale(display, WINDOW_SIZE), (0, 0))
         pygame.display.update()
         clock.tick(60)
+
+
+stats = open(f'{os.getcwd()}\\options\\video.txt', 'r')
+x = stats.readlines()
+if x:
+    m = int(str(x[0]))
+    n = int(str(x[1]))
+    curstype = f'data_img/curs{n + 1}.png'
+    if m == 1:
+        pygame.display.set_mode(WINDOW_SIZE, pygame.FULLSCREEN)
+
+    if m == 0:
+        pygame.display.set_mode(WINDOW_SIZE)
+stats.close()
 
 
 main_menu()
