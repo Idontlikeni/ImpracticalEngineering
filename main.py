@@ -1527,7 +1527,7 @@ def trade_area(hpn=10):
                 player.metal, running, player.hp = towerdefence(player.metal, player.hp)
                 if running == False:
                     stats = open(f'{os.getcwd()}\\save\\autosave.txt', 'w')
-                    stats.write(str(f"{player.hp}\n{player.metal}"))
+                    stats.write(str(f"{10}\n{0}"))
                     stats.close()
 
         if player_movement[0] != 0 and player_movement[1] != 0:
