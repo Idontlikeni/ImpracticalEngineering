@@ -1038,6 +1038,7 @@ def towerdefence(metalmoney=0, hpn=10):
     player.show_weapon = False
     player.hp = hpn
     runningar = True
+    mosang = 0
     while running:
         #  pygame.mouse.set_visible(False)
         if alive:
@@ -1074,14 +1075,14 @@ def towerdefence(metalmoney=0, hpn=10):
 
             if player_movement[0] != 0 or player_movement[1] != 0:
                 if player_movement[0] > 0:
-                    player.is_flipped = False
+                    mosang = 0
                 if player_movement[0] < 0:
-                    player.is_flipped = True
+                    mosang = 3.2
                 player.change_action('running')
             elif player_movement[0] == 0 and player_movement[1] == 0:
                 player.change_action('idle')
             player.move(player_movement, tile_rects, [])
-            player.update(0)
+            player.update(mosang)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
