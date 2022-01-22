@@ -5,6 +5,7 @@ from pygame import mouse
 import engine as e
 from pygame.locals import *
 from pygame.mixer import set_num_channels
+import os
 
 pygame.init()
 pygame.display.set_caption("Yandex game")
@@ -56,6 +57,21 @@ explosions = []
 towernum = 0
 spawntime = 0
 playerv = 2
+stats = open('stats\\stats.txt', 'r')
+x = stats.readlines()
+plrkills = int(str(x[0]))
+plrdamage = int(str(x[1]))
+plrtowers = int(str(x[2]))
+plrmetal = int(str(x[3]))
+stats.close()
+volume = 50
+curstype = 'data_img/curs1.png'
+stats = open(f'{os.getcwd()}\\options\\audio.txt', 'r')
+x = stats.readlines()
+if x:
+    volume = int(str(x[0]))
+stats.close()
+pygame.mixer.music.set_volume(volume / 100)
 speedcoef = cellsize / 20
 uirect = [pygame.Rect(68.05 * cellsize, 8 * cellsize, 12 * cellsize, 8.5 * cellsize),
           pygame.Rect(68.05 * cellsize, 17 * cellsize, 12 * cellsize, 8.5 * cellsize),
@@ -100,18 +116,6 @@ mousx = 0
 mousy = 0
 dieuiclicked = False
 alive = True
-if 'fullscreen.txt' in os.listdir(os.getcwd()):
-    print('aaa')
-    stats = open('fullscreen.txt', 'r')
-    x = stats.readlines()
-    if x:
-        if x[0] == "1":
-            flscr = True
-        else:
-            flscr = False
-    else:
-        flscr = False
-    stats.close()
 pygame.init()
 pygame.font.init()
 myfont = pygame.font.Font('MaredivRegular.ttf', round(1.5 * cellsize))
@@ -355,11 +359,12 @@ class FreshMeat(e.Enemy):
 
     def update(self):
         super().update()
-    
+
     def draw(self):
-        
+
         #  pygame.draw.circle(window, self.color, [self.x, self.y], self.size)
-        window.blit(pygame.transform.flip(self.image, self.is_flipped, False), (self.x - self.size + 2, self.y - self.size + 2))
+        window.blit(pygame.transform.flip(self.image, self.is_flipped, False),
+                    (self.x - self.size + 2, self.y - self.size + 2))
         # pygame.draw.rect(window, (255, 0, 0), self.rect, 1)
 
     def go(self):
@@ -643,7 +648,7 @@ def dieui():
             wawe1 = 1
             player.set_pos(cellsize * countx - player.width, cellsize * 11.1)
             player.hp = 10
-            plr.money = metalmoneypast
+            plr.money = 0
             playerv = 2
             t = 0
             meatend = False
@@ -666,10 +671,11 @@ def dieui():
             alive = True
             player.set_pos(cellsize * countx - player.width, cellsize * 11.1)
             player.hp = 10
-            plr.money = 35
+            plr.money = 0
             playerv = 2
             player_movement = [0, 0]
             running = False
+            return True
     f1 = myfont.render('Retry', False, 'white')
     monitor.blit(f1, (width - 15 * cellsize, height + 3 * cellsize))
     f2 = myfont.render('Exit', False, 'white')
@@ -795,7 +801,7 @@ def createrad():
 
 
 def run():
-    global spawntime, inviztime, wawe, playerv, meatend, wawe1
+    global spawntime, inviztime, wawe, playerv, meatend, wawe1, plrkills, plrdamage, plrtowers, plrmetal
     overwidth()
     if alive:
         if not meatend:
@@ -806,12 +812,14 @@ def run():
                 if drop.taked():
                     drops.remove(drop)
                     plr.money += 1
+                    plrmetal += 1
             for bullet in bullets:
                 bullet.move()
                 bullet.draw()
                 # pygame.draw.rect(window, 'red', bullet.rect, 1)
                 if player.rect().colliderect(bullet.rect):
                     player.hp -= 1
+                    plrdamage += 1
                     bullets.remove(bullet)
                     break
                 for wall in walls:
@@ -820,11 +828,15 @@ def run():
                         break
                 for tower in towers:
                     if tower.rect.colliderect(bullet.rect) and bullet.tower != tower:
-                        tile_rects.remove(pygame.Rect(tower.x - cellsize / 2, tower.y - cellsize / 2, cellsize, cellsize))
-                        towerrects.remove(pygame.Rect(tower.x - cellsize / 2, tower.y - cellsize / 2, cellsize, cellsize))
-                        tile_rects_coord.remove([(tower.x - cellsize / 2) // cellsize, (tower.y - cellsize / 2) // cellsize])
+                        tile_rects.remove(
+                            pygame.Rect(tower.x - cellsize / 2, tower.y - cellsize / 2, cellsize, cellsize))
+                        towerrects.remove(
+                            pygame.Rect(tower.x - cellsize / 2, tower.y - cellsize / 2, cellsize, cellsize))
+                        tile_rects_coord.remove(
+                            [(tower.x - cellsize / 2) // cellsize, (tower.y - cellsize / 2) // cellsize])
                         towers.remove(tower)
                         bullets.remove(bullet)
+                        plrtowers += 1
                         explosions.append(e.Explosion(tower.x, tower.y))
                         break
             for meats in meat:
@@ -846,8 +858,10 @@ def run():
                             adddrop(meats.x, meats.y, meats.x, meats.y, True)
                         explosions.append(e.Explosion(meats.x, meats.y))
                         meat.remove(meats)
+                        plrkills += 1
                 if inviztime > 500 and player.rect().colliderect(meats.rect):
                     player.hp -= 1
+                    plrdamage += 1
                     inviztime = 0
                 else:
                     inviztime += 1
@@ -883,12 +897,14 @@ def run():
                 if drop.taked():
                     drops.remove(drop)
                     plr.money += 1
+                    plrmetal += 1
             for bullet in bullets:
                 bullet.move()
                 bullet.draw()
                 # pygame.draw.rect(window, 'red', bullet.rect, 1)
                 if player.rect().colliderect(bullet.rect):
                     player.hp -= 1
+                    plrdamage += 1
                     bullets.remove(bullet)
                     break
                 for wall in walls:
@@ -897,11 +913,15 @@ def run():
                         break
                 for tower in towers:
                     if tower.rect.colliderect(bullet.rect) and bullet.tower != tower:
-                        tile_rects.remove(pygame.Rect(tower.x - cellsize / 2, tower.y - cellsize / 2, cellsize, cellsize))
-                        towerrects.remove(pygame.Rect(tower.x - cellsize / 2, tower.y - cellsize / 2, cellsize, cellsize))
-                        tile_rects_coord.remove([(tower.x - cellsize / 2) // cellsize, (tower.y - cellsize / 2) // cellsize])
+                        tile_rects.remove(
+                            pygame.Rect(tower.x - cellsize / 2, tower.y - cellsize / 2, cellsize, cellsize))
+                        towerrects.remove(
+                            pygame.Rect(tower.x - cellsize / 2, tower.y - cellsize / 2, cellsize, cellsize))
+                        tile_rects_coord.remove(
+                            [(tower.x - cellsize / 2) // cellsize, (tower.y - cellsize / 2) // cellsize])
                         towers.remove(tower)
                         bullets.remove(bullet)
+                        plrtowers += 1
                         explosions.append(e.Explosion(tower.x, tower.y))
                         break
             for meats in meat:
@@ -1001,7 +1021,7 @@ redtow1 = pygame.transform.scale(redtow, (cellsize * 6, cellsize * 6))
 bluetow1 = pygame.transform.scale(bluetow, (cellsize * 6, cellsize * 6))
 
 
-def towerdefence(metalmoney=0):
+def towerdefence(metalmoney=0, hpn=10):
     global countx, county, sclsz, sclsz1, width1, height1, width, height, cellsize, cellsize1, countx1, county1, fps
     global flscr, show, inviztime, inhub, meatend, bullets, towers, meat, drops, heals, walls, way, allmetal, tile_rects
     global tile_rects1, tile_rects_coord, explosions, towernum, spawntime, playerv, speedcoef, uirect, Map, down
@@ -1010,7 +1030,8 @@ def towerdefence(metalmoney=0):
     global player, fullhp, playerhp, running, moving_right, moving_left, moving_up, moving_down, last_time, greentower
     global greentow, yellowtower, yellowtow, redtower, redtow, bluetower, bluetow, metim, metal, metim1, metal1, metim2
     global metal2, metim3, metal3, allmetal, helim, healim, greentow1, yellowtow1, redtow1, bluetow1, wawe1, portalcoord
-    global metalmoneypast
+    global metalmoneypast, plrkills, plrdamage, plrtowers, plrmetal
+
     running = True
     alive = True
     bullets = []
@@ -1034,8 +1055,12 @@ def towerdefence(metalmoney=0):
     portal.is_active = False
     use = False
     player.show_weapon = False
+    player.hp = hpn
+    runningar = True
+    mosang = 0
     while running:
-        #  pygame.mouse.set_visible(False)
+        # print(f"{plrkills}\t{plrdamage}\t{plrtowers}\t{plrmetal}")
+        pygame.mouse.set_visible(False)
         if alive:
             if meatend and t == 0:
                 portal.is_active = True
@@ -1070,14 +1095,14 @@ def towerdefence(metalmoney=0):
 
             if player_movement[0] != 0 or player_movement[1] != 0:
                 if player_movement[0] > 0:
-                    player.is_flipped = False
+                    mosang = 0
                 if player_movement[0] < 0:
-                    player.is_flipped = True
+                    mosang = 3.2
                 player.change_action('running')
             elif player_movement[0] == 0 and player_movement[1] == 0:
                 player.change_action('idle')
             player.move(player_movement, tile_rects, [])
-            player.update(0)
+            player.update(mosang)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
@@ -1122,8 +1147,11 @@ def towerdefence(metalmoney=0):
                         if towernum != 0:
                             towernum = 0
                         else:
-                            if ingamemenu(monitor):
+                            if ingamemenu(monitor, False):
                                 running = False
+                                runningar = False
+                                plr.money = 0
+                                player.hp = 10
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_d:
                         moving_right = False
@@ -1159,6 +1187,10 @@ def towerdefence(metalmoney=0):
             crosshair.render()
             checklife()
         else:
+            plrtowers = 0
+            plrdamage = 0
+            plrmetal = 0
+            plrkills = 0
             dieuiclicked = False
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
@@ -1183,12 +1215,13 @@ def towerdefence(metalmoney=0):
             monitor.blit(pygame.transform.scale(deadscreen, (width1, height1)), (0, 0))
             hp = myfont1.render('Game over!', False, 'white')
             monitor.blit(hp, (width - 13.4 * cellsize, height - 10 * cellsize))
-            dieui()
+            if dieui():
+                runningar = False
             crosshair.render()
         showfps()
         pygame.display.update()
         clock.tick(fps)
-    return plr.money
+    return plr.money, runningar, player.hp
 
 
 def fullscrn(display):
@@ -1200,7 +1233,7 @@ def fullscrn(display):
     flscr = not flscr
 
 
-def ingamemenu(surface):
+def ingamemenu(surface, exitnal=True):
     running = True
     pygame.mouse.set_visible(True)
     SCALE_MULTIPLIER = 5
@@ -1215,7 +1248,8 @@ def ingamemenu(surface):
         mx, my = pygame.mouse.get_pos()
         playbtn = pygame.Rect(WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 20, 106, 36, 23)
         optionsbtn = pygame.Rect(WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 35, 141, 69, 23)
-        exitbtn = pygame.Rect(WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 20, 176, 36, 19)
+        if exitnal:
+            exitbtn = pygame.Rect(WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 20, 176, 36, 19)
         mx = mx / SCALE_MULTIPLIER
         my = my / SCALE_MULTIPLIER
         if playbtn.collidepoint((mx, my)):
@@ -1230,20 +1264,22 @@ def ingamemenu(surface):
                 options()
         else:
             cveta3 = (255, 235, 214)
-        if exitbtn.collidepoint((mx, my)):
-            cveta5 = (214, 136, 17)
-            if click:
-                return True
-        else:
-            cveta5 = (255, 235, 214)
+        if exitnal:
+            if exitbtn.collidepoint((mx, my)):
+                cveta5 = (214, 136, 17)
+                if click:
+                    return True
+            else:
+                cveta5 = (255, 235, 214)
         text = font.render("play", True, cveta1)
         display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 20, 100))
 
         text = font.render("options", True, cveta3)
         display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 35, 135))
 
-        text = font.render("exit", True, cveta5)
-        display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 20, 170))
+        if exitnal:
+            text = font.render("exit", True, cveta5)
+            display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 20, 170))
         click = False
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -1279,7 +1315,7 @@ def winwin(surface):
     background = pygame.Surface(WINDOW_SIZE, pygame.SRCALPHA)
     background.blit(pygame.transform.scale(surface, WINDOW_SIZE), (0, 0))
     while running:
-        display.fill((0, 0, 0, 200))
+        display.fill((0, 0, 0, 100))
         screen.blit(background, (0, 0))
         mx, my = pygame.mouse.get_pos()
         playbtn = pygame.Rect(WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 12, 187, 24, 17)
@@ -1291,8 +1327,8 @@ def winwin(surface):
                 running = False
         else:
             cveta3 = (255, 235, 214)
-        text1 = font.render("YOU WIN!", True, (255, 235, 214))
-        display.blit(text1, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 40, 30))
+        text1 = font.render("The waves are over, you can go out!", True, (255, 235, 214))
+        display.blit(text1, (20, 50))
         text = font.render("OK", True, cveta3)
         display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 12, 180))
         click = False
@@ -1338,20 +1374,20 @@ def main_menu():
 
     for i in range(100):
         stars.fill(pygame.Color('white'),
-                    (random.random() * WINDOW_SIZE[0] / SCALE_MULTIPLIER,
-                     random.random() * WINDOW_SIZE[1] / SCALE_MULTIPLIER, 1, 1))
+                   (random.random() * WINDOW_SIZE[0] / SCALE_MULTIPLIER,
+                    random.random() * WINDOW_SIZE[1] / SCALE_MULTIPLIER, 1, 1))
     for i in range(40):
         stars1.fill(pygame.Color('white'),
-                   (random.random() * WINDOW_SIZE[0] / SCALE_MULTIPLIER,
-                    random.random() * WINDOW_SIZE[1] / SCALE_MULTIPLIER, 1, 1))
+                    (random.random() * WINDOW_SIZE[0] / SCALE_MULTIPLIER,
+                     random.random() * WINDOW_SIZE[1] / SCALE_MULTIPLIER, 1, 1))
     for i in range(20):
         stars2.fill(pygame.Color('white'),
-                   (random.random() * WINDOW_SIZE[0] / SCALE_MULTIPLIER,
-                    random.random() * WINDOW_SIZE[1] / SCALE_MULTIPLIER, 1, 1))
+                    (random.random() * WINDOW_SIZE[0] / SCALE_MULTIPLIER,
+                     random.random() * WINDOW_SIZE[1] / SCALE_MULTIPLIER, 1, 1))
     for i in range(10):
         stars3.fill(pygame.Color('white'),
-                   (random.random() * WINDOW_SIZE[0] / SCALE_MULTIPLIER,
-                    random.random() * WINDOW_SIZE[1] / SCALE_MULTIPLIER, 1, 1))
+                    (random.random() * WINDOW_SIZE[0] / SCALE_MULTIPLIER,
+                     random.random() * WINDOW_SIZE[1] / SCALE_MULTIPLIER, 1, 1))
     while running:
         mpx, mpy, = pygame.mouse.get_pos()
         stars0.fill((15, 11, 66))
@@ -1431,10 +1467,10 @@ def main_menu():
     pygame.mixer.music.fadeout(1000)
 
 
-def trade_area():
+def trade_area(hpn=10):
     SCALE_MULTIPLIER = 4
     display = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER))
-
+    global spaceship #  comment if something goes wrong
     clicked = False
     running = True
     use = False
@@ -1447,7 +1483,6 @@ def trade_area():
     true_scroll = [0, 0]
     scroll = [0, 0]
 
-    
     pygame.mixer.music.load("music/Don't Bother none.mp3")
     pygame.mixer.music.play(-1)
     last_time = time.time()
@@ -1456,7 +1491,7 @@ def trade_area():
     world = e.TradeWorld(24, 14, 20)
     world.generate_map()
     player = e.Player(200, 100, 16, 16, 10, 'player')
-    cursor = e.Cursor(0, 0, 'data_img/curs3.png')
+    cursor = e.Cursor(0, 0, curstype)
     portal1 = e.Portal(240, 30, 10, 'portal')
     portal2 = e.Portal(30, 140, 10, 'portal')
     metalcount = e.MetalCount(10, 25, 0)
@@ -1464,12 +1499,20 @@ def trade_area():
     world.add_usable_entity(portal1)
     world.add_usable_entity(portal2)
     particles = []
-    global spaceship
-    player.metal = 100
+    #  spaceship = e.SpaceShip(300, 140, 21, 20, 1, "spaceship")
+    player.hp = hpn
+    if 'autosave.txt' in os.listdir(f'{os.getcwd()}\\save'):
+        stats = open(f'{os.getcwd()}\\save\\autosave.txt', 'r')
+        x = stats.readlines()
+        if x:
+            player.hp = int(str(x[0]))
+            player.metal = int(str(x[1]))
+        stats.close()
 
     pick = e.pickableWeapon(300, 100, e.AltMachineGun(300, 100, 0, player))
     world.add_usable_entity(pick)
     while running:
+        # print(f"{plrkills}\t{plrdamage}\t{plrtowers}\t{plrmetal}")
         pygame.mouse.set_visible(False)
         dt = time.time() - last_time
         dt *= 60
@@ -1511,9 +1554,13 @@ def trade_area():
             world.check_use(player)
             spaceship.use(player)
             if portal1.used(player):
-                player.metal, player.ammo = game(player.metal)
+                player.metal, player.ammo, player.hp = game(player.metal, player.hp)
             if portal2.used(player):
-                player.metal = towerdefence(player.metal)
+                player.metal, running, player.hp = towerdefence(player.metal, player.hp)
+                if running == False:
+                    stats = open(f'{os.getcwd()}\\save\\autosave.txt', 'w')
+                    stats.write(str(f"{10}\n{0}"))
+                    stats.close()
 
         if swap_weapons:
             player.swap_weapons()
@@ -1561,6 +1608,7 @@ def trade_area():
                 particles.pop(i)
 
         metalcount.draw(display)
+        player.healthbar.draw(display)
         ammocount.draw(display)
         cursor.draw(display)
 
@@ -1580,8 +1628,14 @@ def trade_area():
                 if event.key == K_ESCAPE:
                     if ingamemenu(screen):
                         running = False
+                        stats = open(f'{os.getcwd()}\\save\\autosave.txt', 'w')
+                        stats.write(str(f"{player.hp}\n{player.metal}"))
+                        stats.close()
+                    cursor = e.Cursor(0, 0, curstype)
                 if event.key == pygame.K_F11:
                     fullscrn(display)
+                if event.key == pygame.K_F10:
+                    winscreen(display, player.x - spaceship.x, player.y - spaceship.y)
                 if event.key == pygame.K_f:
                     use = True
                 if event.key == pygame.K_q or event.key == pygame.K_SPACE:
@@ -1601,7 +1655,6 @@ def trade_area():
                     swap_weapons = False
             if event.type == MOUSEBUTTONDOWN:
                 if event.button == 1:
-                    #  print(math.atan2(mouse_pos[1] / SCALE_MULTIPLIER - player.y, mouse_pos[0] / SCALE_MULTIPLIER - player.x))
                     clicked = True
                     one_click = True
             if event.type == MOUSEBUTTONUP:
@@ -1615,7 +1668,7 @@ def trade_area():
     pygame.mouse.set_visible(True)
 
 
-def game(metal=0):
+def game(metal=0, hpn=10):
     SCALE_MULTIPLIER = 4
     display = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER))
 
@@ -1628,18 +1681,17 @@ def game(metal=0):
     moving_left = False
     moving_up = False
     moving_down = False
-    
+
     true_scroll = [0, 0]
     scroll = [0, 0]
 
     last_time = time.time()
 
-
     pygame.mouse.set_visible(False)
     world = e.World(48, 48, 20)
     world.generate_map()
     player = e.Player(*world.get_start_pos(), 16, 16, 10, 'player')
-    cursor = e.Cursor(0, 0, 'data_img/curs3.png')
+    cursor = e.Cursor(0, 0, curstype)
     portal = e.Portal(*world.get_start_pos(), 10, 'portal')
     metalcount = e.MetalCount(10, 25, 0)
     ammocount = e.AmmoCount(10, 35, 10)
@@ -1647,6 +1699,7 @@ def game(metal=0):
     world.add_usable_entity(portal)
     particles = []
     player.metal = metal
+    player.hp = hpn
     while running:
         pygame.mouse.set_visible(False)
         dt = time.time() - last_time
@@ -1694,7 +1747,7 @@ def game(metal=0):
         if player_movement[0] != 0 and player_movement[1] != 0:
             player_movement[0] *= math.sin(math.pi / 4)
             player_movement[1] *= math.sin(math.pi / 4)
-        
+
         if player_movement[0] != 0 or player_movement[1] != 0:
             # if player_movement[0] > 0:
             #     player.is_flipped = False
@@ -1717,7 +1770,6 @@ def game(metal=0):
         defense_timer.update()
         if defense_timer.get_time() <= 0 or player.hp <= 0:
             running = False
-        #  print(player.hp)
         #  player.move(player_movement)
         #  pygame.draw.line(display, (0, 255, 0), (player.x + player.width / 2 - scroll[0], player.y + player.height / 2 - scroll[1]), ((pygame.mouse.get_pos()[0] // SCALE_MULTIPLIER), (pygame.mouse.get_pos()[1] // SCALE_MULTIPLIER)))
 
@@ -1750,8 +1802,9 @@ def game(metal=0):
                 if event.key == K_s:
                     moving_down = True
                 if event.key == K_ESCAPE:
-                    if ingamemenu(screen):
+                    if ingamemenu(screen, False):
                         running = False
+                    cursor = e.Cursor(0, 0, curstype)
                 if event.key == pygame.K_F11:
                     fullscrn(display)
                 if event.key == pygame.K_f:
@@ -1773,7 +1826,6 @@ def game(metal=0):
                     swap_weapons = False
             if event.type == MOUSEBUTTONDOWN:
                 if event.button == 1:
-                    #  print(math.atan2(mouse_pos[1] / SCALE_MULTIPLIER - player.y, mouse_pos[0] / SCALE_MULTIPLIER - player.x))
                     clicked = True
                     one_click = True
             if event.type == MOUSEBUTTONUP:
@@ -1785,7 +1837,8 @@ def game(metal=0):
         pygame.display.update()
         clock.tick(60)
     pygame.mouse.set_visible(True)
-    return player.metal, player.ammo
+    return player.metal, player.ammo, player.hp
+
 
 
 def options():
@@ -1820,8 +1873,10 @@ def options():
         display.blit(text2, (WINDOW_SIZE[0] // 12, 40))
         text2 = font.render("Cotrols", True, (cveta1))
         display.blit(text2, (WINDOW_SIZE[0] // 12, 60))
-        button_1 = pygame.Rect(WINDOW_SIZE[0] // 8 - 400 / SCALE_MULTIPLIER, 0, 250 / SCALE_MULTIPLIER, 100 / SCALE_MULTIPLIER)
-        button_2 = pygame.Rect(WINDOW_SIZE[0] // 8 - 400 / SCALE_MULTIPLIER, 100 / SCALE_MULTIPLIER, 250 / SCALE_MULTIPLIER, 100 / SCALE_MULTIPLIER)
+        button_1 = pygame.Rect(WINDOW_SIZE[0] // 8 - 400 / SCALE_MULTIPLIER, 0, 250 / SCALE_MULTIPLIER,
+                               100 / SCALE_MULTIPLIER)
+        button_2 = pygame.Rect(WINDOW_SIZE[0] // 8 - 400 / SCALE_MULTIPLIER, 100 / SCALE_MULTIPLIER,
+                               250 / SCALE_MULTIPLIER, 100 / SCALE_MULTIPLIER)
         # pygame.draw.circle(display, (0, 255, 0), (mx, my), 2)
         # pygame.draw.rect(display, (0, 255, 0), button_1, 1)
         # pygame.draw.rect(display, (0, 255, 0), button_2, 1)
@@ -1849,11 +1904,10 @@ def options():
 
 
 def Audio():
-    WINDOW_SIZE = (1920, 1080)
+    global volume
     TILE_SIZE = 16
     #  screen = pygame.display.set_mode(WINDOW_SIZE, 0, 32)
     n = 0
-    m = 0
     pygame.mouse.set_visible(True)
     SCALE_MULTIPLIER = 5
     cveta1 = (200, 200, 200)
@@ -1865,6 +1919,11 @@ def Audio():
     bomb_image = load_image("data_img/esc.png")
     display = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER))
     running = True
+    stats = open(f'{os.getcwd()}\\options\\audio.txt', 'r')
+    x = stats.readlines()
+    if x:
+        volume = int(str(x[0]))
+    stats.close()
     while running:
         display.fill((0, 0, 0))
         mx, my = pygame.mouse.get_pos()
@@ -1883,7 +1942,7 @@ def Audio():
         text3 = font1.render('-', True, (0, 0, 0))
         display.blit(text3, (214, -2))
 
-        text2 = font.render(f"sound-{m}/100", True, (cveta1))
+        text2 = font.render(f"sound-{volume}/100", True, (cveta1))
         display.blit(text2, (100, 2))
         mx = mx / SCALE_MULTIPLIER
         my = my / SCALE_MULTIPLIER
@@ -1917,15 +1976,177 @@ def Audio():
                     running = False
         uslza += 0.5
         if usl2 == 1 and uslza % 3 == 0:
-            if m - 1 >= 0:
-                m -= 1
+            if volume - 1 >= 0:
+                volume -= 1
         if usl1 == 1 and uslza % 3 == 0:
-            if m + 1 <= 100:
-                m += 1
-
+            if volume + 1 <= 100:
+                volume += 1
+        pygame.mixer.music.set_volume(volume / 100)
         screen.blit(pygame.transform.scale(display, WINDOW_SIZE), (0, 0))
         pygame.display.update()
         clock.tick(60)
+    stats = open('options\\audio.txt', 'w')
+    stats.write(str(volume))
+    stats.close()
+
+
+def winscreen(surface, x, y):
+    running = True
+    pygame.mouse.set_visible(True)
+    SCALE_MULTIPLIER = 4
+    click = False
+    font = pygame.font.Font('MaredivRegular.ttf', 20)
+    display = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER), pygame.SRCALPHA)
+    background = pygame.Surface(WINDOW_SIZE, pygame.SRCALPHA)
+    background.blit(pygame.transform.scale(surface, WINDOW_SIZE), (0, 0))
+    center = [(WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - player.width / 2) - x + 10, (WINDOW_SIZE[1] / SCALE_MULTIPLIER / 2 - player.width / 2) - y + 10]
+    layer = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER), pygame.SRCALPHA)
+    stars = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER),
+                           pygame.SRCALPHA)
+    stars.fill((15, 11, 66))
+    for i in range(200):
+        stars.fill(pygame.Color('white'),
+                   (random.random() * WINDOW_SIZE[0] / SCALE_MULTIPLIER,
+                    random.random() * WINDOW_SIZE[1] / SCALE_MULTIPLIER, 1, 1))
+    stars = pygame.transform.scale(stars, (WINDOW_SIZE[0] + 10, WINDOW_SIZE[1] + 10))
+    v = 250
+    r = 0
+    r1 = 0
+    t = 0
+    prz = 0
+    prz1 = 0
+    timer = 0
+    explosion = True
+    flying = True
+    up = False
+    click = False
+    x1 = 0
+    y1 = 0
+    x2 = 0
+    y2 = 0
+    myfont2 = pygame.font.Font('MaredivRegular.ttf', round(cellsize))
+    font3 = pygame.font.Font('MaredivRegular.ttf', 15)
+    font4 = pygame.font.Font('MaredivRegular.ttf', 18)
+    # explosion = False
+    # timer = 700
+    rocket = pygame.image.load('data_img/rocket7.png').convert_alpha()
+    while running:
+        while explosion:
+            display.fill((0, 0, 0, 150))
+            screen.blit(background, (0, 0))
+            mx, my = pygame.mouse.get_pos()
+            pygame.draw.circle(display, 'white', center, r)
+            r += v / 60
+            while timer < 90 and r > 25:
+                if t == 0:
+                    r1 = r
+                    t = 1
+                display.fill((0, 0, 0, 150))
+                screen.blit(background, (0, 0))
+                pygame.draw.circle(display, 'white', center, r1)
+                if timer % 10 == 0:
+                    if up:
+                        r1 += 1
+                    else:
+                        r1 -= 1
+                    up = not up
+                timer += 1
+                if timer == 90:
+                    v = 700
+                    r = r1
+                screen.blit(pygame.transform.scale(display, WINDOW_SIZE), (0, 0))
+                pygame.display.update()
+                clock.tick(60)
+            if WINDOW_SIZE[0] / SCALE_MULTIPLIER < r:
+                explosion = False
+                timer = 0
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    pygame.quit()
+                    sys.exit()
+                if event.type == KEYDOWN:
+                    if event.key == K_ESCAPE:
+                        running = False
+            screen.blit(pygame.transform.scale(display, WINDOW_SIZE), (0, 0))
+            pygame.display.update()
+            clock.tick(60)
+        while flying:
+            if timer % 2 == 0:
+                x1 = random.randint(-10, 0)
+                y1 -= random.randint(-10, 0)
+                x2 = random.randint(-2, 2)
+                y2 = random.randint(-2, 2)
+                if y1 >= WINDOW_SIZE[1]:
+                    y1 = 0
+            screen.blit(stars, (x1, y1))
+            screen.blit(stars, (x1, y1 - WINDOW_SIZE[1]))
+            screen.blit(rocket, (WINDOW_SIZE[0] / 2 - 112 + x2, WINDOW_SIZE[1] / 2 - 250 + y2))
+            display.fill((255, 255, 255, 255 - prz))
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    pygame.quit()
+                    sys.exit()
+                if event.type == KEYDOWN:
+                    if event.key == K_ESCAPE:
+                        flying = False
+                        running = False
+                if event.type == MOUSEBUTTONDOWN:
+                    if event.button == 1:
+                        click = True
+
+                if event.type == MOUSEBUTTONUP:
+                    if event.button == 1:
+                        click = False
+
+            if timer > 700:
+                mx, my = pygame.mouse.get_pos()
+                layer.fill((0, 0, 0, prz1))
+                hp = myfont2.render(str('You have left the planet!'), False, (255, 235, 214))
+                layer.blit(hp, (4 * cellsize, 1.5 * cellsize))
+                hp = font4.render(str(f'Mobs killed: {plrkills}'), False, (255, 235, 214))
+                layer.blit(hp, (5 * cellsize, 3.5 * cellsize))
+                hp = font4.render(str(f'Metal received: {plrmetal}'), False, (255, 235, 214))
+                layer.blit(hp, (5 * cellsize, 4.5 * cellsize))
+                hp = font4.render(str(f'Damage received: {plrdamage}'), False, (255, 235, 214))
+                layer.blit(hp, (5 * cellsize, 5.5 * cellsize))
+                hp = font4.render(str(f'Towers destroyed: {plrtowers}'), False, (255, 235, 214))
+                layer.blit(hp, (5 * cellsize, 6.5 * cellsize))
+                if prz1 < 180:
+                    prz1 += 1
+                playbtn = pygame.Rect(WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 45, 223, 95, 29)
+                mx = mx / SCALE_MULTIPLIER
+                my = my / SCALE_MULTIPLIER
+                if playbtn.collidepoint((mx, my)):
+                    cveta = (78, 29, 92)
+                    cveta1 = (214, 136, 17)
+                    if click:
+                        running = False
+                        flying = False
+                else:
+                    cveta = (109, 29, 112)
+                    cveta1 = (255, 235, 214)
+                pygame.draw.rect(layer, cveta, playbtn)
+                text = font3.render("Main menu", True, cveta1)
+                layer.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 32, 225))
+                click = False
+            screen.blit(pygame.transform.scale(display, WINDOW_SIZE), (0, 0))
+            screen.blit(pygame.transform.scale(layer, WINDOW_SIZE), (0, 0))
+            pygame.display.update()
+            clock.tick(60)
+            timer += 1
+            if prz != 255:
+                prz += 1
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == KEYDOWN:
+                if event.key == K_ESCAPE:
+                    running = False
+        screen.blit(pygame.transform.scale(display, WINDOW_SIZE), (0, 0))
+        pygame.display.update()
+        clock.tick(60)
+    pygame.mouse.set_visible(False)
 
 
 def load_image(name, colorkey=None):
@@ -1942,7 +2163,7 @@ def load_image(name, colorkey=None):
 
 
 def Video():
-    WINDOW_SIZE = (1920, 1080)
+    global curstype, flscr
     #  screen = pygame.display.set_mode(WINDOW_SIZE, 0, 32)
     n = 0
     m = 0
@@ -1957,6 +2178,12 @@ def Video():
     display = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER))
     bomb_image = load_image("data_img/esc.png")
     running = True
+    stats = open(f'{os.getcwd()}\\options\\video.txt', 'r')
+    x = stats.readlines()
+    if x:
+        m = int(str(x[0]))
+        n = int(str(x[1]))
+    stats.close()
     while running:
         display.fill((0, 0, 0))
         mx, my = pygame.mouse.get_pos()
@@ -1995,10 +2222,12 @@ def Video():
             if event.type == pygame.MOUSEBUTTONUP:
                 if button_2.collidepoint((mx, my)):
                     m = 1
+                    pygame.display.set_mode(WINDOW_SIZE, pygame.FULLSCREEN)
 
             if event.type == pygame.MOUSEBUTTONUP:
                 if button_3.collidepoint((mx, my)):
                     m = 0
+                    pygame.display.set_mode(WINDOW_SIZE)
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if button_4.collidepoint((mx, my)):
                     running = False
@@ -2009,10 +2238,31 @@ def Video():
         if m == 0:
             cveta2 = (200, 200, 200)
             cveta3 = (200, 0, 0)
-
+        curstype = f'data_img/curs{n + 1}.png'
+        stats = open('options\\video.txt', 'w')
+        stats.write(str(f'{m}\n{n}'))
+        stats.close()
         screen.blit(pygame.transform.scale(display, WINDOW_SIZE), (0, 0))
         pygame.display.update()
         clock.tick(60)
 
 
+stats = open(f'{os.getcwd()}\\options\\video.txt', 'r')
+x = stats.readlines()
+if x:
+    m = int(str(x[0]))
+    n = int(str(x[1]))
+    curstype = f'data_img/curs{n + 1}.png'
+    if m == 1:
+        pygame.display.set_mode(WINDOW_SIZE, pygame.FULLSCREEN)
+
+    if m == 0:
+        pygame.display.set_mode(WINDOW_SIZE)
+stats.close()
+
+
 main_menu()
+
+stats = open(f'{os.getcwd()}\\stats\\stats.txt', 'w')
+stats.write(str(f"{plrkills}\n{plrdamage}\n{plrtowers}\n{plrmetal}"))
+stats.close()
