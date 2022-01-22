@@ -164,7 +164,7 @@ class World:  # ZA WARUDOOOOOO
 
     def check_use(self, player):
         for entity in self.usable_entities:
-            entity.used()
+            entity.used(player)
 
     def to_screen_coordinates(self, x, y):
         return x * self.tile_size, y * self.tile_size
@@ -297,10 +297,10 @@ class World:  # ZA WARUDOOOOOO
             enemy.draw(display, scroll)
             enemy.draw_projectiles(display, scroll)
 
-        for i, drop in sorted(enumerate(self.drops), reverse=True):
+        for drop in self.drops:
             drop.draw(display, scroll)
 
-        for i, entity in sorted(enumerate(self.usable_entities), reverse=True):
+        for entity in self.usable_entities:
             entity.draw(display, scroll)
 
         for effect in self.effects:
@@ -577,7 +577,7 @@ class Enemy(Entity):
         self.debug = [[0, 0], [0, 0]]
         self.player_angle = 0
         self.player_dist = 0
-        self.primary_weapon = RustyRifle(self.x, self.y, 0, "data_img/weapon_2.png", self)
+        self.primary_weapon = RustyRifle(self.x, self.y, 0, self)
         #  self.animation_database['idle'] = self.load_animations('data_img/animations/enemy/idle', [6, 6, 6, 6, 6,])
         self.animation_database['running'] = self.load_animations('data_img/animations/enemy/running', [8, 8, 8, 8])
         self.change_action('running')
@@ -677,7 +677,8 @@ class Enemy(Entity):
 class Player(Entity):
     def __init__(self, x, y, width, height, hp, type):
         super().__init__(x, y, width, height, hp, type)
-        self.primary_weapon = Weapon(self.x, self.y, 0, "data_img/weapon_1.png", self)
+        self.primary_weapon = MachineGun(self.x, self.y, 0, self)
+        self.secondary_weapon = AltMachineGun(self.x, self.y, 0, self)
         self.ammo = 128
         self.animation_database['idle'] = self.load_animations('data_img/animations/idle', [6, 6, 6, 6, 6, ])
         self.animation_database['running'] = self.load_animations('data_img/animations/running', [5, 5, 5, 5, 5, 5])
@@ -687,7 +688,10 @@ class Player(Entity):
         self.show_weapon = True
 
     def shoot(self, angle):
-        return self.primary_weapon.shoot(angle)
+        if self.ammo > 0:
+            res = self.primary_weapon.shoot(angle)
+            if res[1]:
+                self.ammo -= 1
         #  return super().shoot(angle)
 
     def update(self, mouse_angle):
@@ -706,6 +710,13 @@ class Player(Entity):
         super().draw(surface, scroll)
         if self.show_weapon:
             self.primary_weapon.draw(surface, scroll)
+
+    def swap_weapons(self):
+        if self.secondary_weapon is not None:
+            self.primary_weapon, self.secondary_weapon = self.secondary_weapon, self.primary_weapon
+            self.primary_weapon.update()
+            self.primary_weapon.set_pos(self.x, self.y)
+
 
     def use(self):
         pass
@@ -777,9 +788,10 @@ class SpaceShip(UsableEntity):
         super().__init__(x, y, width, height, hp, type)
         self.metal = 0
         self.can_be_used = False
-        ss = spritesheet("data_img/animations/machine/machine.png")
-        self.image = ss.image_at((0, 0, 26, 29), (0, 0, 0))
-
+        self.ss = spritesheet("data_img/animations/machine/machine.png")
+        self.image = self.ss.image_at((0, 0, 26, 29), (0, 0, 0))
+        self.image_ind = 0
+    
     def use(self, player):
         x1 = player.x + player.width / 2
         y1 = player.y + player.height / 2
@@ -790,7 +802,11 @@ class SpaceShip(UsableEntity):
             if player.metal > 0:
                 player.metal -= 1
                 self.metal += 1
+        if self.image_ind != self.metal // 10:
+            self.image_ind = self.metal // 10
+            self.image = self.ss.image_at((26 * self.image_ind, 0, 26, 29), (0, 0, 0))
 
+    
     def update(self, player):
         if self.metal > 150:
             print('win')
@@ -828,6 +844,7 @@ class Portal(Entity):
         self.use_img.set_colorkey((0, 0, 0))
         self.is_active = True
 
+        
     def update(self, player):
         self.angle2 += 0.2
         self.angle3 += 0.2
@@ -843,34 +860,29 @@ class Portal(Entity):
             return True
         self.can_be_used = False
         return False
+        
 
     def draw(self, surface, scroll):
         if self.is_active:
             pygame.draw.circle(surface, (128, 0, 200), (self.x - scroll[0], self.y - scroll[1]), self.radius)
-            pygame.draw.circle(surface, (100, 0, 175),
-                               (self.x - scroll[0] + self.pos2[0], self.y - scroll[1] + self.pos2[1]),
-                               self.radius / 1.3)
+            pygame.draw.circle(surface, (100, 0, 175), (self.x - scroll[0] + self.pos2[0], self.y - scroll[1] + self.pos2[1]), self.radius / 1.3)
             pygame.draw.circle(surface, (100, 0, 175), (self.x - scroll[0], self.y - scroll[1]), self.radius * 0.8, 1)
             pygame.draw.circle(surface, (100, 0, 175), (self.x - scroll[0], self.y - scroll[1]), self.radius * 0.7, 1)
-            pygame.draw.circle(surface, (80, 0, 150),
-                               (self.x - scroll[0] + self.pos3[0], self.y - scroll[1] + self.pos3[1]), self.radius / 2)
+            pygame.draw.circle(surface, (80, 0, 150), (self.x - scroll[0] + self.pos3[0], self.y - scroll[1] + self.pos3[1]), self.radius / 2)
             pygame.draw.circle(surface, (100, 0, 175), (self.x - scroll[0], self.y - scroll[1]), self.radius * 1, 1)
         else:
             pygame.draw.circle(surface, (128, 128, 200), (self.x - scroll[0], self.y - scroll[1]), self.radius)
-            pygame.draw.circle(surface, (100, 100, 175),
-                               (self.x - scroll[0] + self.pos2[0], self.y - scroll[1] + self.pos2[1]),
-                               self.radius / 1.3)
+            pygame.draw.circle(surface, (100, 100, 175), (self.x - scroll[0] + self.pos2[0], self.y - scroll[1] + self.pos2[1]), self.radius / 1.3)
             pygame.draw.circle(surface, (100, 100, 175), (self.x - scroll[0], self.y - scroll[1]), self.radius * 0.8, 1)
             pygame.draw.circle(surface, (100, 100, 175), (self.x - scroll[0], self.y - scroll[1]), self.radius * 0.7, 1)
-            pygame.draw.circle(surface, (80, 80, 150),
-                               (self.x - scroll[0] + self.pos3[0], self.y - scroll[1] + self.pos3[1]), self.radius / 2)
+            pygame.draw.circle(surface, (80, 80, 150), (self.x - scroll[0] + self.pos3[0], self.y - scroll[1] + self.pos3[1]), self.radius / 2)
             pygame.draw.circle(surface, (100, 100, 175), (self.x - scroll[0], self.y - scroll[1]), self.radius * 1, 1)
 
-        if self.can_be_used:
-            surface.blit(self.use_img, (self.x - scroll[0] - self.use_img.get_width() / 2,
-                                        self.y - scroll[1] - self.radius - self.use_img.get_height()))
 
-    def used(self):
+        if self.can_be_used:
+            surface.blit(self.use_img, (self.x - scroll[0] - self.use_img.get_width() / 2, self.y - scroll[1] - self.radius - self.use_img.get_height()))
+
+    def used(self, player):
         if self.can_be_used and self.is_active:
             return True
         return False
@@ -905,8 +917,8 @@ class Weapon:
                                         angle, 8, self.entity.type + "_projectile")
             self.entity.projectiles.append(projectile)
             self.shootTimer = 0
-            return projectile
-        return None
+            return projectile, True
+        return None, False
 
     def draw(self, surface, scroll):
         blitRotate(surface, pygame.transform.flip(self.img, False, self.is_flipped), (
@@ -916,6 +928,15 @@ class Weapon:
         # copy_img = pygame.transform.rotate(self.img, -math.degrees(self.angle))
         # print(math.degrees(self.angle))
         # surface.blit(copy_img, (self.x - scroll[0], self.y - scroll[1]))
+    
+
+    def alt_draw(self, surface, scroll):
+        #  blitRotate(surface, pygame.transform.flip(self.img, False, self.is_flipped), (self.x - scroll[0] + self.entity.width / 2, self.y - scroll[1] + self.entity.height / 2 + int(self.is_flipped) * 5), (0, 0), -math.degrees(self.angle))
+
+        copy_img = pygame.transform.rotate(self.img, -math.degrees(self.angle))
+        print(math.degrees(self.angle))
+        surface.blit(copy_img, (self.x - scroll[0] - int(copy_img.get_width() / 2), self.y - scroll[1] - int(copy_img.get_height() / 2)))
+
 
     def update(self):
         if abs(self.angle) < math.pi / 2:
@@ -925,9 +946,23 @@ class Weapon:
         self.shootTimer += 1
 
 
+class MachineGun(Weapon):
+    def __init__(self, x, y, angle, entity):
+        super().__init__(x, y, angle, "data_img/weapon_1.png", entity) 
+        self.shootTimer = 10
+        self.cooldown = 10
+
+
+class AltMachineGun(Weapon):
+    def __init__(self, x, y, angle, entity):
+        super().__init__(x, y, angle, "data_img/weapon_3.png", entity) 
+        self.shootTimer = 10
+        self.cooldown = 10
+
+
 class RustyRifle(Weapon):
-    def __init__(self, x, y, angle, path, entity):
-        super().__init__(x, y, angle, path, entity)
+    def __init__(self, x, y, angle, entity):
+        super().__init__(x, y, angle, "data_img/weapon_2.png", entity)
         self.shootTimer = 0
         self.cooldown = 60
 
@@ -946,6 +981,58 @@ class RustyRifle(Weapon):
             self.cooldown = random.randint(60, 180)
             return projectile
         return None
+
+
+class ShawedShotgun(Weapon):
+    def __init__(self, x, y, angle, path, entity):
+        super().__init__(x, y, angle, path, entity)
+
+
+class pickableWeapon:
+    def __init__(self, x, y, weapon):
+        self.x = x
+        self.y = y
+        self.weapon = weapon
+        self.draw_angle = random.uniform(0, math.pi * 2)
+        self.weapon.angle = self.draw_angle
+        self.use_img = pygame.image.load("data_img/use_item_pic.png").convert()
+        self.use_img.set_colorkey((0, 0, 0))
+        self.can_be_used = False
+
+
+    def used(self, player):
+        if self.can_be_used:
+            if player.secondary_weapon is not None:
+                player.primary_weapon, self.weapon = self.weapon, player.primary_weapon
+                self.weapon.x = self.x
+                self.weapon.y = self.y
+            else:
+                player.secondary_weapon = self.weapon
+                self.weapon = None
+    
+
+    def update(self, player):
+        if self.weapon is None:
+            return False
+        else:
+            x1 = player.x + player.width / 2
+            y1 = player.y + player.height / 2
+            x2 = self.x + self.weapon.img.get_width() / 2
+            y2 = self.y + self.weapon.img.get_height() / 2
+            dist = math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+            if dist <= player.width / 2 + 10:
+                self.can_be_used = True
+                return True
+            self.can_be_used = False
+            return False
+
+
+    def draw(self, surface, scroll = [0, 0]):
+        if self.weapon is not None:
+            self.weapon.alt_draw(surface, scroll)
+            if self.can_be_used:
+                surface.blit(self.use_img, (self.x - scroll[0] - self.use_img.get_width() + self.weapon.img.get_width() / 2, self.y - scroll[1] - self.use_img.get_height() + self.weapon.img.get_height() / 2))
+        
 
 
 class Cursor(GameObject):
@@ -1195,4 +1282,29 @@ class MetalCount:
 
     def draw(self, display, scroll=[0, 0]):
         time_text = self.font.render(f"Metal: {self.metal}", True, (255, 255, 255))
+        outline_text = self.font.render(f"Metal: {self.metal}", True, (104, 111, 153))
+        display.blit(outline_text, (self.x - 1, self.y))
+        display.blit(outline_text, (self.x + 1, self.y))
+        display.blit(outline_text, (self.x, self.y - 1))
+        display.blit(outline_text, (self.x, self.y + 1))
+        display.blit(time_text, (self.x, self.y))
+
+
+class AmmoCount(MetalCount):
+    def __init__(self, x, y, ammo) -> None:
+        super().__init__(x, y, 0)
+        self.ammo = ammo
+    
+
+    def set_ammo(self, ammo):
+        self.ammo = ammo
+
+
+    def draw(self, display, scroll=[0, 0]):
+        time_text = self.font.render(f"Ammo: {self.ammo}", True, (255, 255, 255))
+        outline_text = self.font.render(f"Ammo: {self.ammo}", True, (59, 125, 79))
+        display.blit(outline_text, (self.x - 1, self.y))
+        display.blit(outline_text, (self.x + 1, self.y))
+        display.blit(outline_text, (self.x, self.y - 1))
+        display.blit(outline_text, (self.x, self.y + 1))
         display.blit(time_text, (self.x, self.y))
