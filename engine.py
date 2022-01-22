@@ -1046,6 +1046,7 @@ class Cursor(GameObject):
     def draw(self, display):
         display.blit(self.img, (self.x - self.width // 2, self.y - self.height // 2))
 
+
 class Healthbar:
     def __init__(self, fullhp, nowhp):
         self.fullhp = fullhp

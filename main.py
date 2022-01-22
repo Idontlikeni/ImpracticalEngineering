@@ -1390,6 +1390,10 @@ def main_menu():
         else:
             cveta4 = (109, 29, 112)
             cveta5 = (255, 235, 214)
+
+        title_img = pygame.image.load('data_img/title2.png')
+        display.blit(title_img, (121, 50))
+
         pygame.draw.rect(display, cveta, playbtn)
         pygame.draw.rect(display, cveta2, optionsbtn)
         pygame.draw.rect(display, cveta4, exitbtn)
