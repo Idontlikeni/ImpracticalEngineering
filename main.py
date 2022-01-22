@@ -4,6 +4,7 @@ from pygame import mouse
 import engine as e
 from pygame.locals import *
 from pygame.mixer import set_num_channels
+import os
 
 pygame.init()
 pygame.display.set_caption("Yandex game")
@@ -640,7 +641,7 @@ def dieui():
             wawe1 = 1
             player.set_pos(cellsize * countx - player.width, cellsize * 11.1)
             player.hp = 10
-            plr.money = metalmoneypast
+            plr.money = 0
             playerv = 2
             t = 0
             meatend = False
@@ -663,10 +664,11 @@ def dieui():
             alive = True
             player.set_pos(cellsize * countx - player.width, cellsize * 11.1)
             player.hp = 10
-            plr.money = 35
+            plr.money = 0
             playerv = 2
             player_movement = [0, 0]
             running = False
+            return True
     f1 = myfont.render('Retry', False, 'white')
     monitor.blit(f1, (width - 15 * cellsize, height + 3 * cellsize))
     f2 = myfont.render('Exit', False, 'white')
@@ -1004,7 +1006,7 @@ redtow1 = pygame.transform.scale(redtow, (cellsize * 6, cellsize * 6))
 bluetow1 = pygame.transform.scale(bluetow, (cellsize * 6, cellsize * 6))
 
 
-def towerdefence(metalmoney=0):
+def towerdefence(metalmoney=0, hpn=10):
     global countx, county, sclsz, sclsz1, width1, height1, width, height, cellsize, cellsize1, countx1, county1, fps
     global flscr, show, inviztime, inhub, meatend, bullets, towers, meat, drops, heals, walls, way, allmetal, tile_rects
     global tile_rects1, tile_rects_coord, explosions, towernum, spawntime, playerv, speedcoef, uirect, Map, down
@@ -1037,6 +1039,8 @@ def towerdefence(metalmoney=0):
     portal.is_active = False
     use = False
     player.show_weapon = False
+    player.hp = hpn
+    runningar = True
     while running:
         #  pygame.mouse.set_visible(False)
         if alive:
@@ -1125,8 +1129,11 @@ def towerdefence(metalmoney=0):
                         if towernum != 0:
                             towernum = 0
                         else:
-                            if ingamemenu(monitor):
+                            if ingamemenu(monitor, False):
                                 running = False
+                                runningar = False
+                                plr.money = 0
+                                player.hp = 10
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_d:
                         moving_right = False
@@ -1186,12 +1193,13 @@ def towerdefence(metalmoney=0):
             monitor.blit(pygame.transform.scale(deadscreen, (width1, height1)), (0, 0))
             hp = myfont1.render('Game over!', False, 'white')
             monitor.blit(hp, (width - 13.4 * cellsize, height - 10 * cellsize))
-            dieui()
+            if dieui():
+                runningar = False
             crosshair.render()
         showfps()
         pygame.display.update()
         clock.tick(fps)
-    return plr.money
+    return plr.money, runningar, player.hp
 
 
 def fullscrn(display):
@@ -1203,7 +1211,7 @@ def fullscrn(display):
     flscr = not flscr
 
 
-def ingamemenu(surface):
+def ingamemenu(surface, exitnal=True):
     running = True
     pygame.mouse.set_visible(True)
     SCALE_MULTIPLIER = 5
@@ -1218,7 +1226,8 @@ def ingamemenu(surface):
         mx, my = pygame.mouse.get_pos()
         playbtn = pygame.Rect(WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 20, 106, 36, 23)
         optionsbtn = pygame.Rect(WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 35, 141, 69, 23)
-        exitbtn = pygame.Rect(WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 20, 176, 36, 19)
+        if exitnal:
+            exitbtn = pygame.Rect(WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 20, 176, 36, 19)
         mx = mx / SCALE_MULTIPLIER
         my = my / SCALE_MULTIPLIER
         if playbtn.collidepoint((mx, my)):
@@ -1233,20 +1242,22 @@ def ingamemenu(surface):
                 options()
         else:
             cveta3 = (255, 235, 214)
-        if exitbtn.collidepoint((mx, my)):
-            cveta5 = (214, 136, 17)
-            if click:
-                return True
-        else:
-            cveta5 = (255, 235, 214)
+        if exitnal:
+            if exitbtn.collidepoint((mx, my)):
+                cveta5 = (214, 136, 17)
+                if click:
+                    return True
+            else:
+                cveta5 = (255, 235, 214)
         text = font.render("play", True, cveta1)
         display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 20, 100))
 
         text = font.render("options", True, cveta3)
         display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 35, 135))
 
-        text = font.render("exit", True, cveta5)
-        display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 20, 170))
+        if exitnal:
+            text = font.render("exit", True, cveta5)
+            display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 20, 170))
         click = False
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -1282,7 +1293,7 @@ def winwin(surface):
     background = pygame.Surface(WINDOW_SIZE, pygame.SRCALPHA)
     background.blit(pygame.transform.scale(surface, WINDOW_SIZE), (0, 0))
     while running:
-        display.fill((0, 0, 0, 200))
+        display.fill((0, 0, 0, 100))
         screen.blit(background, (0, 0))
         mx, my = pygame.mouse.get_pos()
         playbtn = pygame.Rect(WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 12, 187, 24, 17)
@@ -1294,8 +1305,8 @@ def winwin(surface):
                 running = False
         else:
             cveta3 = (255, 235, 214)
-        text1 = font.render("YOU WIN!", True, (255, 235, 214))
-        display.blit(text1, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 40, 30))
+        text1 = font.render("The waves are over, you can go out!", True, (255, 235, 214))
+        display.blit(text1, (20, 50))
         text = font.render("OK", True, cveta3)
         display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 12, 180))
         click = False
@@ -1430,7 +1441,7 @@ def main_menu():
     pygame.mixer.music.fadeout(1000)
 
 
-def trade_area():
+def trade_area(hpn=10):
     SCALE_MULTIPLIER = 4
     display = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER))
 
@@ -1462,6 +1473,15 @@ def trade_area():
     world.add_usable_entity(portal2)
     particles = []
     spaceship = e.SpaceShip(300, 140, 21, 20, 1, "spaceship")
+    player.hp = hpn
+    print(os.getcwd())
+    if 'autosave.txt' in os.listdir(f'{os.getcwd()}\\save'):
+        stats = open(f'{os.getcwd()}\\save\\autosave.txt', 'r')
+        x = stats.readlines()
+        if x:
+            player.hp = int(str(x[0]))
+            player.metal = int(str(x[1]))
+        stats.close()
 
     while running:
         pygame.mouse.set_visible(False)
@@ -1502,9 +1522,13 @@ def trade_area():
             use = False
             spaceship.use(player)
             if portal1.used():
-                player.metal = game(player.metal)
+                player.metal, player.hp = game(player.metal, player.hp)
             if portal2.used():
-                player.metal = towerdefence(player.metal)
+                player.metal, running, player.hp = towerdefence(player.metal, player.hp)
+                if running == False:
+                    stats = open(f'{os.getcwd()}\\save\\autosave.txt', 'w')
+                    stats.write(str(f"{player.hp}\n{player.metal}"))
+                    stats.close()
 
         if player_movement[0] != 0 and player_movement[1] != 0:
             player_movement[0] *= math.sin(math.pi / 4)
@@ -1543,6 +1567,7 @@ def trade_area():
                 particles.pop(i)
 
         metalcount.draw(display)
+        player.healthbar.draw(display)
         cursor.draw(display)
 
         for event in pygame.event.get():
@@ -1561,6 +1586,9 @@ def trade_area():
                 if event.key == K_ESCAPE:
                     if ingamemenu(screen):
                         running = False
+                        stats = open(f'{os.getcwd()}\\save\\autosave.txt', 'w')
+                        stats.write(str(f"{player.hp}\n{player.metal}"))
+                        stats.close()
                 if event.key == pygame.K_F11:
                     fullscrn(display)
                 if event.key == pygame.K_F10:
@@ -1591,7 +1619,7 @@ def trade_area():
     pygame.mouse.set_visible(True)
 
 
-def game(metal=0):
+def game(metal=0, hpn=10):
     SCALE_MULTIPLIER = 4
     display = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER))
 
@@ -1620,6 +1648,7 @@ def game(metal=0):
     world.add_usable_entity(portal)
     particles = []
     player.metal = metal
+    player.hp = hpn
     while running:
         pygame.mouse.set_visible(False)
         dt = time.time() - last_time
@@ -1716,7 +1745,7 @@ def game(metal=0):
                 if event.key == K_s:
                     moving_down = True
                 if event.key == K_ESCAPE:
-                    if ingamemenu(screen):
+                    if ingamemenu(screen, False):
                         running = False
                 if event.key == pygame.K_F11:
                     fullscrn(display)
@@ -1744,7 +1773,7 @@ def game(metal=0):
         pygame.display.update()
         clock.tick(60)
     pygame.mouse.set_visible(True)
-    return player.metal
+    return player.metal, player.hp
 
 
 def options():
@@ -1918,10 +1947,13 @@ def winscreen(surface, x, y):
     explosion = True
     flying = True
     up = False
+    click = False
     x1 = 0
     y1 = 0
     myfont2 = pygame.font.Font('MaredivRegular.ttf', round(cellsize))
-    explosion = False
+    font3 = pygame.font.Font('MaredivRegular.ttf', 15)
+    # explosion = False
+    # timer = 700
     while running:
         while explosion:
             display.fill((0, 0, 0, 150))
@@ -1979,12 +2011,37 @@ def winscreen(surface, x, y):
                     if event.key == K_ESCAPE:
                         flying = False
                         running = False
-            if timer > 300:
+                if event.type == MOUSEBUTTONDOWN:
+                    if event.button == 1:
+                        click = True
+
+                if event.type == MOUSEBUTTONUP:
+                    if event.button == 1:
+                        click = False
+
+            if timer > 700:
+                mx, my = pygame.mouse.get_pos()
                 layer.fill((0, 0, 0, prz1))
-                hp = myfont2.render(str('You have left the planet!'), False, 'white')
+                hp = myfont2.render(str('You have left the planet!'), False, (255, 235, 214))
                 layer.blit(hp, (4 * cellsize, 1.5 * cellsize))
                 if prz1 < 180:
                     prz1 += 1
+                playbtn = pygame.Rect(WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 45, 223, 95, 29)
+                mx = mx / SCALE_MULTIPLIER
+                my = my / SCALE_MULTIPLIER
+                if playbtn.collidepoint((mx, my)):
+                    cveta = (78, 29, 92)
+                    cveta1 = (214, 136, 17)
+                    if click:
+                        running = False
+                        flying = False
+                else:
+                    cveta = (109, 29, 112)
+                    cveta1 = (255, 235, 214)
+                pygame.draw.rect(layer, cveta, playbtn)
+                text = font3.render("Main menu", True, cveta1)
+                layer.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 32, 225))
+                click = False
             screen.blit(pygame.transform.scale(display, WINDOW_SIZE), (0, 0))
             screen.blit(pygame.transform.scale(layer, WINDOW_SIZE), (0, 0))
             pygame.display.update()
