@@ -649,6 +649,7 @@ def dieui():
             wawe1 = 1
             player.set_pos(cellsize * countx - player.width, cellsize * 11.1)
             player.hp = 10
+            spaceship.metal = 0
             player.ammo = 128
             plr.money = 0
             playerv = 2
@@ -673,6 +674,7 @@ def dieui():
             alive = True
             player.set_pos(cellsize * countx - player.width, cellsize * 11.1)
             player.hp = 10
+            spaceship.metal = 0
             player.ammo = 128
             plr.money = 0
             playerv = 2
@@ -689,6 +691,7 @@ def deathui(surface, player):
     player.hp = 10
     player.metal = 0
     player.ammo = 128
+    spaceship.metal = 0
     running = True
     pygame.mouse.set_visible(True)
     SCALE_MULTIPLIER = 5
@@ -1245,6 +1248,7 @@ def towerdefence(metalmoney=0, ammo = 128, hpn=10):
                                 plr.money = 0
                                 player.hp = 10
                                 player.ammo = 128
+                                spaceship.metal = 0
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_d:
                         moving_right = False
@@ -1420,8 +1424,10 @@ def winwin(surface):
                 running = False
         else:
             cveta3 = (255, 235, 214)
-        text1 = font.render("The waves are over, you can go out!", True, (255, 235, 214))
-        display.blit(text1, (20, 50))
+        text1 = font.render("The waves are over,", True, (255, 235, 214))
+        display.blit(text1, (95, 50))
+        text1 = font.render("you can go out!", True, (255, 235, 214))
+        display.blit(text1, (115, 70))
         text = font.render("OK", True, cveta3)
         display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 12, 180))
         click = False
@@ -1602,6 +1608,7 @@ def trade_area(hpn=10):
             player.hp = int(str(x[0]))
             player.metal = int(str(x[1]))
             player.ammo = int(str(x[2]))
+            spaceship.metal = int(str(x[3]))
         stats.close()
     player.metal = 100
     pick = e.pickableWeapon(300, 100, e.AltMachineGun(300, 100, 0, player))
@@ -1656,14 +1663,14 @@ def trade_area(hpn=10):
                 player.metal, player.ammo, player.hp, is_exit = game(player.metal, player.ammo, player.hp)
                 if is_exit:
                     stats = open(f'{os.getcwd()}\\save\\autosave.txt', 'w')
-                    stats.write(str(f"{10}\n{0}\n{128}"))
+                    stats.write(str(f"{10}\n{0}\n{128}\n{0}"))
                     stats.close()
                     running = False
             if portal2.used(player):
                 player.metal, player.ammo, running, player.hp = towerdefence(player.metal, player.ammo, player.hp)
                 if running == False:
                     stats = open(f'{os.getcwd()}\\save\\autosave.txt', 'w')
-                    stats.write(str(f"{10}\n{0}\n{128}"))
+                    stats.write(str(f"{10}\n{0}\n{128}\n{0}"))
                     stats.close()
 
         if swap_weapons:
@@ -1733,7 +1740,7 @@ def trade_area(hpn=10):
                     if ingamemenu(screen):
                         running = False
                         stats = open(f'{os.getcwd()}\\save\\autosave.txt', 'w')
-                        stats.write(str(f"{player.hp}\n{player.metal}\n{player.ammo}"))
+                        stats.write(str(f"{player.hp}\n{player.metal}\n{player.ammo}\n{spaceship.metal}"))
                         stats.close()
                     cursor = e.Cursor(0, 0, curstype)
                 if event.key == pygame.K_F11:
@@ -1775,7 +1782,7 @@ def trade_area(hpn=10):
 def game(metal=0, ammo=128, hpn=10):
     SCALE_MULTIPLIER = 4
     display = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER))
-    global curstype
+    global curstype, plrkills
     one_click = False
     clicked = False
     running = True
@@ -1806,6 +1813,8 @@ def game(metal=0, ammo=128, hpn=10):
     player.metal = metal
     player.hp = hpn
     player.ammo = ammo
+    enemy_count = 0
+    enemy_num = len(world.get_enemies())
     while running:
         pygame.mouse.set_visible(False)
         dt = time.time() - last_time
@@ -1864,6 +1873,8 @@ def game(metal=0, ammo=128, hpn=10):
             player.change_action('idle')
 
         collision_types = player.move(player_movement, tile_rects, [])
+
+
 
         player.move_projectiles(world, world.get_enemies(), dt)
         player.update(mouse_angle)
@@ -1950,6 +1961,7 @@ def game(metal=0, ammo=128, hpn=10):
         pygame.display.update()
         clock.tick(60)
     pygame.mouse.set_visible(True)
+    plrkills += enemy_num - len(world.get_enemies())
     return player.metal, player.ammo, player.hp, False
 
 
