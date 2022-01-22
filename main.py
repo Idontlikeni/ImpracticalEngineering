@@ -1588,6 +1588,7 @@ def trade_area(hpn=10):
 
     pygame.mouse.set_visible(False)
     world = e.TradeWorld(24, 14, 20)
+    world.field = [['0'] * world.width for _ in range(world.height)]
     world.generate_map()
     player = e.Player(200, 100, 16, 16, 10, 'player')
     cursor = e.Cursor(0, 0, curstype)
@@ -1619,7 +1620,7 @@ def trade_area(hpn=10):
         dt = time.time() - last_time
         dt *= 60
         last_time = time.time()
-        display.fill((240, 181, 65))
+        display.fill((207, 117, 43))
         mouse_pos = pygame.mouse.get_pos()
 
         cursor.set_pos(mouse_pos[0] / SCALE_MULTIPLIER, mouse_pos[1] / SCALE_MULTIPLIER)
@@ -1820,7 +1821,7 @@ def game(metal=0, ammo=128, hpn=10):
         dt = time.time() - last_time
         dt *= 60
         last_time = time.time()
-        display.fill((240, 181, 65))
+        display.fill((207, 117, 43))
         mouse_pos = pygame.mouse.get_pos()
 
         cursor.set_pos(mouse_pos[0] / SCALE_MULTIPLIER, mouse_pos[1] / SCALE_MULTIPLIER)

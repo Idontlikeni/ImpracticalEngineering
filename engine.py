@@ -214,6 +214,7 @@ class World:  # ZA WARUDOOOOOO
                 self.effects.pop(i)
 
     def draw(self, display, scroll):
+        pygame.draw.rect(display, (240, 181, 65), (-scroll[0] + self.tile_size, -scroll[1] + self.tile_size, (self.width - 2) *  self.tile_size, (self.height - 2) * self.tile_size))
         for y in range(len(self.field)):
             for x in range(len(self.field[y])):
                 if self.field[y][x] == '1':
@@ -274,9 +275,27 @@ class World:  # ZA WARUDOOOOOO
                                          pygame.Rect((x * self.tile_size - scroll[0], y * self.tile_size - scroll[1]),
                                                      (self.tile_size, self.tile_size)))
                 if self.field[y][x] == 'x':
-                    pygame.draw.rect(display, (255, 0, 0),
-                                     pygame.Rect((x * self.tile_size - scroll[0], y * self.tile_size - scroll[1]),
-                                                 (self.tile_size, self.tile_size)), 1)
+                    if y == 0:
+                        display.blit(self.images1[7], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
+                    elif y == self.height - 1:
+                        display.blit(self.images1[1], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
+                    elif x == 0:
+                        display.blit(self.images1[5], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
+                    elif x == self.width - 1:
+                        display.blit(self.images1[3], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
+            pygame.draw.rect(display, (207, 117, 43),
+                                     pygame.Rect((0 - scroll[0], 0 - scroll[1]),
+                                                 (self.tile_size, self.tile_size)))
+            pygame.draw.rect(display, (207, 117, 43),
+                                     pygame.Rect((0 - scroll[0], (self.height - 1) * self.tile_size - scroll[1]),
+                                                 (self.tile_size, self.tile_size)))
+            pygame.draw.rect(display, (207, 117, 43),
+                                     pygame.Rect(((self.width - 1) * self.tile_size - scroll[0], (self.height - 1) * self.tile_size - scroll[1]),
+                                                 (self.tile_size, self.tile_size)))
+            pygame.draw.rect(display, (207, 117, 43),
+                                     pygame.Rect(((self.width - 1) * self.tile_size - scroll[0], 0 - scroll[1]),
+                                                 (self.tile_size, self.tile_size)))
+                    
         # y = 0
         # for row in self.field:
         #     x = 0
@@ -489,9 +508,9 @@ class Entity(GameObject):
         self.action = new_value
 
     def draw(self, surface, scroll):
-        pygame.draw.rect(surface, (255, 0, 0),
-                         pygame.Rect(self.physical_object.x - scroll[0], self.physical_object.y - scroll[1],
-                                     self.physical_object.width, self.physical_object.height), 1)
+        # pygame.draw.rect(surface, (255, 0, 0),
+        #                  pygame.Rect(self.physical_object.x - scroll[0], self.physical_object.y - scroll[1],
+        #                              self.physical_object.width, self.physical_object.height), 1)
         if self.image != None:
             surface.blit(pygame.transform.flip(self.image, self.is_flipped, False),
                          (self.physical_object.x - scroll[0], self.physical_object.y - scroll[1]))
