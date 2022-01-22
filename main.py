@@ -1323,8 +1323,10 @@ def winwin(surface):
                 running = False
         else:
             cveta3 = (255, 235, 214)
-        text1 = font.render("The waves are over, you can go out!", True, (255, 235, 214))
-        display.blit(text1, (20, 50))
+        text1 = font.render("The waves are over,", True, (255, 235, 214))
+        display.blit(text1, (95, 50))
+        text1 = font.render("you can go out!", True, (255, 235, 214))
+        display.blit(text1, (115, 70))
         text = font.render("OK", True, cveta3)
         display.blit(text, (WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2 - 12, 180))
         click = False
