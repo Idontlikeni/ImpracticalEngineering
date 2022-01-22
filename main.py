@@ -1065,7 +1065,7 @@ def towerdefence(metalmoney=0):
                 player_movement[1] *= math.sin(math.pi / 4)
             if use:
                 use = False
-                if portal.used():
+                if portal.used(player):
                     running = False
 
             if player_movement[0] != 0 or player_movement[1] != 0:
