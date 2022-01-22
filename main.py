@@ -1,3 +1,4 @@
+from cmath import pi
 from dis import dis
 import pygame, sys, os, random, math, time
 from pygame import mouse
@@ -167,6 +168,8 @@ for x in range(countx1):
 tile_rects1.remove(pygame.Rect(0, county1 // 2 * cellsize, cellsize, cellsize))
 tile_rects1.remove(pygame.Rect(countx1 // 2 * cellsize, 0, cellsize, cellsize))
 lenwalls = len(tile_rects)
+
+spaceship = e.SpaceShip(300, 140, 21, 20, 1, "spaceship")
 
 
 class Player:
@@ -1028,6 +1031,7 @@ def towerdefence(metalmoney=0, hpn=10):
     global greentow, yellowtower, yellowtow, redtower, redtow, bluetower, bluetow, metim, metal, metim1, metal1, metim2
     global metal2, metim3, metal3, allmetal, helim, healim, greentow1, yellowtow1, redtow1, bluetow1, wawe1, portalcoord
     global metalmoneypast, plrkills, plrdamage, plrtowers, plrmetal
+
     running = True
     alive = True
     bullets = []
@@ -1086,7 +1090,7 @@ def towerdefence(metalmoney=0, hpn=10):
                 player_movement[1] *= math.sin(math.pi / 4)
             if use:
                 use = False
-                if portal.used():
+                if portal.used(player):
                     running = False
 
             if player_movement[0] != 0 or player_movement[1] != 0:
@@ -1424,6 +1428,10 @@ def main_menu():
         else:
             cveta4 = (109, 29, 112)
             cveta5 = (255, 235, 214)
+
+        title_img = pygame.image.load('data_img/title2.png')
+        display.blit(title_img, (121, 50))
+
         pygame.draw.rect(display, cveta, playbtn)
         pygame.draw.rect(display, cveta2, optionsbtn)
         pygame.draw.rect(display, cveta4, exitbtn)
@@ -1464,16 +1472,16 @@ def main_menu():
 def trade_area(hpn=10):
     SCALE_MULTIPLIER = 4
     display = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER))
-
+    global spaceship #  comment if something goes wrong
     clicked = False
     running = True
     use = False
-
+    swap_weapons = False
     moving_right = False
     moving_left = False
     moving_up = False
     moving_down = False
-
+    one_click = False
     true_scroll = [0, 0]
     scroll = [0, 0]
 
@@ -1489,10 +1497,11 @@ def trade_area(hpn=10):
     portal1 = e.Portal(240, 30, 10, 'portal')
     portal2 = e.Portal(30, 140, 10, 'portal')
     metalcount = e.MetalCount(10, 25, 0)
+    ammocount = e.AmmoCount(10, 35, 0)
     world.add_usable_entity(portal1)
     world.add_usable_entity(portal2)
     particles = []
-    spaceship = e.SpaceShip(300, 140, 21, 20, 1, "spaceship")
+    #  spaceship = e.SpaceShip(300, 140, 21, 20, 1, "spaceship")
     player.hp = hpn
     if 'autosave.txt' in os.listdir(f'{os.getcwd()}\\save'):
         stats = open(f'{os.getcwd()}\\save\\autosave.txt', 'r')
@@ -1502,6 +1511,8 @@ def trade_area(hpn=10):
             player.metal = int(str(x[1]))
         stats.close()
 
+    pick = e.pickableWeapon(300, 100, e.AltMachineGun(300, 100, 0, player))
+    world.add_usable_entity(pick)
     while running:
         # print(f"{plrkills}\t{plrdamage}\t{plrtowers}\t{plrmetal}")
         pygame.mouse.set_visible(False)
@@ -1538,17 +1549,25 @@ def trade_area(hpn=10):
             player_movement[1] += 2 * dt
         if clicked == True:
             player.shoot(mouse_angle)
+        if one_click:
+            one_click = False
         if use:
             use = False
+            world.check_use(player)
             spaceship.use(player)
-            if portal1.used():
-                player.metal, player.hp = game(player.metal, player.hp)
-            if portal2.used():
+            if portal1.used(player):
+                player.metal, player.ammo, player.hp = game(player.metal, player.hp)
+            if portal2.used(player):
                 player.metal, running, player.hp = towerdefence(player.metal, player.hp)
                 if running == False:
                     stats = open(f'{os.getcwd()}\\save\\autosave.txt', 'w')
                     stats.write(str(f"{10}\n{0}"))
                     stats.close()
+
+        if swap_weapons:
+            player.swap_weapons()
+            swap_weapons = False
+
 
         if player_movement[0] != 0 and player_movement[1] != 0:
             player_movement[0] *= math.sin(math.pi / 4)
@@ -1568,12 +1587,16 @@ def trade_area(hpn=10):
         player.move_projectiles(world, world.get_enemies(), dt)
         player.update(mouse_angle)
         world.update(player, dt)
+        #  pick.update(player)
         spaceship.update(player)
         world.draw(display, scroll)
+        #  pick.draw(display, scroll)
         player.draw(display, scroll)
         player.draw_projectiles(display, scroll)
         spaceship.draw(display, scroll)
         metalcount.set_metal(player.metal)
+        ammocount.set_ammo(player.ammo)
+        print(player.hp, player.metal)
         #  player.move(player_movement)
         #  pygame.draw.line(display, (0, 255, 0), (player.x + player.width / 2 - scroll[0], player.y + player.height / 2 - scroll[1]), ((pygame.mouse.get_pos()[0] // SCALE_MULTIPLIER), (pygame.mouse.get_pos()[1] // SCALE_MULTIPLIER)))
 
@@ -1588,6 +1611,7 @@ def trade_area(hpn=10):
 
         metalcount.draw(display)
         player.healthbar.draw(display)
+        ammocount.draw(display)
         cursor.draw(display)
 
         for event in pygame.event.get():
@@ -1616,6 +1640,8 @@ def trade_area(hpn=10):
                     winscreen(display, player.x - spaceship.x, player.y - spaceship.y)
                 if event.key == pygame.K_f:
                     use = True
+                if event.key == pygame.K_q or event.key == pygame.K_SPACE:
+                    swap_weapons = True
             if event.type == KEYUP:
                 if event.key == K_d:
                     moving_right = False
@@ -1627,12 +1653,16 @@ def trade_area(hpn=10):
                     moving_down = False
                 if event.key == pygame.K_f:
                     use = False
+                if event.key == pygame.K_q or event.key == pygame.K_SPACE:
+                    swap_weapons = False
             if event.type == MOUSEBUTTONDOWN:
                 if event.button == 1:
                     clicked = True
+                    one_click = True
             if event.type == MOUSEBUTTONUP:
                 if event.button == 1:
                     clicked = False
+                    one_click = False
 
         screen.blit(pygame.transform.scale(display, WINDOW_SIZE), (0, 0))
         pygame.display.update()
@@ -1644,10 +1674,11 @@ def game(metal=0, hpn=10):
     SCALE_MULTIPLIER = 4
     display = pygame.Surface((WINDOW_SIZE[0] / SCALE_MULTIPLIER, WINDOW_SIZE[1] / SCALE_MULTIPLIER))
 
+    one_click = False
     clicked = False
     running = True
     use = False
-
+    swap_weapons = False
     moving_right = False
     moving_left = False
     moving_up = False
@@ -1665,6 +1696,7 @@ def game(metal=0, hpn=10):
     cursor = e.Cursor(0, 0, curstype)
     portal = e.Portal(*world.get_start_pos(), 10, 'portal')
     metalcount = e.MetalCount(10, 25, 0)
+    ammocount = e.AmmoCount(10, 35, 10)
     defense_timer = e.Timer(45, WINDOW_SIZE[0] / SCALE_MULTIPLIER / 2, 10)
     world.add_usable_entity(portal)
     particles = []
@@ -1707,8 +1739,12 @@ def game(metal=0, hpn=10):
             player.shoot(mouse_angle)
         if use:
             use = False
-            if portal.used():
+            if portal.used(player):
                 running = False
+        if swap_weapons:
+            player.swap_weapons()
+            swap_weapons = False
+
 
         if player_movement[0] != 0 and player_movement[1] != 0:
             player_movement[0] *= math.sin(math.pi / 4)
@@ -1732,6 +1768,7 @@ def game(metal=0, hpn=10):
         player.draw(display, scroll)
         player.draw_projectiles(display, scroll)
         metalcount.set_metal(player.metal)
+        ammocount.set_ammo(player.ammo)
         defense_timer.update()
         if defense_timer.get_time() <= 0 or player.hp <= 0:
             running = False
@@ -1750,6 +1787,7 @@ def game(metal=0, hpn=10):
         defense_timer.draw(display)
         player.healthbar.draw(display)
         metalcount.draw(display)
+        ammocount.draw(display)
         cursor.draw(display)
 
         for event in pygame.event.get():
@@ -1773,6 +1811,8 @@ def game(metal=0, hpn=10):
                     fullscrn(display)
                 if event.key == pygame.K_f:
                     use = True
+                if event.key == pygame.K_q or event.key == pygame.K_SPACE:
+                    swap_weapons = True
             if event.type == KEYUP:
                 if event.key == K_d:
                     moving_right = False
@@ -1784,18 +1824,23 @@ def game(metal=0, hpn=10):
                     moving_down = False
                 if event.key == pygame.K_f:
                     use = False
+                if event.key == pygame.K_q or event.key == pygame.K_SPACE:
+                    swap_weapons = False
             if event.type == MOUSEBUTTONDOWN:
                 if event.button == 1:
                     clicked = True
+                    one_click = True
             if event.type == MOUSEBUTTONUP:
                 if event.button == 1:
                     clicked = False
+                    one_click = False
 
         screen.blit(pygame.transform.scale(display, WINDOW_SIZE), (0, 0))
         pygame.display.update()
         clock.tick(60)
     pygame.mouse.set_visible(True)
-    return player.metal, player.hp
+    return player.metal, player.ammo, player.hp
+
 
 
 def options():
